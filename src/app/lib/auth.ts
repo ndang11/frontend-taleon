@@ -5,7 +5,7 @@ const TOKEN_KEY = "auth_token";
 const USER_KEY = "auth_user";
 
 export function setAuthData(data: AuthResponse) {
-  Cookies.set(TOKEN_KEY, data.token, { expires: 7 }); // Expires in 7 days
+  Cookies.set(TOKEN_KEY, data.token, { expires: 7 });
   Cookies.set(USER_KEY, JSON.stringify(data.user), { expires: 7 });
 }
 
