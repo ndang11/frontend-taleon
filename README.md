@@ -151,7 +151,7 @@ frontend-taleon/
 └── README.md                         # This file
 ```
 
-## Milestones
+## Milestones for the project
 
 ### Phase 1: Foundation (Week 1-2)
 - [x] Project setup with Next.js and TypeScript
