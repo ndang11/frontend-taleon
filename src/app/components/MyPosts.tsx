@@ -1,7 +1,15 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight, Eye, EyeOff, Trash2 } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Edit,
+  Eye,
+  EyeOff,
+  Plus,
+  Trash2,
+} from "lucide-react";
 import { useState } from "react";
 import {
   deletePost,
@@ -11,12 +19,15 @@ import {
   updatePostStatus,
 } from "../lib/api-client";
 import { getToken } from "../lib/auth";
+import { PostForm } from "./PostForm";
 
 const POSTS_PER_PAGE = 10;
 
 export function MyPosts() {
   const [currentPage, setCurrentPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState<string>("");
+  const [showForm, setShowForm] = useState(false);
+  const [editingPost, setEditingPost] = useState<Post | null>(null);
   const queryClient = useQueryClient();
   const token = getToken();
 
@@ -98,8 +109,8 @@ export function MyPosts() {
         (old: PostsResponse | undefined) => {
           if (!old) return old;
           return {
-            ...old!,
-            posts: old!.posts.map((post: Post) =>
+            ...old,
+            posts: old.posts.map((post: Post) =>
               post.id === postId ? { ...post, status } : post,
             ),
           };
@@ -145,20 +156,68 @@ export function MyPosts() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-gray-900">My Posts</h1>
-        <select
-          value={statusFilter}
-          onChange={(e) => {
-            setStatusFilter(e.target.value);
-            setCurrentPage(1);
-          }}
-          className="rounded-md border border-gray-300 px-3 py-2"
-        >
-          <option value="">All Status</option>
-          <option value="draft">Draft</option>
-          <option value="published">Published</option>
-          <option value="unpublished">Unpublished</option>
-        </select>
+        <div className="flex space-x-2">
+          <button
+            type="button"
+            onClick={() => setShowForm(true)}
+            className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 flex items-center space-x-2"
+          >
+            <Plus className="h-4 w-4" />
+            <span>Create Post</span>
+          </button>
+          <div className="flex space-x-1">
+            <button
+              type="button"
+              onClick={() => {
+                setStatusFilter("draft");
+                setCurrentPage(1);
+              }}
+              className={`px-4 py-2 rounded-md ${
+                statusFilter === "draft"
+                  ? "bg-black text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+            >
+              Drafts
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setStatusFilter("published");
+                setCurrentPage(1);
+              }}
+              className={`px-4 py-2 rounded-md ${
+                statusFilter === "published"
+                  ? "bg-black text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+            >
+              Published
+            </button>
+          </div>
+        </div>
       </div>
+
+      {showForm && (
+        <div className="p-6 border rounded-lg bg-gray-50">
+          <h2 className="text-xl font-semibold mb-4">Create New Post</h2>
+          <PostForm
+            onSuccess={() => setShowForm(false)}
+            onCancel={() => setShowForm(false)}
+          />
+        </div>
+      )}
+
+      {editingPost && (
+        <div className="p-6 border rounded-lg bg-gray-50">
+          <h2 className="text-xl font-semibold mb-4">Edit Post</h2>
+          <PostForm
+            post={editingPost}
+            onSuccess={() => setEditingPost(null)}
+            onCancel={() => setEditingPost(null)}
+          />
+        </div>
+      )}
 
       {data?.posts.length === 0 ? (
         <div className="text-center py-8 text-gray-500">No posts found</div>
@@ -190,30 +249,46 @@ export function MyPosts() {
                     </p>
                   </div>
                   <div className="flex space-x-2">
-                    <button
-                      type="button"
-                      onClick={() => handleToggleStatus(post)}
-                      disabled={updateStatusMutation.isPending}
-                      className="p-2 text-gray-400 hover:text-gray-600"
-                      title={
-                        post.status === "published" ? "Unpublish" : "Publish"
-                      }
-                    >
-                      {post.status === "published" ? (
-                        <EyeOff className="h-5 w-5" />
-                      ) : (
-                        <Eye className="h-5 w-5" />
-                      )}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleDelete(post.id)}
-                      disabled={deleteMutation.isPending}
-                      className="p-2 text-red-400 hover:text-red-600"
-                      title="Delete"
-                    >
-                      <Trash2 className="h-5 w-5" />
-                    </button>
+                    {post.status === "draft" ? (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => setEditingPost(post)}
+                          className="p-2 text-blue-400 hover:text-blue-600"
+                          title="Edit"
+                        >
+                          <Edit className="h-5 w-5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(post.id)}
+                          disabled={deleteMutation.isPending}
+                          className="p-2 text-red-400 hover:text-red-600"
+                          title="Delete"
+                        >
+                          <Trash2 className="h-5 w-5" />
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <a
+                          href={`/blog/myblog/${post.slug}`} // TODO: get actual tenantSlug
+                          className="p-2 text-blue-400 hover:text-blue-600"
+                          title="View Public Link"
+                        >
+                          <Eye className="h-5 w-5" />
+                        </a>
+                        <button
+                          type="button"
+                          onClick={() => handleToggleStatus(post)}
+                          disabled={updateStatusMutation.isPending}
+                          className="p-2 text-gray-400 hover:text-gray-600"
+                          title="Move to Drafts"
+                        >
+                          <EyeOff className="h-5 w-5" />
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
               </li>
