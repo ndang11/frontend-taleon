@@ -173,3 +173,22 @@ export async function updatePostStatus(
 
   return response.json();
 }
+
+export async function fetchPublicPosts(
+  params: FetchPostsParams = {},
+  tenantSlug?: string,
+): Promise<PostsResponse> {
+  const query = new URLSearchParams();
+  if (params.page) query.append("page", params.page.toString());
+  if (params.limit) query.append("limit", params.limit.toString());
+  if (params.status) query.append("status", params.status);
+  if (tenantSlug) query.append("tenantSlug", tenantSlug);
+
+  const response = await fetch(`${API_BASE_URL}/public/posts?${query}`);
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch public posts");
+  }
+
+  return response.json();
+}
