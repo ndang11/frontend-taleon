@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { vi } from "vitest";
+import { type Mock, vi } from "vitest";
 import { MyPosts } from "../MyPosts";
 
 // Mock API functions
@@ -60,7 +60,7 @@ const mockPosts = [
 describe("MyPosts", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    (fetchPosts as any).mockResolvedValue({
+    (fetchPosts as Mock).mockResolvedValue({
       posts: mockPosts,
       total: 2,
       page: 1,
@@ -81,12 +81,13 @@ describe("MyPosts", () => {
     renderWithProviders(<MyPosts />);
 
     await waitFor(() => {
-      expect(screen.getByDisplayValue("All Status")).toBeInTheDocument();
+      expect(screen.getByText("Drafts")).toBeInTheDocument();
+      expect(screen.getByText("Published")).toBeInTheDocument();
     });
   });
 
   it("handles delete with confirmation", async () => {
-    (deletePost as any).mockResolvedValue(undefined);
+    (deletePost as Mock).mockResolvedValue(undefined);
 
     renderWithProviders(<MyPosts />);
 
@@ -101,12 +102,12 @@ describe("MyPosts", () => {
     fireEvent.click(deleteButtons[0]);
 
     await waitFor(() => {
-      expect(deletePost).toHaveBeenCalledWith("1", "token123");
+      expect(deletePost).toHaveBeenCalledWith("2", "token123");
     });
   });
 
   it("handles status toggle with optimistic update", async () => {
-    (updatePostStatus as any).mockResolvedValue({
+    (updatePostStatus as Mock).mockResolvedValue({
       ...mockPosts[0],
       status: "unpublished",
     });
@@ -117,20 +118,16 @@ describe("MyPosts", () => {
       expect(screen.getByText("Test Post 1")).toBeInTheDocument();
     });
 
-    const toggleButtons = screen.getAllByTitle("Unpublish");
+    const toggleButtons = screen.getAllByTitle("Move to Drafts");
     fireEvent.click(toggleButtons[0]);
 
     await waitFor(() => {
-      expect(updatePostStatus).toHaveBeenCalledWith(
-        "1",
-        "unpublished",
-        "token123",
-      );
+      expect(updatePostStatus).toHaveBeenCalledWith("1", "draft", "token123");
     });
   });
 
   it("shows pagination when multiple pages", async () => {
-    (fetchPosts as any).mockResolvedValue({
+    (fetchPosts as Mock).mockResolvedValue({
       posts: mockPosts,
       total: 25,
       page: 1,

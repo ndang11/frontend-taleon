@@ -1,5 +1,5 @@
 const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
 
 export interface LoginRequest {
   email: string;
@@ -43,7 +43,7 @@ export interface Post {
   updatedAt: string;
   slug: string;
   userId: string;
-  blogId: string;
+  tenantId: string;
 }
 
 export interface PostsResponse {
@@ -140,6 +140,20 @@ export async function fetchPosts(
   return response.json();
 }
 
+export async function fetchPost(postId: string, token: string): Promise<Post> {
+  const response = await fetch(`${API_BASE_URL}/posts/${postId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch post");
+  }
+
+  return response.json();
+}
+
 export async function deletePost(postId: string, token: string): Promise<void> {
   const response = await fetch(`${API_BASE_URL}/posts/${postId}`, {
     method: "DELETE",
@@ -158,7 +172,7 @@ export async function updatePostStatus(
   status: "published" | "unpublished",
   token: string,
 ): Promise<Post> {
-  const response = await fetch(`${API_BASE_URL}/posts/${postId}/status`, {
+  const response = await fetch(`${API_BASE_URL}/posts/${postId}`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
@@ -174,15 +188,87 @@ export async function updatePostStatus(
   return response.json();
 }
 
+export interface CreatePostRequest {
+  title: string;
+  content: string;
+  status?: "draft" | "published" | "unpublished";
+  slug?: string;
+}
+
+export async function createPost(
+  data: CreatePostRequest,
+  token: string,
+): Promise<Post> {
+  const response = await fetch(`${API_BASE_URL}/posts`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to create post");
+  }
+
+  return response.json();
+}
+
+export interface UpdatePostRequest {
+  title?: string;
+  content?: string;
+  status?: "draft" | "published" | "unpublished";
+}
+
+export async function updatePost(
+  postId: string,
+  data: UpdatePostRequest,
+  token: string,
+): Promise<Post> {
+  const response = await fetch(`${API_BASE_URL}/posts/${postId}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to update post");
+  }
+
+  return response.json();
+}
+
+export interface PublicPost {
+  id: string;
+  title: string;
+  content: string;
+  createdAt: string;
+  slug: string;
+  blogSlug: string;
+  authorName: string;
+  excerpt?: string;
+  imageUrl?: string;
+}
+
+export interface PublicPostsResponse {
+  posts: PublicPost[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
 export async function fetchPublicPosts(
-  params: FetchPostsParams = {},
-  tenantSlug?: string,
-): Promise<PostsResponse> {
+  params: FetchPostsParams & { tenantSlug?: string } = {},
+): Promise<PublicPostsResponse> {
   const query = new URLSearchParams();
   if (params.page) query.append("page", params.page.toString());
   if (params.limit) query.append("limit", params.limit.toString());
   if (params.status) query.append("status", params.status);
-  if (tenantSlug) query.append("tenantSlug", tenantSlug);
+  if (params.tenantSlug) query.append("tenantSlug", params.tenantSlug);
 
   const response = await fetch(`${API_BASE_URL}/public/posts?${query}`);
 
