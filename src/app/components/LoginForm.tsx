@@ -40,14 +40,18 @@ export function LoginForm() {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div>
-        <label htmlFor="email" className="block text-sm font-medium">
+        <label
+          htmlFor="email"
+          className="block text-sm text-gray-700 font-medium"
+        >
           Email
         </label>
         <input
           id="email"
           type="email"
+          placeholder="Enter your email"
           {...register("email")}
-          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+          className="mt-1 block w-full rounded-md border text-gray-500 border-gray-300 px-3 py-2"
         />
         {errors.email && (
           <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
@@ -55,14 +59,18 @@ export function LoginForm() {
       </div>
 
       <div>
-        <label htmlFor="password" className="block text-sm font-medium">
+        <label
+          htmlFor="password"
+          className="block text-sm text-gray-700 font-medium"
+        >
           Password
         </label>
         <input
           id="password"
           type="password"
+          placeholder="Enter your password"
           {...register("password")}
-          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+          className="mt-1 block w-full rounded-md border text-gray-500 border-gray-300 px-3 py-2"
         />
         {errors.password && (
           <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
