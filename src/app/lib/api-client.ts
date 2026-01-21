@@ -97,7 +97,11 @@ export async function register(data: RegisterRequest): Promise<AuthResponse> {
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(data),
+    body: JSON.stringify({
+      name: data.name,
+      email: data.email,
+      password: data.password,
+    }),
   });
 
   if (!response.ok) {
