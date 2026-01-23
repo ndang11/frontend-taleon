@@ -57,11 +57,13 @@ export function EditorComponent({ post }: { post?: Post }) {
       content: string;
       status?: "draft" | "published" | "unpublished";
     }) =>
-      updatePost(
-        post.id,
-        { title: data.title, content: data.content, status: data.status },
-        token || "",
-      ),
+      post
+        ? updatePost(
+            post.id,
+            { title: data.title, content: data.content, status: data.status },
+            token || "",
+          )
+        : Promise.reject(new Error("Post is undefined")),
     onSuccess: () => {
       setSaved(true);
     },
