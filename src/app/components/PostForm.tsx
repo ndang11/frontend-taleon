@@ -33,6 +33,7 @@ export function PostForm({ post, onSuccess, onCancel }: PostFormProps) {
         : createPost(data as CreatePostRequest, token || ""),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["posts"] });
+      queryClient.invalidateQueries({ queryKey: ["posts", 1, ""] });
       queryClient.invalidateQueries({ queryKey: ["public-posts"] });
       onSuccess?.();
     },
@@ -44,9 +45,12 @@ export function PostForm({ post, onSuccess, onCancel }: PostFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-6">
       <div>
-        <label htmlFor="title" className="block text-sm font-medium text-black">
+        <label
+          htmlFor="title"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+        >
           Title
         </label>
         <input
@@ -54,14 +58,15 @@ export function PostForm({ post, onSuccess, onCancel }: PostFormProps) {
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+          className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
           required
         />
       </div>
+
       <div>
         <label
           htmlFor="content"
-          className="block text-sm font-medium text-gray-700"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300"
         >
           Content
         </label>
@@ -70,14 +75,15 @@ export function PostForm({ post, onSuccess, onCancel }: PostFormProps) {
           value={content}
           onChange={(e) => setContent(e.target.value)}
           rows={10}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+          className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
           required
         />
       </div>
+
       <div>
         <label
           htmlFor="status"
-          className="block text-sm font-medium text-gray-700"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300"
         >
           Status
         </label>
@@ -87,18 +93,19 @@ export function PostForm({ post, onSuccess, onCancel }: PostFormProps) {
           onChange={(e) =>
             setStatus(e.target.value as "draft" | "published" | "unpublished")
           }
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+          className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
         >
           <option value="draft">Draft</option>
           <option value="published">Published</option>
           <option value="unpublished">Unpublished</option>
         </select>
       </div>
-      <div className="flex space-x-2">
+
+      <div className="flex space-x-3">
         <button
           type="submit"
           disabled={mutation.isPending}
-          className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 disabled:opacity-50"
+          className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50"
         >
           {mutation.isPending ? "Saving..." : post ? "Update" : "Create"} Post
         </button>

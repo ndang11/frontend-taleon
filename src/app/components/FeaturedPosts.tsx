@@ -9,7 +9,7 @@ function PostCard({ post }: { post: PublicPost }) {
   const excerpt = post.excerpt || `${post.content.substring(0, 150)}...`;
 
   return (
-    <article className="bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-shadow overflow-hidden">
+    <article className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden border border-gray-200 dark:border-gray-700">
       {post.imageUrl && (
         <div className="relative h-48">
           <Image
@@ -60,7 +60,7 @@ export function FeaturedPosts() {
               <div
                 // biome-ignore lint/suspicious/noArrayIndexKey: Skeleton elements are static and order doesn't change
                 key={`skeleton-${i}`}
-                className="bg-gray-200 dark:bg-gray-700 rounded-lg h-64 animate-pulse"
+                className="bg-gray-200 dark:bg-gray-700 rounded-lg h-64"
               ></div>
             ))}
           </div>
@@ -82,7 +82,7 @@ export function FeaturedPosts() {
   }
 
   return (
-    <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gray-50 dark:bg-gray-900">
+    <section className="py-16 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-8 text-center">
           Featured Posts
