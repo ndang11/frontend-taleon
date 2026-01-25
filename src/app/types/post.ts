@@ -10,4 +10,5 @@ export interface Post {
   tenantId: string;
   category: string;
   image?: string;
+  isPublic: boolean;
 }

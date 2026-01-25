@@ -1,4 +1,4 @@
-import { v2 as cloudinary } from "cloudinary";
+import { v2 as cloudinary, type UploadApiResponse } from "cloudinary";
 import { NextResponse } from "next/server";
 
 cloudinary.config({
@@ -34,8 +34,10 @@ export async function POST(request: Request) {
       stream.pipe(uploadStream);
     });
 
-    return NextResponse.json({ url: (uploadResult as any).secure_url });
-  } catch (error) {
+    return NextResponse.json({
+      url: (uploadResult as UploadApiResponse).secure_url,
+    });
+  } catch (_error) {
     return NextResponse.json(
       { error: "Failed to upload file to Cloudinary" },
       { status: 500 },
@@ -45,6 +47,6 @@ export async function POST(request: Request) {
 
 import { Readable } from "node:stream";
 
-if (typeof (global as any).Readable === "undefined") {
-  (global as any).Readable = Readable as any;
+if (typeof (globalThis as any).Readable === "undefined") {
+  (globalThis as any).Readable = Readable;
 }

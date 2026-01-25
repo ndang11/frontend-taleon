@@ -1,15 +1,9 @@
 "use client";
 
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import {
-  type CreatePostRequest,
-  createPost,
-  type Post,
-  type UpdatePostRequest,
-  updatePost,
-} from "../lib/api-client";
-import { getToken } from "../lib/auth";
+import { useCreatePost, useUpdatePost } from "../features/posts/hooks";
+import type { Post } from "../types/post";
+import { ImageUpload } from "./ImageUpload";
 
 interface PostFormProps {
   post?: Post;
@@ -24,164 +18,200 @@ export function PostForm({ post, onSuccess, onCancel }: PostFormProps) {
     post?.status ?? "draft",
   );
   const [category, setCategory] = useState(post?.category ?? "");
-  const [image, setImage] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [slug, setSlug] = useState(post?.slug ?? "");
+  const [imageUrl, setImageUrl] = useState(post?.image ?? "");
+  const [isPublic, setIsPublic] = useState(post?.isPublic ?? false);
   const [error, setError] = useState<string | null>(null);
 
-  const queryClient = useQueryClient();
-  const token = getToken();
-
-  const mutation = useMutation({
-    mutationFn: async (formData: FormData) => {
-      if (!token) throw new Error("You must be logged in");
-
-      if (post) {
-        const postData: UpdatePostRequest = {
-          title: formData.get("title") as string,
-          content: formData.get("content") as string,
-          status: formData.get("status") as
-            | "draft"
-            | "published"
-            | "unpublished",
-          category: formData.get("category") as string,
-        };
-        return updatePost(post.id, postData, token);
-      }
-
-      const postData: CreatePostRequest = {
-        title,
-        content,
-        status,
-        category,
-        image: image ? image.name : undefined,
-      };
-      return createPost(postData, token);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["posts"] });
-      queryClient.invalidateQueries({ queryKey: ["public-posts"] });
-      onSuccess?.();
-    },
-    onError: (err: any) => {
-      setError(err.message || "Failed to create post");
-    },
-  });
+  const createPost = useCreatePost();
+  const updatePost = useUpdatePost();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
-    if (!title || !content || !category) {
-      setError("All fields are required");
+    if (!title.trim() || !content.trim() || !category.trim() || !slug.trim()) {
+      setError("Please fill in all required fields");
       return;
     }
 
-    if (!image && !post) {
-      setError("Image is required");
-      return;
+    const postData = {
+      title: title.trim(),
+      content: content.trim(),
+      status,
+      category: category.trim(),
+      slug: slug.trim(),
+      image: imageUrl || undefined,
+      isPublic,
+    };
+
+    if (post) {
+      updatePost.mutate(
+        { id: post.id, data: postData },
+        {
+          onSuccess: () => {
+            onSuccess?.();
+          },
+          onError: (err) => {
+            setError(err.message || "Failed to update post");
+          },
+        },
+      );
+    } else {
+      createPost.mutate(postData, {
+        onSuccess: () => {
+          onSuccess?.();
+        },
+        onError: (err) => {
+          setError(err.message || "Failed to create post");
+        },
+      });
     }
-
-    const formData = new FormData();
-    formData.append("title", title);
-    formData.append("content", content);
-    formData.append("status", status);
-    formData.append("category", category);
-
-    if (image) {
-      formData.append("image", image); // 👈 MUST be "image"
-    }
-
-    mutation.mutate(formData);
   };
 
+  const isLoading = createPost.isPending || updatePost.isPending;
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-6">
       {error && (
-        <div className="p-3 text-sm text-red-700 bg-red-100 rounded">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
           {error}
         </div>
       )}
 
-      <input
-        type="text"
-        placeholder="Title"
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        className="w-full rounded border p-2"
-        required
-      />
-
-      <textarea
-        placeholder="Content"
-        value={content}
-        onChange={(e) => setContent(e.target.value)}
-        rows={8}
-        className="w-full rounded border p-2"
-        required
-      />
-
-      <select
-        value={status}
-        onChange={(e) =>
-          setStatus(e.target.value as "draft" | "published" | "unpublished")
-        }
-        className="w-full rounded border p-2"
-      >
-        <option value="draft">Draft</option>
-        <option value="published">Published</option>
-        <option value="unpublished">Unpublished</option>
-      </select>
-
-      <input
-        type="text"
-        placeholder="Category"
-        value={category}
-        onChange={(e) => setCategory(e.target.value)}
-        className="w-full rounded border p-2"
-        required
-      />
-
-      <input
-        type="file"
-        accept="image/*"
-        onChange={(e) => {
-          const file = e.target.files?.[0];
-          if (file) {
-            setImage(file);
-            setImagePreview(URL.createObjectURL(file));
-          }
-        }}
-      />
-
-      {imagePreview && (
-        <img
-          src={imagePreview}
-          alt="Preview"
-          className="h-32 rounded object-cover"
-        />
-      )}
-
-      <button
-        type="submit"
-        disabled={mutation.isPending}
-        className="bg-indigo-600 text-white px-4 py-2 rounded disabled:opacity-50"
-      >
-        {mutation.isPending
-          ? "Saving..."
-          : post
-            ? "Update Post"
-            : "Create Post"}
-      </button>
-
-      {onCancel && (
-        <button
-          type="button"
-          onClick={onCancel}
-          className="ml-2 bg-gray-500 text-white px-4 py-2 rounded"
+      <div>
+        <label
+          htmlFor="title"
+          className="block text-sm font-medium text-gray-700 mb-2"
         >
-          Cancel
+          Title *
+        </label>
+        <input
+          type="text"
+          id="title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          required
+        />
+      </div>
+
+      <div>
+        <label
+          htmlFor="slug"
+          className="block text-sm font-medium text-gray-700 mb-2"
+        >
+          Slug *
+        </label>
+        <input
+          type="text"
+          id="slug"
+          value={slug}
+          onChange={(e) => setSlug(e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          required
+        />
+      </div>
+
+      <div>
+        <label
+          htmlFor="category"
+          className="block text-sm font-medium text-gray-700 mb-2"
+        >
+          Category *
+        </label>
+        <input
+          type="text"
+          id="category"
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          required
+        />
+      </div>
+
+      <div>
+        <label
+          htmlFor="status"
+          className="block text-sm font-medium text-gray-700 mb-2"
+        >
+          Status
+        </label>
+        <select
+          id="status"
+          value={status}
+          onChange={(e) =>
+            setStatus(e.target.value as "draft" | "published" | "unpublished")
+          }
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="draft">Draft</option>
+          <option value="published">Published</option>
+          <option value="unpublished">Unpublished</option>
+        </select>
+      </div>
+
+      <div>
+        <label
+          htmlFor="image-upload"
+          className="block text-sm font-medium text-gray-700 mb-2"
+        >
+          Image
+        </label>
+        <ImageUpload
+          onImageUploaded={setImageUrl}
+          currentImage={imageUrl}
+          onRemove={() => setImageUrl("")}
+        />
+      </div>
+
+      <div>
+        <label
+          htmlFor="content"
+          className="block text-sm font-medium text-gray-700 mb-2"
+        >
+          Content *
+        </label>
+        <textarea
+          id="content"
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          rows={10}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          required
+        />
+      </div>
+
+      <div>
+        <label className="flex items-center">
+          <input
+            type="checkbox"
+            checked={isPublic}
+            onChange={(e) => setIsPublic(e.target.checked)}
+            className="mr-2"
+          />
+          <span className="text-sm text-gray-700">Make this post public</span>
+        </label>
+      </div>
+
+      <div className="flex justify-end space-x-4">
+        {onCancel && (
+          <button
+            type="button"
+            onClick={onCancel}
+            className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+          >
+            Cancel
+          </button>
+        )}
+        <button
+          type="submit"
+          disabled={isLoading}
+          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+        >
+          {isLoading ? "Saving..." : post ? "Update Post" : "Create Post"}
         </button>
-      )}
+      </div>
     </form>
   );
 }
