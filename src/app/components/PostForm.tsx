@@ -1,15 +1,9 @@
 "use client";
 
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import {
-  type CreatePostRequest,
-  createPost,
-  type Post,
-  type UpdatePostRequest,
-  updatePost,
-} from "../lib/api-client";
-import { getToken } from "../lib/auth";
+import { useCreatePost, useUpdatePost } from "../features/posts/hooks";
+import type { Post } from "../types/post";
+import { ImageUpload } from "./ImageUpload";
 
 interface PostFormProps {
   post?: Post;
@@ -18,66 +12,128 @@ interface PostFormProps {
 }
 
 export function PostForm({ post, onSuccess, onCancel }: PostFormProps) {
-  const [title, setTitle] = useState(post?.title || "");
-  const [content, setContent] = useState(post?.content || "");
+  const [title, setTitle] = useState(post?.title ?? "");
+  const [content, setContent] = useState(post?.content ?? "");
   const [status, setStatus] = useState<"draft" | "published" | "unpublished">(
-    post?.status || "draft",
+    post?.status ?? "draft",
   );
-  const queryClient = useQueryClient();
-  const token = getToken();
+  const [category, setCategory] = useState(post?.category ?? "");
+  const [slug, setSlug] = useState(post?.slug ?? "");
+  const [imageUrl, setImageUrl] = useState(post?.image ?? "");
+  const [isPublic, setIsPublic] = useState(post?.isPublic ?? false);
+  const [error, setError] = useState<string | null>(null);
 
-  const mutation = useMutation({
-    mutationFn: (data: CreatePostRequest | UpdatePostRequest) =>
-      post
-        ? updatePost(post.id, data as UpdatePostRequest, token || "")
-        : createPost(data as CreatePostRequest, token || ""),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["posts"] });
-      queryClient.invalidateQueries({ queryKey: ["public-posts"] });
-      onSuccess?.();
-    },
-  });
+  const createPost = useCreatePost();
+  const updatePost = useUpdatePost();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    mutation.mutate({ title, content, status });
+    setError(null);
+
+    if (!title.trim() || !content.trim() || !category.trim() || !slug.trim()) {
+      setError("Please fill in all required fields");
+      return;
+    }
+
+    const postData = {
+      title: title.trim(),
+      content: content.trim(),
+      status,
+      category: category.trim(),
+      slug: slug.trim(),
+      image: imageUrl || undefined,
+      isPublic,
+    };
+
+    if (post) {
+      updatePost.mutate(
+        { id: post.id, data: postData },
+        {
+          onSuccess: () => {
+            onSuccess?.();
+          },
+          onError: (err) => {
+            setError(err.message || "Failed to update post");
+          },
+        },
+      );
+    } else {
+      createPost.mutate(postData, {
+        onSuccess: () => {
+          onSuccess?.();
+        },
+        onError: (err) => {
+          setError(err.message || "Failed to create post");
+        },
+      });
+    }
   };
 
+  const isLoading = createPost.isPending || updatePost.isPending;
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <label htmlFor="title" className="block text-sm font-medium text-black">
-          Title
-        </label>
-        <input
-          id="title"
-          type="text"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-          required
-        />
-      </div>
+    <form onSubmit={handleSubmit} className="space-y-6">
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+          {error}
+        </div>
+      )}
+
       <div>
         <label
-          htmlFor="content"
-          className="block text-sm font-medium text-gray-700"
+          htmlFor="title"
+          className="block text-sm font-medium text-gray-700 mb-2"
         >
-          Content
+          Title *
         </label>
-        <textarea
-          id="content"
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          rows={10}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+        <input
+          type="text"
+          id="title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           required
         />
       </div>
+
+      <div>
+        <label
+          htmlFor="slug"
+          className="block text-sm font-medium text-gray-700 mb-2"
+        >
+          Slug *
+        </label>
+        <input
+          type="text"
+          id="slug"
+          value={slug}
+          onChange={(e) => setSlug(e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          required
+        />
+      </div>
+
+      <div>
+        <label
+          htmlFor="category"
+          className="block text-sm font-medium text-gray-700 mb-2"
+        >
+          Category *
+        </label>
+        <input
+          type="text"
+          id="category"
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          required
+        />
+      </div>
+
       <div>
         <label
           htmlFor="status"
-          className="block text-sm font-medium text-gray-700"
+          className="block text-sm font-medium text-gray-700 mb-2"
         >
           Status
         </label>
@@ -87,30 +143,74 @@ export function PostForm({ post, onSuccess, onCancel }: PostFormProps) {
           onChange={(e) =>
             setStatus(e.target.value as "draft" | "published" | "unpublished")
           }
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="draft">Draft</option>
           <option value="published">Published</option>
           <option value="unpublished">Unpublished</option>
         </select>
       </div>
-      <div className="flex space-x-2">
-        <button
-          type="submit"
-          disabled={mutation.isPending}
-          className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 disabled:opacity-50"
+
+      <div>
+        <label
+          htmlFor="image-upload"
+          className="block text-sm font-medium text-gray-700 mb-2"
         >
-          {mutation.isPending ? "Saving..." : post ? "Update" : "Create"} Post
-        </button>
+          Image
+        </label>
+        <ImageUpload
+          onImageUploaded={setImageUrl}
+          currentImage={imageUrl}
+          onRemove={() => setImageUrl("")}
+        />
+      </div>
+
+      <div>
+        <label
+          htmlFor="content"
+          className="block text-sm font-medium text-gray-700 mb-2"
+        >
+          Content *
+        </label>
+        <textarea
+          id="content"
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          rows={10}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          required
+        />
+      </div>
+
+      <div>
+        <label className="flex items-center">
+          <input
+            type="checkbox"
+            checked={isPublic}
+            onChange={(e) => setIsPublic(e.target.checked)}
+            className="mr-2"
+          />
+          <span className="text-sm text-gray-700">Make this post public</span>
+        </label>
+      </div>
+
+      <div className="flex justify-end space-x-4">
         {onCancel && (
           <button
             type="button"
             onClick={onCancel}
-            className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700"
+            className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
           >
             Cancel
           </button>
         )}
+        <button
+          type="submit"
+          disabled={isLoading}
+          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+        >
+          {isLoading ? "Saving..." : post ? "Update Post" : "Create Post"}
+        </button>
       </div>
     </form>
   );
