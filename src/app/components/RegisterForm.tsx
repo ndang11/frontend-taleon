@@ -62,73 +62,83 @@ export function RegisterForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       <div>
         <label
           htmlFor="email"
-          className="block text-sm text-gray-700 font-medium"
+          className="block text-sm font-semibold text-gray-700 mb-2"
         >
-          Email
+          Email Address
         </label>
         <input
           id="email"
           type="email"
           placeholder="Enter your email"
           {...register("email")}
-          className="mt-1 block w-full rounded-md border text-gray-500 border-gray-300 px-3 py-2"
+          className="block w-full rounded-xl border-0 px-4 py-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-purple-500 transition-all duration-200"
         />
         {errors.email && (
-          <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
+          <p className="mt-2 text-sm text-red-600 font-medium">
+            {errors.email.message}
+          </p>
         )}
       </div>
 
       <div>
         <label
           htmlFor="password"
-          className="block text-sm font-medium text-gray-700"
+          className="block text-sm font-semibold text-gray-700 mb-2"
         >
           Password
         </label>
         <input
           id="password"
           type="password"
-          placeholder="Enter your password"
+          placeholder="Create a strong password"
           {...register("password")}
-          className="mt-1 block w-full rounded-md border text-gray-500 border-gray-300 px-3 py-2"
+          className="block w-full rounded-xl border-0 px-4 py-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-purple-500 transition-all duration-200"
         />
         {errors.password && (
-          <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
+          <p className="mt-2 text-sm text-red-600 font-medium">
+            {errors.password.message}
+          </p>
         )}
       </div>
 
       <div>
         <label
           htmlFor="blogName"
-          className="block text-sm font-medium text-gray-700"
+          className="block text-sm font-semibold text-gray-700 mb-2"
         >
-          What should we call your blog?
+          Blog Name
         </label>
         <input
           id="blogName"
           type="text"
           placeholder="My awesome blog"
           {...register("blogName")}
-          className="mt-1 block w-full rounded-md border border-gray-300 text-gray-500 px-3 py-2"
+          className="block w-full rounded-xl border-0 px-4 py-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-purple-500 transition-all duration-200"
         />
         {errors.blogName && (
-          <p className="mt-1 text-sm text-red-600">{errors.blogName.message}</p>
+          <p className="mt-2 text-sm text-red-600 font-medium">
+            {errors.blogName.message}
+          </p>
         )}
       </div>
 
       <button
         type="submit"
         disabled={isRegistering}
-        className="w-full rounded-md  bg-blue-600 px-4 py-2 text-white hover:bg-gray-800 disabled:opacity-50"
+        className="w-full rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 px-4 py-3 text-white font-semibold hover:from-purple-700 hover:to-blue-700 focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg"
       >
-        {isRegistering ? "Creating..." : "Join Taleon"}
+        {isRegistering ? "Creating your account..." : "Create Account"}
       </button>
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && (
+        <div className="rounded-lg bg-red-50 p-4 border border-red-200">
+          <p className="text-sm text-red-700 font-medium">{error}</p>
+        </div>
+      )}
     </form>
   );
 }
