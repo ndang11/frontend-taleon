@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useCreatePost, useUpdatePost } from "../features/posts/hooks";
+import { generateSlug } from "../lib/api-client";
 import type { Post } from "../types/post";
 import { ImageUpload } from "./ImageUpload";
 
@@ -19,9 +20,22 @@ export function PostForm({ post, onSuccess, onCancel }: PostFormProps) {
   );
   const [category, setCategory] = useState(post?.category ?? "");
   const [slug, setSlug] = useState(post?.slug ?? "");
+  const [autoGenerateSlug, setAutoGenerateSlug] = useState(!post?.slug);
+
+  useEffect(() => {
+    if (autoGenerateSlug && title.trim()) {
+      setSlug(generateSlug(title.trim()));
+    }
+  }, [title, autoGenerateSlug]);
   const [imageUrl, setImageUrl] = useState(post?.image ?? "");
+  const [imageId, setImageId] = useState(post?.imageId ?? "");
   const [isPublic, setIsPublic] = useState(post?.isPublic ?? false);
   const [error, setError] = useState<string | null>(null);
+
+  const handleImageUploaded = (data: { url: string; fileId: string }) => {
+    setImageUrl(data.url);
+    setImageId(data.fileId);
+  };
 
   const createPost = useCreatePost();
   const updatePost = useUpdatePost();
@@ -30,9 +44,14 @@ export function PostForm({ post, onSuccess, onCancel }: PostFormProps) {
     e.preventDefault();
     setError(null);
 
-    if (!title.trim() || !content.trim() || !category.trim() || !slug.trim()) {
+    if (!title.trim() || !content.trim() || !category.trim()) {
       setError("Please fill in all required fields");
       return;
+    }
+
+    let finalSlug = slug.trim();
+    if (!finalSlug) {
+      finalSlug = generateSlug(title.trim());
     }
 
     const postData = {
@@ -40,8 +59,9 @@ export function PostForm({ post, onSuccess, onCancel }: PostFormProps) {
       content: content.trim(),
       status,
       category: category.trim(),
-      slug: slug.trim(),
+      slug: finalSlug,
       image: imageUrl || undefined,
+      imageId: imageId || undefined,
       isPublic,
     };
 
@@ -107,7 +127,10 @@ export function PostForm({ post, onSuccess, onCancel }: PostFormProps) {
           type="text"
           id="slug"
           value={slug}
-          onChange={(e) => setSlug(e.target.value)}
+          onChange={(e) => {
+            setSlug(e.target.value);
+            setAutoGenerateSlug(false);
+          }}
           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           required
         />
@@ -159,7 +182,7 @@ export function PostForm({ post, onSuccess, onCancel }: PostFormProps) {
           Image
         </label>
         <ImageUpload
-          onImageUploaded={setImageUrl}
+          onImageUploaded={handleImageUploaded}
           currentImage={imageUrl}
           onRemove={() => setImageUrl("")}
         />

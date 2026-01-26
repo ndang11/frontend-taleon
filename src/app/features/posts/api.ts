@@ -8,6 +8,7 @@ export interface CreatePostRequest {
   slug: string;
   category: string;
   image?: string;
+  imageId?: string;
   isPublic?: boolean;
 }
 
@@ -53,11 +54,11 @@ export const postsApi = {
     });
   },
 
-  async uploadImage(file: File): Promise<{ url: string }> {
+  async uploadImage(file: File): Promise<{ url: string; fileId: string }> {
     const formData = new FormData();
     formData.append("file", file);
 
-    return api<{ url: string }>("/posts/upload", {
+    return api<{ url: string; fileId: string }>("/posts/upload", {
       method: "POST",
       body: formData,
     });
