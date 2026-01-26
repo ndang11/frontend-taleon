@@ -1,6 +1,17 @@
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
 
+export const api = async <T>(
+  endpoint: string,
+  options: RequestInit = {},
+): Promise<T> => {
+  const response = await fetch(`${API_BASE_URL}${endpoint}`, options);
+  if (!response.ok) {
+    throw new Error(`Request failed with status ${response.status}`);
+  }
+  return response.json();
+};
+
 export interface LoginRequest {
   email: string;
   password: string;
@@ -44,6 +55,8 @@ export interface Post {
   slug: string;
   userId: string;
   tenantId: string;
+  category: string;
+  image?: string;
 }
 
 export interface PostsResponse {
@@ -193,23 +206,35 @@ export interface CreatePostRequest {
   content: string;
   status?: "draft" | "published" | "unpublished";
   slug?: string;
+  category?: string;
+  image?: string;
 }
 
 export async function createPost(
   data: CreatePostRequest,
   token: string,
 ): Promise<Post> {
+  const formData = new FormData();
+  formData.append("title", data.title);
+  formData.append("content", data.content);
+  formData.append("status", data.status || "draft");
+  formData.append("category", data.category || "");
+
+  if (data.image) {
+    formData.append("image", data.image);
+  }
+
   const response = await fetch(`${API_BASE_URL}/posts`, {
     method: "POST",
     headers: {
-      "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify(data),
+    body: formData,
   });
 
   if (!response.ok) {
-    throw new Error("Failed to create post");
+    const errorData = await response.json();
+    throw new Error(errorData.message || "Failed to create post");
   }
 
   return response.json();
@@ -219,6 +244,8 @@ export interface UpdatePostRequest {
   title?: string;
   content?: string;
   status?: "draft" | "published" | "unpublished";
+  category?: string;
+  image?: string;
 }
 
 export async function updatePost(

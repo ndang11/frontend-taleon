@@ -14,16 +14,23 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
+    "@nestjs/common": "^11.1.12",
+    "@nestjs/mongoose": "^11.0.4",
+    "@nestjs/passport": "^11.0.5",
     "@tanstack/react-query": "^5.90.17",
     "@tanstack/react-query-devtools": "^5.91.2",
     "@tiptap/extension-bubble-menu": "^3.15.3",
     "@tiptap/extension-floating-menu": "^3.15.3",
-    "@tiptap/extension-placeholder": "^3.15.3",
-    "@tiptap/react": "^3.15.3",
-    "@tiptap/starter-kit": "^3.15.3",
+    "@tiptap/extension-placeholder": "^3.16.0",
+    "@tiptap/react": "^3.16.0",
+    "@tiptap/starter-kit": "^3.16.0",
+    "class-validator": "^0.14.3",
+    "cloudinary": "^2.9.0",
     "js-cookie": "^3.0.5",
     "lucide-react": "^0.562.0",
+    "mongoose": "^9.1.5",
     "next": "16.1.1",
+    "passport-jwt": "^4.0.1",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-hook-form": "^7.71.1",
@@ -35,8 +42,10 @@
     "@tailwindcss/typography": "^0.5.19",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.1",
+    "@types/jest": "^30.0.0",
     "@types/js-cookie": "^3.0.6",
     "@types/node": "^20",
+    "@types/passport-jwt": "^4.0.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitejs/plugin-react": "^5.1.2",
@@ -59,7 +68,7 @@
   "lint-staged": {
     "*.{ts,tsx,js,json}": [
       "biome format --write",
-      "biome check --write"
+      "biome check --write --unsafe"
     ]
   }
 }

@@ -28,7 +28,6 @@ export default function PublicPostPage() {
       </div>
       <div
         className="prose prose-lg max-w-none"
-        // biome-ignore lint/security/noDangerouslySetInnerHtml: Content is sanitized by TipTap editor
         dangerouslySetInnerHTML={{ __html: data.content }}
       />
     </div>

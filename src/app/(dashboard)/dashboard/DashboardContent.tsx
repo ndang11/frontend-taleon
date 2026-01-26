@@ -22,7 +22,7 @@ import {
   Zap,
 } from "lucide-react";
 import Link from "next/link";
-import { fetchPosts, fetchPublicPosts, type Post } from "../../lib/api-client";
+import { fetchPosts, type Post } from "../../lib/api-client";
 import { getToken } from "../../lib/auth";
 
 export default function DashboardContent() {
