@@ -1,10 +1,10 @@
-import { v2 as cloudinary, type UploadApiResponse } from "cloudinary";
+import ImageKit from "@imagekit/nodejs";
 import { NextResponse } from "next/server";
 
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
+const imagekit = new (ImageKit as any)({
+  publicKey: process.env.IMAGEKIT_PUBLIC_KEY!,
+  privateKey: process.env.IMAGEKIT_PRIVATE_KEY!,
+  urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT!,
 });
 
 export async function POST(request: Request) {
@@ -18,28 +18,19 @@ export async function POST(request: Request) {
   try {
     const buffer = Buffer.from(await file.arrayBuffer());
 
-    const uploadResult = await new Promise((resolve, reject) => {
-      const uploadStream = cloudinary.uploader.upload_stream(
-        { resource_type: "auto", folder: "taleon/posts" },
-        (error, result) => {
-          if (error) reject(error);
-          else resolve(result);
-        },
-      );
-
-      // Create a readable stream from the buffer and pipe to Cloudinary
-      const stream = new Readable();
-      stream.push(buffer);
-      stream.push(null);
-      stream.pipe(uploadStream);
+    const uploadResult = await (imagekit as any).upload({
+      file: buffer,
+      fileName: file.name,
+      folder: "/taleon/posts",
     });
 
     return NextResponse.json({
-      url: (uploadResult as UploadApiResponse).secure_url,
+      url: uploadResult.url,
+      fileId: uploadResult.fileId,
     });
   } catch (_error) {
     return NextResponse.json(
-      { error: "Failed to upload file to Cloudinary" },
+      { error: "Failed to upload file to ImageKit" },
       { status: 500 },
     );
   }

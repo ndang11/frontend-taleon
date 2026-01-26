@@ -6,7 +6,7 @@ import { useRef, useState } from "react";
 import { useUploadImage } from "../features/posts/hooks";
 
 interface ImageUploadProps {
-  onImageUploaded: (url: string) => void;
+  onImageUploaded: (data: { url: string; fileId: string }) => void;
   currentImage?: string;
   onRemove?: () => void;
 }
@@ -37,7 +37,7 @@ export function ImageUpload({
 
     uploadImage.mutate(file, {
       onSuccess: (response) => {
-        onImageUploaded(response.url);
+        onImageUploaded(response);
       },
       onError: (error) => {
         console.error("Upload failed:", error);

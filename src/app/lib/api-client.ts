@@ -5,7 +5,10 @@ export const api = async <T>(
   endpoint: string,
   options: RequestInit = {},
 ): Promise<T> => {
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, options);
+  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    ...options,
+    credentials: "include",
+  });
   if (!response.ok) {
     throw new Error(`Request failed with status ${response.status}`);
   }
@@ -208,28 +211,28 @@ export interface CreatePostRequest {
   slug?: string;
   category?: string;
   image?: string;
+  isPublic?: boolean;
 }
 
 export async function createPost(
   data: CreatePostRequest,
   token: string,
 ): Promise<Post> {
-  const formData = new FormData();
-  formData.append("title", data.title);
-  formData.append("content", data.content);
-  formData.append("status", data.status || "draft");
-  formData.append("category", data.category || "");
-
-  if (data.image) {
-    formData.append("image", data.image);
-  }
-
   const response = await fetch(`${API_BASE_URL}/posts`, {
     method: "POST",
     headers: {
+      "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
-    body: formData,
+    body: JSON.stringify({
+      title: data.title,
+      content: data.content,
+      status: data.status || "draft",
+      slug: data.slug,
+      category: data.category,
+      image: data.image,
+      isPublic: data.isPublic,
+    }),
   });
 
   if (!response.ok) {
