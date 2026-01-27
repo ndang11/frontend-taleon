@@ -48,6 +48,28 @@ export interface BlogResponse {
   userId: string;
 }
 
+export interface UserProfile {
+  _id: string;
+  name: string;
+  email: string;
+  avatar?: string;
+  bio?: string;
+  followers: {
+    _id: string;
+    name: string;
+    email: string;
+    avatar?: string;
+  }[];
+  following: {
+    _id: string;
+    name: string;
+    email: string;
+    avatar?: string;
+  }[];
+  followersCount: number;
+  followingCount: number;
+}
+
 export interface Post {
   id: string;
   title: string;
@@ -60,6 +82,7 @@ export interface Post {
   tenantId: string;
   category: string;
   image?: string;
+  isPublic?: boolean;
 }
 
 export interface PostsResponse {
@@ -81,6 +104,7 @@ export async function login(data: LoginRequest): Promise<AuthResponse> {
     headers: {
       "Content-Type": "application/json",
     },
+    credentials: "include",
     body: JSON.stringify(data),
   });
 
@@ -97,6 +121,7 @@ export async function register(data: RegisterRequest): Promise<AuthResponse> {
     headers: {
       "Content-Type": "application/json",
     },
+    credentials: "include",
     body: JSON.stringify({
       name: data.name,
       email: data.email,
@@ -121,6 +146,7 @@ export async function createBlog(
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
+    credentials: "include",
     body: JSON.stringify(data),
   });
 
@@ -151,10 +177,25 @@ export async function fetchPosts(
     headers: {
       Authorization: `Bearer ${token}`,
     },
+    credentials: "include",
   });
 
   if (!response.ok) {
     throw new Error("Failed to fetch posts");
+  }
+
+  return response.json();
+}
+
+export async function fetchMyPosts(token: string): Promise<Post[]> {
+  const response = await fetch(`${API_BASE_URL}/posts/my-posts`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch my posts");
   }
 
   return response.json();
@@ -308,6 +349,120 @@ export async function fetchPublicPosts(
 
   if (!response.ok) {
     throw new Error("Failed to fetch public posts");
+  }
+
+  return response.json();
+}
+
+export async function getUserProfile(
+  userId: string,
+  token: string,
+): Promise<UserProfile> {
+  if (!userId || !token) {
+    throw new Error("User ID and token are required");
+  }
+
+  const response = await fetch(`${API_BASE_URL}/users/${userId}/profile`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(
+      `Failed to fetch user profile: ${response.status} ${response.statusText}`,
+    );
+  }
+
+  const userData = await response.json();
+
+  // Validate the response structure
+  if (!userData || typeof userData !== "object") {
+    throw new Error("Invalid profile response format");
+  }
+
+  // Ensure required fields exist
+  const profile: UserProfile = {
+    _id: userData._id || userId,
+    name: userData.name || "Unknown User",
+    email: userData.email || "",
+    avatar: userData.avatar || undefined,
+    bio: userData.bio || undefined,
+    followers: Array.isArray(userData.followers) ? userData.followers : [],
+    following: Array.isArray(userData.following) ? userData.following : [],
+    followersCount: userData.followersCount || userData.followers?.length || 0,
+    followingCount: userData.followingCount || userData.following?.length || 0,
+  };
+
+  return profile;
+}
+
+export async function followUser(userId: string, token: string): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/users/${userId}/follow`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to follow user");
+  }
+}
+
+export async function unfollowUser(
+  userId: string,
+  token: string,
+): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/users/${userId}/follow`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to unfollow user");
+  }
+}
+
+export async function isFollowing(
+  userId: string,
+  token: string,
+): Promise<boolean> {
+  const response = await fetch(`${API_BASE_URL}/users/${userId}/is-following`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to check follow status");
+  }
+
+  return response.json();
+}
+
+export async function updateUserProfile(
+  userId: string,
+  data: { name?: string; email?: string; bio?: string },
+  token: string,
+): Promise<UserProfile> {
+  const response = await fetch(`${API_BASE_URL}/users/${userId}`, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to update profile");
   }
 
   return response.json();

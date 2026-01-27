@@ -1,5 +1,6 @@
 "use client";
 
+import { BookOpen, Lock, Mail } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -66,17 +67,20 @@ export function RegisterForm() {
       <div>
         <label
           htmlFor="email"
-          className="block text-sm font-semibold text-gray-700 mb-2"
+          className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2"
         >
           Email Address
         </label>
-        <input
-          id="email"
-          type="email"
-          placeholder="Enter your email"
-          {...register("email")}
-          className="block w-full rounded-xl border-0 px-4 py-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-purple-500 transition-all duration-200"
-        />
+        <div className="relative">
+          <input
+            id="email"
+            type="email"
+            placeholder="Enter your email"
+            {...register("email")}
+            className="block w-full rounded-xl border-0 pl-12 pr-4 py-3 text-gray-900 dark:text-white dark:bg-gray-800 shadow-sm ring-1 ring-inset ring-gray-300 dark:ring-gray-600 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:ring-2 focus:ring-inset focus:ring-purple-500 dark:focus:ring-purple-400 transition-all duration-200"
+          />
+          <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+        </div>
         {errors.email && (
           <p className="mt-2 text-sm text-red-600 font-medium">
             {errors.email.message}
@@ -87,17 +91,20 @@ export function RegisterForm() {
       <div>
         <label
           htmlFor="password"
-          className="block text-sm font-semibold text-gray-700 mb-2"
+          className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2"
         >
           Password
         </label>
-        <input
-          id="password"
-          type="password"
-          placeholder="Create a strong password"
-          {...register("password")}
-          className="block w-full rounded-xl border-0 px-4 py-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-purple-500 transition-all duration-200"
-        />
+        <div className="relative">
+          <input
+            id="password"
+            type="password"
+            placeholder="Create a strong password"
+            {...register("password")}
+            className="block w-full rounded-xl border-0 pl-12 pr-4 py-3 text-gray-900 dark:text-white dark:bg-gray-800 shadow-sm ring-1 ring-inset ring-gray-300 dark:ring-gray-600 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:ring-2 focus:ring-inset focus:ring-purple-500 dark:focus:ring-purple-400 transition-all duration-200"
+          />
+          <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+        </div>
         {errors.password && (
           <p className="mt-2 text-sm text-red-600 font-medium">
             {errors.password.message}
@@ -108,17 +115,20 @@ export function RegisterForm() {
       <div>
         <label
           htmlFor="blogName"
-          className="block text-sm font-semibold text-gray-700 mb-2"
+          className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2"
         >
           Blog Name
         </label>
-        <input
-          id="blogName"
-          type="text"
-          placeholder="My awesome blog"
-          {...register("blogName")}
-          className="block w-full rounded-xl border-0 px-4 py-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-purple-500 transition-all duration-200"
-        />
+        <div className="relative">
+          <input
+            id="blogName"
+            type="text"
+            placeholder="My awesome blog"
+            {...register("blogName")}
+            className="block w-full rounded-xl border-0 pl-12 pr-4 py-3 text-gray-900 dark:text-white dark:bg-gray-800 shadow-sm ring-1 ring-inset ring-gray-300 dark:ring-gray-600 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:ring-2 focus:ring-inset focus:ring-purple-500 dark:focus:ring-purple-400 transition-all duration-200"
+          />
+          <BookOpen className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+        </div>
         {errors.blogName && (
           <p className="mt-2 text-sm text-red-600 font-medium">
             {errors.blogName.message}
@@ -129,14 +139,16 @@ export function RegisterForm() {
       <button
         type="submit"
         disabled={isRegistering}
-        className="w-full rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 px-4 py-3 text-white font-semibold hover:from-purple-700 hover:to-blue-700 focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg"
+        className="w-full rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold py-3 px-4 focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
       >
         {isRegistering ? "Creating your account..." : "Create Account"}
       </button>
 
       {error && (
-        <div className="rounded-lg bg-red-50 p-4 border border-red-200">
-          <p className="text-sm text-red-700 font-medium">{error}</p>
+        <div className="rounded-xl bg-red-50 dark:bg-red-900/20 p-4 border border-red-200 dark:border-red-800">
+          <p className="text-sm text-red-700 dark:text-red-400 font-medium">
+            {error}
+          </p>
         </div>
       )}
     </form>
