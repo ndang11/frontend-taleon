@@ -230,7 +230,7 @@ export function PostForm({ post, onSuccess, onCancel }: PostFormProps) {
         <button
           type="submit"
           disabled={isLoading}
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+          className="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-md disabled:opacity-50 transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105"
         >
           {isLoading ? "Saving..." : post ? "Update Post" : "Create Post"}
         </button>

@@ -1,6 +1,6 @@
 "use client";
 
-import { FileText, Home, LogOut, Settings } from "lucide-react";
+import { FileText, Home, LogOut, Settings, User } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { clearAuthData } from "../lib/auth";
@@ -8,6 +8,7 @@ import { clearAuthData } from "../lib/auth";
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: Home },
   { name: "My Posts", href: "/dashboard/posts", icon: FileText },
+  { name: "Profile", href: "/dashboard/profile", icon: User },
   { name: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
 
