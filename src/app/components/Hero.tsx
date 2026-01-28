@@ -1,155 +1,151 @@
 "use client";
 
-import { BarChart3, BookOpen, Edit, Palette, Quote, Users } from "lucide-react";
+import { Sparkles, TrendingUp } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 
 export function Hero() {
   return (
-    <section className="bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 py-20 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto text-center">
-        <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-6 animate-fade-in">
-          Unleash Your Voice: Write, Share, and Connect on Taleon
-        </h1>
-        <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-3xl mx-auto leading-relaxed">
-          The ultimate multi-tenant blogging platform where serious writers
-          thrive, communities grow, and ideas spread like wildfire.
-        </p>
-        <div className="max-w-md mx-auto">
-          <Link
-            href="/register"
-            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 rounded-xl font-semibold inline-block shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
-          >
-            Start Your Writing Journey Today
-          </Link>
-        </div>
-      </div>
+    <>
+      {/* Navigation Bar - White & Black */}
+      <nav className="fixed top-0 w-full bg-white backdrop-blur-md border-b border-gray-200 z-50">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <Link href="/" className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
+                <Sparkles className="w-5 h-5 text-white" />
+              </div>
+              <span className="text-xl font-bold text-black">Taleon</span>
+            </Link>
 
-      {/* Features */}
-      <div className="mt-24 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
-        <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 text-center group">
-          <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:rotate-12 transition-transform duration-300">
-            <BookOpen className="h-8 w-8 text-white" />
-          </div>
-          <h3 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">
-            Seamless Multi-Tenant Blogging
-          </h3>
-          <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
-            Create and manage multiple blogs under one account, perfect for
-            writers with diverse interests or professional portfolios.
-          </p>
-        </div>
-        <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 text-center group">
-          <div className="w-16 h-16 bg-gradient-to-r from-green-500 to-teal-500 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:rotate-12 transition-transform duration-300">
-            <Edit className="h-8 w-8 text-white" />
-          </div>
-          <h3 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">
-            Rich Text Editor
-          </h3>
-          <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
-            Craft stunning posts with our intuitive editor featuring markdown
-            support, image uploads, and real-time previews.
-          </p>
-        </div>
-        <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 text-center group">
-          <div className="w-16 h-16 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:rotate-12 transition-transform duration-300">
-            <Users className="h-8 w-8 text-white" />
-          </div>
-          <h3 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">
-            Community Engagement
-          </h3>
-          <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
-            Build a loyal audience with comments, likes, and social sharing
-            features that keep readers coming back.
-          </p>
-        </div>
-        <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 text-center group">
-          <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:rotate-12 transition-transform duration-300">
-            <Palette className="h-8 w-8 text-white" />
-          </div>
-          <h3 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">
-            Customizable Themes
-          </h3>
-          <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
-            Personalize your blog's look with a variety of themes and layouts to
-            match your unique style.
-          </p>
-        </div>
-        <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 text-center group md:col-span-2 lg:col-span-1">
-          <div className="w-16 h-16 bg-gradient-to-r from-indigo-500 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:rotate-12 transition-transform duration-300">
-            <BarChart3 className="h-8 w-8 text-white" />
-          </div>
-          <h3 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">
-            Analytics Dashboard
-          </h3>
-          <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
-            Track your blog's performance with detailed analytics on views,
-            engagement, and growth metrics.
-          </p>
-        </div>
-      </div>
+            <div className="hidden md:flex items-center gap-8">
+              <Link
+                href="/about"
+                className="text-sm text-gray-600 hover:text-black transition-colors font-medium"
+              >
+                About Us
+              </Link>
+              <Link
+                href="/blog"
+                className="text-sm text-gray-600 hover:text-black transition-colors font-medium"
+              >
+                Discover
+              </Link>
+              <Link
+                href="/membership"
+                className="text-sm text-gray-600 hover:text-black transition-colors font-medium"
+              >
+                Premium
+              </Link>
+            </div>
 
-      {/* About */}
-      <div className="mt-24 max-w-4xl mx-auto text-center bg-white dark:bg-gray-800 p-12 rounded-3xl shadow-xl">
-        <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
-          About Taleon
-        </h2>
-        <p className="text-lg text-gray-600 dark:text-gray-300 leading-relaxed">
-          Taleon is more than just a blogging platform—it's a vibrant ecosystem
-          designed for passionate writers who want to make an impact. Whether
-          you're a seasoned author, a niche expert, or just starting your
-          writing journey, Taleon provides the tools and community to help your
-          voice be heard. Join thousands of writers who have transformed their
-          ideas into influential content.
-        </p>
-      </div>
+            <div className="flex items-center gap-3">
+              <Link
+                href="/login"
+                className="text-sm font-medium text-gray-600 hover:text-black transition-colors"
+              >
+                Login
+              </Link>
+              <Link
+                href="/register"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg text-sm font-medium transition-all duration-200"
+              >
+                Get Started
+              </Link>
+            </div>
+          </div>
+        </div>
+      </nav>
 
-      {/* Testimonials */}
-      <div className="mt-24 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-7xl mx-auto">
-        <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 relative">
-          <Quote className="h-8 w-8 text-blue-500 absolute top-4 left-4 opacity-20" />
-          <p className="text-gray-600 dark:text-gray-300 mb-6 italic leading-relaxed pt-8">
-            "Taleon has revolutionized how I share my stories. The multi-tenant
-            feature lets me maintain separate blogs for my fiction and
-            non-fiction work effortlessly."
-          </p>
-          <p className="font-semibold text-gray-900 dark:text-white">
-            - Sarah Johnson, Novelist
-          </p>
-        </div>
-        <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 relative">
-          <Quote className="h-8 w-8 text-green-500 absolute top-4 left-4 opacity-20" />
-          <p className="text-gray-600 dark:text-gray-300 mb-6 italic leading-relaxed pt-8">
-            "The community on Taleon is incredible. I've gained so many readers
-            and made connections I never thought possible."
-          </p>
-          <p className="font-semibold text-gray-900 dark:text-white">
-            - Mark Chen, Tech Blogger
-          </p>
-        </div>
-        <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 relative">
-          <Quote className="h-8 w-8 text-purple-500 absolute top-4 left-4 opacity-20" />
-          <p className="text-gray-600 dark:text-gray-300 mb-6 italic leading-relaxed pt-8">
-            "The analytics help me understand what resonates with my audience,
-            allowing me to create better content every time."
-          </p>
-          <p className="font-semibold text-gray-900 dark:text-white">
-            - Emily Rodriguez, Lifestyle Writer
-          </p>
-        </div>
-      </div>
+      {/* Hero Section - White Background */}
+      <section className="pt-32 pb-20 bg-white">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <div>
+              <div className="inline-flex items-center gap-2 bg-gray-100 px-4 py-2 rounded-full mb-6">
+                <TrendingUp className="w-4 h-4 text-gray-700" />
+                <span className="text-sm font-medium text-gray-700">
+                  Trusted by 25,000+ creators
+                </span>
+              </div>
 
-      {/* CTA */}
-      <div className="mt-24 text-center">
-        <Link
-          href="/register"
-          className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-10 py-5 rounded-2xl font-semibold inline-block text-xl shadow-2xl hover:shadow-3xl transform hover:scale-105 transition-all duration-300"
-        >
-          Join the Taleon Community
-        </Link>
-        <p className="mt-4 text-gray-500 dark:text-gray-400">
-          Free to start. No credit card required.
-        </p>
-      </div>
-    </section>
+              <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-black mb-6 leading-tight">
+                Amplify Your Voice, Share Your Vision
+              </h1>
+
+              <p className="text-xl text-gray-600 mb-8 leading-relaxed">
+                The modern platform for storytellers, thought leaders, and
+                creators. Write, publish, and grow your influence with tools
+                built for success.
+              </p>
+
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Link
+                  href="/register"
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-xl font-semibold text-center transition-all duration-200"
+                >
+                  Get Started
+                </Link>
+                <Link
+                  href="/blog"
+                  className="border-2 border-gray-300 text-black px-8 py-4 rounded-xl font-semibold text-center hover:bg-gray-50 transition-all duration-200"
+                >
+                  See Examples
+                </Link>
+              </div>
+            </div>
+
+            <div className="hidden lg:block">
+              <div className="relative">
+                <div className="absolute -inset-4 bg-gray-200 rounded-3xl opacity-30 blur-3xl"></div>
+                <div className="relative bg-white rounded-2xl shadow-2xl overflow-hidden border border-gray-200">
+                  <Image
+                    src="https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=800&h=600&fit=crop"
+                    alt="Person writing on laptop"
+                    width={800}
+                    height={600}
+                    className="w-full h-auto object-cover"
+                    priority
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* <section className="py-20 bg-gray-50 dark:bg-gray-950 border-t border-gray-200 dark:border-gray-800">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="grid md:grid-cols-3 gap-8 text-center">
+            <div className="p-8">
+              <div className="text-5xl font-bold text-black dark:text-white mb-2">
+                25,000+
+              </div>
+              <div className="text-gray-600 dark:text-gray-400 font-medium">
+                Content Creators
+              </div>
+            </div>
+            <div className="p-8">
+              <div className="text-5xl font-bold text-black dark:text-white mb-2">
+                100,000+
+              </div>
+              <div className="text-gray-600 dark:text-gray-400 font-medium">
+                Articles Published
+              </div>
+            </div>
+            <div className="p-8">
+              <div className="text-5xl font-bold text-black dark:text-white mb-2">
+                5M+
+              </div>
+              <div className="text-gray-600 dark:text-gray-400 font-medium">
+                Readers Worldwide
+              </div>
+            </div>
+          </div>
+        </div>
+      </section> */}
+    </>
   );
 }
+
+export default Hero;
