@@ -48,36 +48,19 @@ export function FeaturedPosts() {
     queryFn: () => fetchPublicPosts({ limit: 12 }),
   });
 
+  // Don't show anything while loading
   if (isLoading) {
-    return (
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-white">
-        <div className="max-w-7xl mx-auto">
-          <h2 className="text-3xl font-bold text-black mb-8 text-center">
-            Featured Posts
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {Array.from({ length: 6 }, (_, i) => `skeleton-${i}`).map((key) => (
-              <div
-                key={key}
-                className="bg-gray-100 rounded-lg h-64 shadow-md"
-              ></div>
-            ))}
-          </div>
-        </div>
-      </section>
-    );
+    return null;
   }
 
+  // Don't show anything if there's an error
   if (error) {
-    return (
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-white">
-        <div className="max-w-7xl mx-auto text-center">
-          <p className="text-gray-600">
-            Failed to load posts. Please try again later.
-          </p>
-        </div>
-      </section>
-    );
+    return null;
+  }
+
+  // Don't show anything if there are no posts
+  if (!data || data.posts.length === 0) {
+    return null;
   }
 
   return (
@@ -87,15 +70,10 @@ export function FeaturedPosts() {
           Featured Posts
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {data?.posts.map((post) => (
+          {data.posts.map((post) => (
             <PostCard key={post.id} post={post} />
           ))}
         </div>
-        {data && data.posts.length === 0 && (
-          <p className="text-center text-gray-600 mt-8">
-            No posts available yet. Be the first to create one!
-          </p>
-        )}
       </div>
     </section>
   );
