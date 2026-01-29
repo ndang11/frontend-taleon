@@ -1,30 +1,12 @@
-"use client";
-
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
-import { FeaturedPosts } from "./components/FeaturedPosts";
-import { Footer } from "./components/Footer";
-import { Hero } from "./components/Hero";
-import { getUser } from "./lib/auth";
+import LandingPageHeader from "@/core/components/molecule/landingPage/landingPageHeader";
+import { Footer } from "../core/components/molecule/Footer";
+import { Hero } from "../core/components/molecule/landingPage/Hero";
 
 export default function Home() {
-  const router = useRouter();
-  const user = getUser();
-
-  useEffect(() => {
-    if (user) {
-      router.push("/dashboard");
-    }
-  }, [user, router]);
-
-  if (user) {
-    return null;
-  }
-
   return (
     <div className="min-h-screen bg-background">
+      <LandingPageHeader />
       <Hero />
-      <FeaturedPosts />
       <Footer />
     </div>
   );
