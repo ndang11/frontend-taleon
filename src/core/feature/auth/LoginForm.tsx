@@ -32,6 +32,9 @@ export function LoginForm() {
       setAuthData(data);
       router.push("/me");
     },
+    onError: (err: any) => {
+      console.error("Login failed", err);
+    },
   });
 
   const onSubmit = (data: LoginFormData) => {

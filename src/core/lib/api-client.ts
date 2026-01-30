@@ -84,6 +84,9 @@ export interface UserProfile {
   email: string;
   avatar?: string;
   bio?: string;
+  location?: string;
+  website?: string;
+  phone?: string;
   followers: {
     _id: string;
     name: string;
@@ -386,7 +389,7 @@ export async function getUserProfile(
     throw new Error("User ID and token are required");
   }
 
-  const response = await fetch(`${API_BASE_URL}/users/${userId}/profile`, {
+  const response = await fetch(`${API_BASE_URL}/users/${userId}`, {
     method: "GET",
     headers: {
       Authorization: `Bearer ${token}`,
@@ -416,6 +419,9 @@ export async function getUserProfile(
     email: userData.email || "",
     avatar: userData.avatar || undefined,
     bio: userData.bio || undefined,
+    location: userData.location || undefined,
+    website: userData.website || undefined,
+    phone: userData.phone || undefined,
     followers: Array.isArray(userData.followers) ? userData.followers : [],
     following: Array.isArray(userData.following) ? userData.following : [],
     followersCount: userData.followersCount || userData.followers?.length || 0,
@@ -473,7 +479,15 @@ export async function isFollowing(
 
 export async function updateUserProfile(
   userId: string,
-  data: { name?: string; email?: string; bio?: string },
+  data: {
+    name?: string;
+    email?: string;
+    bio?: string;
+    avatar?: string;
+    location?: string;
+    website?: string;
+    phone?: string;
+  },
   token: string,
 ): Promise<UserProfile> {
   const response = await fetch(`${API_BASE_URL}/users/${userId}`, {
@@ -487,6 +501,26 @@ export async function updateUserProfile(
 
   if (!response.ok) {
     throw new Error("Failed to update profile");
+  }
+
+  return response.json();
+}
+
+export async function fetchUserStories(
+  userId: string,
+  token: string,
+): Promise<Post[]> {
+  const response = await fetch(`${API_BASE_URL}/users/${userId}/stories`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch user stories");
   }
 
   return response.json();

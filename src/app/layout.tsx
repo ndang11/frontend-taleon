@@ -9,12 +9,15 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <html lang="en">
-      <body className="antialiased bg-white text-black">
+      <body
+        className="antialiased bg-white text-black"
+        suppressHydrationWarning
+      >
         <Providers>{children}</Providers>
       </body>
     </html>

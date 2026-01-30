@@ -15,7 +15,7 @@ import { clearAuthData } from "@/core/lib/auth";
 import DashboardHeader from "./dashboard/header";
 
 const navigation = [
-  { name: "Home", href: "/", icon: Home },
+  { name: "Home", href: "/me", icon: Home },
   { name: "Library", href: "/me/list", icon: BookmarkIcon },
   { name: "Profile", href: "/profile", icon: User },
   { name: "Stories", href: "/me/stories", icon: Notebook },

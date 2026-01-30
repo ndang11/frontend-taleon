@@ -10,8 +10,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const userCookie = Cookies.get("auth_user");
-    if (userCookie) {
-      setUser(JSON.parse(userCookie));
+    try {
+      setUser(userCookie ? JSON.parse(userCookie) : null);
+    } catch {
+      setUser(null);
     }
   }, []);
 
