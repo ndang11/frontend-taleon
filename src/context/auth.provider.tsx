@@ -3,7 +3,10 @@
 import Cookies from "js-cookie";
 import { createContext, useContext, useEffect, useState } from "react";
 
-const AuthContext = createContext<{ user: any | null }>({ user: null });
+const AuthContext = createContext<{
+  user: any | null;
+  setUser: (user: any | null) => void;
+}>({ user: null, setUser: () => {} });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<any>(null);
@@ -18,7 +21,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user }}>{children}</AuthContext.Provider>
+    <AuthContext.Provider value={{ user, setUser }}>
+      {children}
+    </AuthContext.Provider>
   );
 }
 

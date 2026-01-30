@@ -22,6 +22,11 @@ export function setAuthData(data: AuthResponse) {
   Cookies.set("auth_user", JSON.stringify(data.user), { expires: 7 });
 }
 
+export function clearAuthData() {
+  Cookies.remove(TOKEN_KEY);
+  Cookies.remove(USER_KEY);
+}
+
 export function getToken(): string | null {
   return Cookies.get(TOKEN_KEY) || null;
 }
@@ -62,11 +67,6 @@ export function getUser(): User | null {
     }
     return null;
   }
-}
-
-export function clearAuthData() {
-  Cookies.remove(TOKEN_KEY);
-  Cookies.remove(USER_KEY);
 }
 
 export function isAuthenticated(): boolean {

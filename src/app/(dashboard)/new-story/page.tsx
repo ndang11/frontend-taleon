@@ -11,10 +11,11 @@ export default function NewStoryPage() {
   const { user } = useAuth();
   const [postId, setPostId] = useState<string | null>(null);
   const [title, setTitle] = useState("");
-  const [saveStatus, setSaveStatus] = useState<"Saved" | "Saving..." | "Draft">(
-    "Draft",
-  );
+  const [saveStatus, setSaveStatus] = useState<
+    "Saved" | "Saving..." | "Draft" | "Published" | "Error"
+  >("Draft");
   const [wordCount, setWordCount] = useState(0);
+  const [isPublishing, setIsPublishing] = useState(false);
 
   // Create a ref to the editor controller
   const editorRef = useRef<any>(null);
@@ -34,6 +35,28 @@ export default function NewStoryPage() {
     };
     initPost();
   }, []);
+
+  const handlePublish = async () => {
+    if (!postId || !title.trim()) {
+      setSaveStatus("Error");
+      return;
+    }
+    setIsPublishing(true);
+    try {
+      const content = editorRef.current?.getJSON();
+      await fetcher.patch(`/posts/${postId}/autosave`, {
+        content,
+        title,
+        status: "published",
+      });
+      setSaveStatus("Published");
+    } catch (err) {
+      console.error("Publish failed", err);
+      setSaveStatus("Error");
+    } finally {
+      setIsPublishing(false);
+    }
+  };
 
   const totalWords =
     title
@@ -75,8 +98,12 @@ export default function NewStoryPage() {
           <span className="text-xs text-gray-500 font-medium">
             {totalWords} words
           </span>
-          <button className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-1.5 rounded-full text-sm font-medium transition-all">
-            Publish
+          <button
+            onClick={handlePublish}
+            disabled={isPublishing}
+            className="bg-blue-600 hover:bg-blue-700 cursor-pointer disabled:bg-gray-400 text-white px-6 py-2 rounded-full text-sm font-medium transition-all"
+          >
+            {isPublishing ? "Publishing..." : "Publish"}
           </button>
         </div>
       </header>
