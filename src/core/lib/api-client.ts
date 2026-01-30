@@ -3,8 +3,28 @@ import type {
   RegisterRequest,
 } from "../../core/types/auth.types";
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
+// ============================================
+// API Configuration
+// ============================================
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+
+// ============================================
+// Auth Headers Helper
+// ============================================
+
+export function getAuthHeaders(): Record<string, string> {
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
+  return {
+    "Content-Type": "application/json",
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+}
+
+// ============================================
+// Base Request Handler
+// ============================================
 
 const request = async <T>(
   endpoint: string,
@@ -26,7 +46,7 @@ const request = async <T>(
     throw new Error(error.message || `Error ${response.status}`);
   }
 
-  // FIX: Check if the response body exists and isn't empty
+  // Check if the response body exists and isn't empty
   const text = await response.text();
   return text ? JSON.parse(text) : ({} as T);
 };
@@ -40,6 +60,12 @@ export const fetcher = {
     request<T>(url, {
       ...options,
       method: "PATCH",
+      body: JSON.stringify(data),
+    }),
+  put: <T>(url: string, data: any, options?: RequestInit) =>
+    request<T>(url, {
+      ...options,
+      method: "PUT",
       body: JSON.stringify(data),
     }),
   delete: <T>(url: string, options?: RequestInit) =>
@@ -60,6 +86,10 @@ export const api = async <T>(
   return response.json();
 };
 
+// ============================================
+// Interfaces
+// ============================================
+
 export interface LoginRequest {
   email: string;
   password: string;
@@ -78,56 +108,7 @@ export interface BlogResponse {
   userId: string;
 }
 
-export interface UserProfile {
-  _id: string;
-  name: string;
-  email: string;
-  avatar?: string;
-  bio?: string;
-  location?: string;
-  website?: string;
-  phone?: string;
-  followers: {
-    _id: string;
-    name: string;
-    email: string;
-    avatar?: string;
-  }[];
-  following: {
-    _id: string;
-    name: string;
-    email: string;
-    avatar?: string;
-  }[];
-  followersCount: number;
-  followingCount: number;
-}
-
-export interface Post {
-  _id: string;
-  id?: string;
-  title: string;
-  slug: string;
-  content: PostContent;
-  status: "draft" | "published" | "unpublished";
-  authorId: AuthorInfo;
-  tenantId: string;
-  readingTime?: number;
-  wordCount?: number;
-  createdAt: string;
-  updatedAt: string;
-  category?: string;
-  image?: string;
-  isPublic?: boolean;
-}
-
-export interface AuthorInfo {
-  _id: string;
-  name: string;
-  email: string;
-  avatar?: string;
-}
-
+// Post-related interfaces matching backend API
 export interface PostContent {
   blocks: ContentBlock[];
   time?: number;
@@ -141,11 +122,38 @@ export interface ContentBlock {
   tunes?: Record<string, unknown>;
 }
 
+export interface AuthorInfo {
+  _id: string;
+  name: string;
+  email: string;
+  avatar?: string;
+}
+
+export interface Post {
+  _id: string;
+  id?: string;
+  title: string;
+  slug: string;
+  content: PostContent;
+  status: "draft" | "published" | "unpublished";
+  authorId: AuthorInfo | string;
+  tenantId?: string;
+  readingTime?: number;
+  wordCount?: number;
+  createdAt: string;
+  updatedAt: string;
+  category?: string;
+  subtitle?: string;
+  image?: string;
+  isPublic?: boolean;
+}
+
 export interface PostsResponse {
   posts: Post[];
   total?: number;
   page?: number;
   limit?: number;
+  totalPages?: number;
 }
 
 export interface FetchPostsParams {
@@ -153,6 +161,23 @@ export interface FetchPostsParams {
   limit?: number;
   status?: string;
 }
+
+// ============================================
+// Permission Helper
+// ============================================
+
+export function canEditPost(
+  post: { authorId: string | AuthorInfo },
+  currentUserId: string,
+): boolean {
+  const authorId =
+    typeof post.authorId === "string" ? post.authorId : post.authorId._id;
+  return authorId === currentUserId;
+}
+
+// ============================================
+// Auth Functions
+// ============================================
 
 export async function login(data: LoginRequest): Promise<AuthResponse> {
   const response = await fetch(`${API_BASE_URL}/auth/login`, {
@@ -186,6 +211,10 @@ export async function register(data: RegisterRequest): Promise<AuthResponse> {
   return response.json();
 }
 
+// ============================================
+// Blog Functions
+// ============================================
+
 export async function createBlog(
   data: CreateBlogRequest,
   token: string,
@@ -214,21 +243,155 @@ export function generateSlug(name: string): string {
     .replace(/^-|-$/g, "");
 }
 
-export async function fetchPosts(
-  params: FetchPostsParams = {},
-  token: string,
-): Promise<PostsResponse> {
-  const query = new URLSearchParams();
-  if (params.page) query.append("page", params.page.toString());
-  if (params.limit) query.append("limit", params.limit.toString());
-  if (params.status) query.append("status", params.status);
+// ============================================
+// POST API Functions (Taleon Posts API)
+// ============================================
 
-  const response = await fetch(`${API_BASE_URL}/posts?${query}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-    credentials: "include",
+export interface CreatePostRequest {
+  title: string;
+  content: any; // Editor.js blocks
+  category?: string;
+  image?: string;
+  subtitle?: string;
+  status?: "draft" | "published";
+}
+
+/**
+ * Create a new post (draft)
+ * POST /posts
+ */
+export async function createDraft(data: CreatePostRequest): Promise<Post> {
+  const response = await fetch(`${API_BASE_URL}/posts`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data),
   });
+
+  if (!response.ok) {
+    const error = await response
+      .json()
+      .catch(() => ({ message: "Failed to create draft" }));
+    throw new Error(error.message || "Failed to create draft");
+  }
+
+  return response.json();
+}
+
+/**
+ * Autosave a draft
+ * PATCH /posts/:id/autosave
+ */
+export async function autoSave(
+  postId: string,
+  content: any,
+  title?: string,
+): Promise<Post> {
+  const response = await fetch(`${API_BASE_URL}/posts/${postId}/autosave`, {
+    method: "PATCH",
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ content, title }),
+  });
+
+  if (!response.ok) {
+    const error = await response
+      .json()
+      .catch(() => ({ message: "Autosave failed" }));
+    throw new Error(error.message || "Autosave failed");
+  }
+
+  return response.json();
+}
+
+/**
+ * Publish a post
+ * POST /posts/:id/publish
+ */
+export async function publishPost(postId: string): Promise<Post> {
+  const response = await fetch(`${API_BASE_URL}/posts/${postId}/publish`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+  });
+
+  if (!response.ok) {
+    const error = await response
+      .json()
+      .catch(() => ({ message: "Failed to publish post" }));
+    throw new Error(error.message || "Failed to publish post");
+  }
+
+  return response.json();
+}
+
+/**
+ * Update a post (PUT)
+ * PUT /posts/:id
+ */
+export async function updatePost(
+  postId: string,
+  updates: {
+    title?: string;
+    content?: any;
+    category?: string;
+    image?: string;
+    subtitle?: string;
+  },
+): Promise<Post> {
+  const response = await fetch(`${API_BASE_URL}/posts/${postId}`, {
+    method: "PUT",
+    headers: getAuthHeaders(),
+    body: JSON.stringify(updates),
+  });
+
+  if (response.status === 403) {
+    throw new Error("You are not authorized to edit this post");
+  }
+
+  if (!response.ok) {
+    const error = await response
+      .json()
+      .catch(() => ({ message: "Failed to update post" }));
+    throw new Error(error.message || "Failed to update post");
+  }
+
+  return response.json();
+}
+
+/**
+ * Delete a post
+ * DELETE /posts/:id
+ */
+export async function deletePost(postId: string): Promise<{ message: string }> {
+  const response = await fetch(`${API_BASE_URL}/posts/${postId}`, {
+    method: "DELETE",
+    headers: getAuthHeaders(),
+  });
+
+  if (response.status === 403) {
+    throw new Error("You are not authorized to delete this post");
+  }
+
+  if (!response.ok) {
+    const error = await response
+      .json()
+      .catch(() => ({ message: "Failed to delete post" }));
+    throw new Error(error.message || "Failed to delete post");
+  }
+
+  return { message: "Post deleted successfully" };
+}
+
+/**
+ * Get user's posts (dashboard)
+ * GET /posts/user?page=1&limit=10
+ */
+export async function getMyPosts(
+  page: number = 1,
+  limit: number = 10,
+): Promise<PostsResponse> {
+  const response = await fetch(
+    `${API_BASE_URL}/posts/user?page=${page}&limit=${limit}`,
+    { headers: getAuthHeaders() },
+  );
 
   if (!response.ok) {
     throw new Error("Failed to fetch posts");
@@ -237,171 +400,163 @@ export async function fetchPosts(
   return response.json();
 }
 
-export async function fetchMyPosts(token: string): Promise<Post[]> {
-  const response = await fetch(`${API_BASE_URL}/posts/my-posts`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+/**
+ * Get published posts (public feed)
+ * GET /posts?page=1&limit=10
+ */
+export async function getPublishedPosts(
+  page: number = 1,
+  limit: number = 10,
+): Promise<PostsResponse> {
+  const response = await fetch(
+    `${API_BASE_URL}/posts?page=${page}&limit=${limit}`,
+    { headers: getAuthHeaders() },
+  );
 
   if (!response.ok) {
-    throw new Error("Failed to fetch my posts");
+    throw new Error("Failed to fetch published posts");
   }
 
   return response.json();
 }
 
-export async function fetchPost(postId: string, token: string): Promise<Post> {
-  const response = await fetch(`${API_BASE_URL}/posts/${postId}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error("Failed to fetch post");
-  }
-
-  return response.json();
-}
-
-export async function deletePost(postId: string, token: string): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/posts/${postId}`, {
-    method: "DELETE",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error("Failed to delete post");
-  }
-}
-
-export async function updatePostStatus(
+/**
+ * Get a single post
+ * GET /posts/:id
+ */
+export async function getPost(
   postId: string,
-  status: "published" | "unpublished",
-  token: string,
-): Promise<Post> {
+): Promise<{ post: Post } | { error: string }> {
   const response = await fetch(`${API_BASE_URL}/posts/${postId}`, {
-    method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({ status }),
+    headers: getAuthHeaders(),
   });
 
   if (!response.ok) {
-    throw new Error("Failed to update post status");
+    const error = await response
+      .json()
+      .catch(() => ({ error: "Failed to fetch post" }));
+    throw new Error(error.error || "Failed to fetch post");
   }
 
   return response.json();
 }
 
-export interface CreatePostRequest {
-  title: string;
-  content: string;
-  status?: "draft" | "published" | "unpublished";
-  slug?: string;
-  category?: string;
-  image?: string;
-  isPublic?: boolean;
+// ============================================
+// Like API Functions
+// ============================================
+
+export interface LikeResponse {
+  liked: boolean;
+  likeCount: number;
 }
 
-export async function createPost(
-  data: CreatePostRequest,
-  token: string,
-): Promise<Post> {
-  const response = await fetch(`${API_BASE_URL}/posts`, {
+/**
+ * Toggle like on a post
+ * POST /likes/post/:postId/toggle
+ */
+export async function toggleLike(postId: string): Promise<LikeResponse> {
+  const response = await fetch(`${API_BASE_URL}/likes/post/${postId}/toggle`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({
-      title: data.title,
-      content: data.content,
-      status: data.status || "draft",
-      slug: data.slug,
-      category: data.category,
-      image: data.image,
-      isPublic: data.isPublic,
-    }),
+    headers: getAuthHeaders(),
   });
 
   if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.message || "Failed to create post");
+    const error = await response
+      .json()
+      .catch(() => ({ message: "Failed to toggle like" }));
+    throw new Error(error.message || "Failed to toggle like");
   }
 
   return response.json();
 }
 
-export interface UpdatePostRequest {
-  title?: string;
-  content?: string;
-  status?: "draft" | "published" | "unpublished";
-  category?: string;
-  image?: string;
-}
+// ============================================
+// Comment API Functions
+// ============================================
 
-export async function updatePost(
-  postId: string,
-  data: UpdatePostRequest,
-  token: string,
-): Promise<Post> {
-  const response = await fetch(`${API_BASE_URL}/posts/${postId}`, {
-    method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(data),
-  });
-
-  if (!response.ok) {
-    throw new Error("Failed to update post");
-  }
-
-  return response.json();
-}
-
-export interface PublicPost {
-  id: string;
-  title: string;
+export interface Comment {
+  _id: string;
   content: string;
+  authorId: {
+    _id: string;
+    name: string;
+    avatar?: string;
+  };
+  postId: string;
   createdAt: string;
-  slug: string;
-  blogSlug: string;
-  authorName: string;
-  excerpt?: string;
-  imageUrl?: string;
+  updatedAt: string;
 }
 
-export interface PublicPostsResponse {
-  posts: PublicPost[];
-  total: number;
-  page: number;
-  limit: number;
-}
-
-export async function fetchPublicPosts(
-  params: FetchPostsParams & { tenantSlug?: string } = {},
-): Promise<PublicPostsResponse> {
-  const query = new URLSearchParams();
-  if (params.page) query.append("page", params.page.toString());
-  if (params.limit) query.append("limit", params.limit.toString());
-  if (params.status) query.append("status", params.status);
-  if (params.tenantSlug) query.append("tenantSlug", params.tenantSlug);
-
-  const response = await fetch(`${API_BASE_URL}/public/posts?${query}`);
+/**
+ * Create a comment
+ * POST /comments
+ */
+export async function createComment(
+  postId: string,
+  content: string,
+): Promise<Comment> {
+  const response = await fetch(`${API_BASE_URL}/comments`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ postId, content }),
+  });
 
   if (!response.ok) {
-    throw new Error("Failed to fetch public posts");
+    const error = await response
+      .json()
+      .catch(() => ({ message: "Failed to create comment" }));
+    throw new Error(error.message || "Failed to create comment");
   }
 
   return response.json();
+}
+
+/**
+ * Get comments for a post
+ * GET /comments/post/:postId
+ */
+export async function getComments(postId: string): Promise<Comment[]> {
+  const response = await fetch(`${API_BASE_URL}/comments/post/${postId}`, {
+    headers: getAuthHeaders(),
+  });
+
+  if (!response.ok) {
+    const error = await response
+      .json()
+      .catch(() => ({ message: "Failed to fetch comments" }));
+    throw new Error(error.message || "Failed to fetch comments");
+  }
+
+  return response.json();
+}
+
+// ============================================
+// User Functions
+// ============================================
+
+export interface UserProfile {
+  _id: string;
+  name: string;
+  email: string;
+  avatar?: string;
+  bio?: string;
+  location?: string;
+  website?: string;
+  phone?: string;
+  followers: {
+    _id: string;
+    name: string;
+    email: string;
+    avatar?: string;
+  }[];
+  following: {
+    _id: string;
+    name: string;
+    email: string;
+    avatar?: string;
+  }[];
+  followersCount: number;
+  followingCount: number;
 }
 
 export async function getUserProfile(
@@ -454,6 +609,35 @@ export async function getUserProfile(
   return profile;
 }
 
+export async function updateUserProfile(
+  userId: string,
+  data: {
+    name?: string;
+    email?: string;
+    bio?: string;
+    avatar?: string;
+    location?: string;
+    website?: string;
+    phone?: string;
+  },
+  token: string,
+): Promise<UserProfile> {
+  const response = await fetch(`${API_BASE_URL}/users/${userId}`, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to update profile");
+  }
+
+  return response.json();
+}
+
 export async function followUser(userId: string, token: string): Promise<void> {
   const response = await fetch(`${API_BASE_URL}/users/${userId}/follow`, {
     method: "POST",
@@ -500,37 +684,83 @@ export async function isFollowing(
   return response.json();
 }
 
-export async function updateUserProfile(
-  userId: string,
-  data: {
-    name?: string;
-    email?: string;
-    bio?: string;
-    avatar?: string;
-    location?: string;
-    website?: string;
-    phone?: string;
-  },
+// ============================================
+// Story Fetching Functions (Legacy)
+// ============================================
+
+export async function fetchPosts(
+  params: FetchPostsParams = {},
   token: string,
-): Promise<UserProfile> {
-  const response = await fetch(`${API_BASE_URL}/users/${userId}`, {
-    method: "PUT",
+): Promise<PostsResponse> {
+  const query = new URLSearchParams();
+  if (params.page) query.append("page", params.page.toString());
+  if (params.limit) query.append("limit", params.limit.toString());
+  if (params.status) query.append("status", params.status);
+
+  const response = await fetch(`${API_BASE_URL}/posts?${query}`, {
     headers: {
       Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
     },
-    body: JSON.stringify(data),
+    credentials: "include",
   });
 
   if (!response.ok) {
-    throw new Error("Failed to update profile");
+    throw new Error("Failed to fetch posts");
   }
 
   return response.json();
 }
 
-// Story fetching functions
+export async function fetchMyPosts(token: string): Promise<Post[]> {
+  const response = await fetch(`${API_BASE_URL}/posts/user/me`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
 
+  if (!response.ok) {
+    throw new Error("Failed to fetch my posts");
+  }
+
+  return response.json();
+}
+
+export async function fetchPost(postId: string, token: string): Promise<Post> {
+  const response = await fetch(`${API_BASE_URL}/posts/${postId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch post");
+  }
+
+  return response.json();
+}
+
+export async function updatePostStatus(
+  postId: string,
+  status: "published" | "unpublished",
+  token: string,
+): Promise<Post> {
+  const response = await fetch(`${API_BASE_URL}/posts/${postId}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ status }),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to update post status");
+  }
+
+  return response.json();
+}
+
+// Story-specific functions
 export async function fetchStories(
   tenantId: string,
   token: string,
@@ -699,6 +929,47 @@ export async function fetchUserStories(
 
   if (!response.ok) {
     throw new Error("Failed to fetch user stories");
+  }
+
+  return response.json();
+}
+
+// ============================================
+// Public Posts
+// ============================================
+
+export interface PublicPost {
+  id: string;
+  title: string;
+  content: string;
+  createdAt: string;
+  slug: string;
+  blogSlug: string;
+  authorName: string;
+  excerpt?: string;
+  imageUrl?: string;
+}
+
+export interface PublicPostsResponse {
+  posts: PublicPost[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export async function fetchPublicPosts(
+  params: FetchPostsParams & { tenantSlug?: string } = {},
+): Promise<PublicPostsResponse> {
+  const query = new URLSearchParams();
+  if (params.page) query.append("page", params.page.toString());
+  if (params.limit) query.append("limit", params.limit.toString());
+  if (params.status) query.append("status", params.status);
+  if (params.tenantSlug) query.append("tenantSlug", params.tenantSlug);
+
+  const response = await fetch(`${API_BASE_URL}/public/posts?${query}`);
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch public posts");
   }
 
   return response.json();

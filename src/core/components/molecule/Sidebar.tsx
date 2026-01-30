@@ -13,7 +13,6 @@ import {
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { clearAuthData } from "@/core/lib/auth";
-import DashboardHeader from "./dashboard/header";
 
 const navigation = [
   { name: "Home", href: "/me", icon: Home },
@@ -34,43 +33,54 @@ export function Sidebar() {
   };
 
   return (
-    <div className="flex h-full w-64 flex-col bg-white">
-      <DashboardHeader />
-      <div className="flex flex-1 flex-col overflow-y-auto">
-        <nav className="flex-1 space-y-1 px-2 py-4">
+    <div className="flex h-full w-64 flex-col bg-white border-r border-gray-100">
+      {/* Logo */}
+      <div className="p-8 border-b border-gray-100">
+        <Link href="/me" className="flex items-center gap-2">
+          <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
+            <span className="text-white font-bold text-lg">T</span>
+          </div>
+          <span className="font-bold text-xl text-gray-900">Taleon</span>
+        </Link>
+      </div>
+
+      {/* Navigation */}
+      <div className="flex-1 overflow-y-auto py-4">
+        <nav className="space-y-6 px-3">
           {navigation.map((item) => {
             const isActive = pathname === item.href;
             return (
               <Link
                 key={item.name}
                 href={item.href}
-                className={`group flex items-center rounded-md px-2 py-2 text-sm font-medium ${
+                className={`flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-all ${
                   isActive
-                    ? "bg-gray-red hover:text-#201920 "
-                    : "text-gray-red  hover:text-#201920"
+                    ? "bg-gray-200 text-gray-900"
+                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                 }`}
               >
                 <item.icon
-                  className={`mr-3 h-5 w-5 flex-shrink-0 ${
-                    isActive ? "text-#201920 " : "text-#201920 "
+                  className={`w-5 h-5 ${
+                    isActive ? "text-gray-900" : "text-gray-400"
                   }`}
-                  aria-hidden="true"
                 />
                 {item.name}
               </Link>
             );
           })}
         </nav>
-        <div className="flex-shrink-0 p-4">
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="group flex w-full items-center rounded-md px-2 py-2 text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white"
-          >
-            <LogOut className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-300" />
-            Logout
-          </button>
-        </div>
+      </div>
+
+      {/* Logout */}
+      <div className="p-3 border-t border-gray-100">
+        <button
+          type="button"
+          onClick={handleLogout}
+          className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-all"
+        >
+          <LogOut className="w-5 h-5 text-gray-400" />
+          Logout
+        </button>
       </div>
     </div>
   );
