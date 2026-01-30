@@ -8,6 +8,7 @@ import {
   NotebookTabs,
   TrendingUp,
   User,
+  Users,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -18,7 +19,8 @@ const navigation = [
   { name: "Home", href: "/me", icon: Home },
   { name: "Library", href: "/me/list", icon: BookmarkIcon },
   { name: "Profile", href: "/profile", icon: User },
-  { name: "Stories", href: "/me/stories", icon: Notebook },
+  { name: "All Stories", href: "/me/stories", icon: Users },
+  { name: "My Stories", href: "/me/my-stories", icon: Notebook },
   { name: "Stats", href: "/me/stats", icon: TrendingUp },
 ];
 

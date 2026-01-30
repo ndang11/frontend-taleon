@@ -1,14 +1,18 @@
 "use client";
 
-import { AlertCircle, BookOpen } from "lucide-react";
+import { AlertCircle, BookOpen, Plus } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 import { useAuth } from "@/context/auth.provider";
 import { StoryCard } from "@/core/components/molecule/dashboard/StoryCard";
-import { useDeleteStory, useStories } from "@/hook/useStories";
+import {
+  useDeleteStory,
+  useMyStories,
+  useStoriesStats,
+} from "@/hook/useStories";
 
-export default function AllStoriesPage() {
+export default function MyStoriesPage() {
   const { user } = useAuth();
   const router = useRouter();
   const [error, setError] = useState("");
@@ -21,11 +25,13 @@ export default function AllStoriesPage() {
     data: posts,
     isLoading,
     isError,
-  } = useStories({
+  } = useMyStories({
     tenantId,
     userId,
     token,
   });
+
+  const stats = useStoriesStats(posts);
 
   const deleteMutation = useDeleteStory({
     tenantId,
@@ -71,7 +77,7 @@ export default function AllStoriesPage() {
             Please log in
           </h3>
           <p className="text-gray-500 mb-6">
-            You need to be logged in to view stories.
+            You need to be logged in to view your stories.
           </p>
           <Link
             href="/login"
@@ -87,9 +93,40 @@ export default function AllStoriesPage() {
   return (
     <div className="max-w-5xl mx-auto px-6 py-10">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">All Stories</h1>
-        <p className="text-gray-500 mt-1">Discover stories from all users</p>
+      <div className="mb-8 flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">My Stories</h1>
+          <p className="text-gray-500 mt-1">Manage your own stories</p>
+        </div>
+        <Link
+          href="/new-story"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800 transition-colors"
+        >
+          <Plus className="w-4 h-4" />
+          New Story
+        </Link>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-4 gap-4 mb-8">
+        <div className="bg-white border border-gray-200 rounded-lg p-4">
+          <p className="text-sm text-gray-500">Total</p>
+          <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
+        </div>
+        <div className="bg-white border border-gray-200 rounded-lg p-4">
+          <p className="text-sm text-green-600">Published</p>
+          <p className="text-2xl font-bold text-green-600">{stats.published}</p>
+        </div>
+        <div className="bg-white border border-gray-200 rounded-lg p-4">
+          <p className="text-sm text-gray-600">Drafts</p>
+          <p className="text-2xl font-bold text-gray-600">{stats.drafts}</p>
+        </div>
+        <div className="bg-white border border-gray-200 rounded-lg p-4">
+          <p className="text-sm text-yellow-600">Unpublished</p>
+          <p className="text-2xl font-bold text-yellow-600">
+            {stats.unpublished}
+          </p>
+        </div>
       </div>
 
       {/* Error Message */}
@@ -111,7 +148,7 @@ export default function AllStoriesPage() {
             <AlertCircle className="w-8 h-8 text-red-400" />
           </div>
           <h3 className="text-lg font-medium text-gray-900 mb-2">
-            Failed to load stories
+            Failed to load your stories
           </h3>
           <p className="text-gray-500 mb-6">Please try again later.</p>
         </div>
@@ -123,13 +160,12 @@ export default function AllStoriesPage() {
           <h3 className="text-lg font-medium text-gray-900 mb-2">
             No stories yet
           </h3>
-          <p className="text-gray-500 mb-6">
-            Be the first to share your story!
-          </p>
+          <p className="text-gray-500 mb-6">Start writing your first story!</p>
           <Link
             href="/new-story"
-            className="inline-flex items-center px-4 py-2 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800 transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800 transition-colors"
           >
+            <Plus className="w-4 h-4" />
             Write a Story
           </Link>
         </div>
@@ -139,9 +175,7 @@ export default function AllStoriesPage() {
             <StoryCard
               key={post._id}
               post={post}
-              isOwner={
-                post.authorId?._id === userId || post.authorId === userId
-              }
+              isOwner={true}
               onEdit={handleEdit}
               onDelete={handleDelete}
               onView={handleView}

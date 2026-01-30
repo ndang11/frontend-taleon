@@ -15,8 +15,40 @@ import {
   deletePost,
   fetchMyPosts,
   type Post,
+  type PostContent,
   updatePostStatus,
 } from "@/core/lib/api-client";
+
+function extractTextFromContent(
+  content: PostContent | string | undefined,
+): string {
+  if (!content) return "";
+
+  // If content is already a string, return it directly
+  if (typeof content === "string") {
+    return content.replace(/<[^>]*>/g, "");
+  }
+
+  // Handle PostContent object with blocks
+  if (typeof content === "object" && "blocks" in content) {
+    const blocks = content.blocks || [];
+    return blocks
+      .map((block: { data?: Record<string, unknown> }) => {
+        // Different block types store text in different data properties
+        const data = block.data || {};
+        return (
+          (data.text as string) ||
+          (data.title as string) ||
+          (data.items as string[])?.join(" ") ||
+          ""
+        );
+      })
+      .filter(Boolean)
+      .join(" ");
+  }
+
+  return "";
+}
 
 type TabType = "drafts" | "published";
 
@@ -172,7 +204,7 @@ export default function LibraryPage() {
         <div className="space-y-4">
           {displayedPosts.map((post) => (
             <div
-              key={post.id}
+              key={post._id}
               className="bg-white border border-gray-200 rounded-xl p-5 hover:border-gray-300 transition-colors"
             >
               <div className="flex items-start justify-between gap-4">
@@ -200,7 +232,7 @@ export default function LibraryPage() {
                     {post.title || "Untitled Story"}
                   </h3>
                   <p className="text-gray-500 text-sm line-clamp-2 mb-3">
-                    {post.content?.replace(/<[^>]*>/g, "").slice(0, 150) ||
+                    {extractTextFromContent(post.content).slice(0, 150) ||
                       "No content yet..."}
                   </p>
                   <div className="flex items-center gap-4 text-xs text-gray-400">
@@ -218,8 +250,8 @@ export default function LibraryPage() {
                 <div className="flex items-center gap-2">
                   {post.status === "draft" && (
                     <button
-                      onClick={() => handlePublish(post.id)}
-                      disabled={processingId === post.id}
+                      onClick={() => handlePublish(post._id)}
+                      disabled={processingId === post._id}
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-green-700 bg-green-50 rounded-lg hover:bg-green-100 transition-colors disabled:opacity-50"
                     >
                       <Send className="w-3.5 h-3.5" />
@@ -228,23 +260,23 @@ export default function LibraryPage() {
                   )}
                   {post.status === "published" && (
                     <button
-                      onClick={() => handleUnpublish(post.id)}
-                      disabled={processingId === post.id}
+                      onClick={() => handleUnpublish(post._id)}
+                      disabled={processingId === post._id}
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-yellow-700 bg-yellow-50 rounded-lg hover:bg-yellow-100 transition-colors disabled:opacity-50"
                     >
                       Unpublish
                     </button>
                   )}
                   <Link
-                    href={`/new-story?edit=${post.id}`}
+                    href={`/new-story?edit=${post._id}`}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
                   >
                     <Edit3 className="w-3.5 h-3.5" />
                     Edit
                   </Link>
                   <button
-                    onClick={() => handleDelete(post.id)}
-                    disabled={processingId === post.id}
+                    onClick={() => handleDelete(post._id)}
+                    disabled={processingId === post._id}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-red-700 bg-red-50 rounded-lg hover:bg-red-100 transition-colors disabled:opacity-50"
                   >
                     <Trash2 className="w-3.5 h-3.5" />

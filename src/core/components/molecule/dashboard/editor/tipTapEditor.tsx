@@ -54,6 +54,7 @@ export default function TiptapEditor({
         toggleBold: () => editor.chain().focus().toggleBold().run(),
         toggleItalic: () => editor.chain().focus().toggleItalic().run(),
         focus: () => editor.commands.focus(),
+        getJSON: () => editor.getJSON(),
       });
     }
   }, [editor, onReady]);

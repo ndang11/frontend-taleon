@@ -104,25 +104,48 @@ export interface UserProfile {
 }
 
 export interface Post {
-  id: string;
+  _id: string;
+  id?: string;
   title: string;
-  content: string;
+  slug: string;
+  content: PostContent;
   status: "draft" | "published" | "unpublished";
+  authorId: AuthorInfo;
+  tenantId: string;
+  readingTime?: number;
+  wordCount?: number;
   createdAt: string;
   updatedAt: string;
-  slug: string;
-  userId: string;
-  tenantId: string;
-  category: string;
+  category?: string;
   image?: string;
   isPublic?: boolean;
 }
 
+export interface AuthorInfo {
+  _id: string;
+  name: string;
+  email: string;
+  avatar?: string;
+}
+
+export interface PostContent {
+  blocks: ContentBlock[];
+  time?: number;
+  version?: string;
+}
+
+export interface ContentBlock {
+  id?: string;
+  type: string;
+  data: Record<string, unknown>;
+  tunes?: Record<string, unknown>;
+}
+
 export interface PostsResponse {
   posts: Post[];
-  total: number;
-  page: number;
-  limit: number;
+  total?: number;
+  page?: number;
+  limit?: number;
 }
 
 export interface FetchPostsParams {
@@ -504,6 +527,161 @@ export async function updateUserProfile(
   }
 
   return response.json();
+}
+
+// Story fetching functions
+
+export async function fetchStories(
+  tenantId: string,
+  token: string,
+): Promise<Post[]> {
+  const response = await fetch(`${API_BASE_URL}/posts`, {
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+      "x-tenant-id": tenantId,
+    },
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    const error = await response
+      .json()
+      .catch(() => ({ message: "Failed to fetch stories" }));
+    throw new Error(error.message || `Error ${response.status}`);
+  }
+
+  const text = await response.text();
+  return text ? JSON.parse(text) : [];
+}
+
+export async function fetchMyStories(
+  tenantId: string,
+  _userId: string,
+  token: string,
+): Promise<Post[]> {
+  const response = await fetch(`${API_BASE_URL}/posts/user/me`, {
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+      "x-tenant-id": tenantId,
+    },
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    const error = await response
+      .json()
+      .catch(() => ({ message: "Failed to fetch your stories" }));
+    throw new Error(error.message || `Error ${response.status}`);
+  }
+
+  const text = await response.text();
+  return text ? JSON.parse(text) : [];
+}
+
+export async function fetchStoryById(
+  tenantId: string,
+  storyId: string,
+  token: string,
+): Promise<Post | null> {
+  const response = await fetch(`${API_BASE_URL}/posts/${storyId}`, {
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+      "x-tenant-id": tenantId,
+    },
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    const error = await response
+      .json()
+      .catch(() => ({ message: "Failed to fetch story" }));
+    throw new Error(error.message || `Error ${response.status}`);
+  }
+
+  const text = await response.text();
+  return text ? JSON.parse(text) : null;
+}
+
+export async function fetchOwnStoryById(
+  tenantId: string,
+  storyId: string,
+  _userId: string,
+  token: string,
+): Promise<Post | null> {
+  const response = await fetch(`${API_BASE_URL}/posts/${storyId}/me`, {
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+      "x-tenant-id": tenantId,
+    },
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    const error = await response
+      .json()
+      .catch(() => ({ message: "Failed to fetch story" }));
+    throw new Error(error.message || `Error ${response.status}`);
+  }
+
+  const text = await response.text();
+  return text ? JSON.parse(text) : null;
+}
+
+export async function deleteStory(
+  tenantId: string,
+  storyId: string,
+  _userId: string,
+  token: string,
+): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/posts/${storyId}`, {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+      "x-tenant-id": tenantId,
+    },
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    const error = await response
+      .json()
+      .catch(() => ({ message: "Failed to delete story" }));
+    throw new Error(error.message || `Error ${response.status}`);
+  }
+}
+
+export async function updateStory(
+  tenantId: string,
+  storyId: string,
+  _userId: string,
+  data: Partial<Post>,
+  token: string,
+): Promise<Post | null> {
+  const response = await fetch(`${API_BASE_URL}/posts/${storyId}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+      "x-tenant-id": tenantId,
+    },
+    body: JSON.stringify(data),
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    const error = await response
+      .json()
+      .catch(() => ({ message: "Failed to update story" }));
+    throw new Error(error.message || `Error ${response.status}`);
+  }
+
+  const text = await response.text();
+  return text ? JSON.parse(text) : null;
 }
 
 export async function fetchUserStories(

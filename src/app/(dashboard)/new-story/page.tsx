@@ -115,10 +115,6 @@ export default function NewStoryPage() {
           value={title}
           onChange={(e) => {
             setTitle(e.target.value);
-            editorRef.current?.triggerAutosave(
-              editorRef.current?.getJSON(),
-              e.target.value,
-            );
           }}
           onKeyDown={(e) => {
             if (e.key === "Enter") {
