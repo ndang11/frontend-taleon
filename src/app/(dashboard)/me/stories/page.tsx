@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 import { useAuth } from "@/context/auth.provider";
 import { StoryCard } from "@/core/components/molecule/dashboard/StoryCard";
+import { getToken } from "@/core/lib/auth";
 import { useDeleteStory, useStories } from "@/hook/useStories";
 
 export default function AllStoriesPage() {
@@ -14,8 +15,8 @@ export default function AllStoriesPage() {
   const [error, setError] = useState("");
 
   const tenantId = user?.tenantId || "";
-  const userId = user?.userId || "";
-  const token = user?.token || "";
+  const userId = user?.id || user?._id || "";
+  const token = getToken() || "";
 
   const {
     data: posts,

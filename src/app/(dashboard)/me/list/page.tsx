@@ -18,6 +18,7 @@ import {
   type PostContent,
   updatePostStatus,
 } from "@/core/lib/api-client";
+import { getToken } from "@/core/lib/auth";
 
 function extractTextFromContent(
   content: PostContent | string | undefined,
@@ -65,7 +66,13 @@ export default function LibraryPage() {
 
     try {
       setLoading(true);
-      const data = await fetchMyPosts("");
+      const token = getToken();
+      if (!token) {
+        setError("Not authenticated");
+        setLoading(false);
+        return;
+      }
+      const data = await fetchMyPosts(token);
       setPosts(data);
     } catch (err: any) {
       setError(err.message || "Failed to load stories");
