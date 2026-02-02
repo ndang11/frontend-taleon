@@ -182,7 +182,29 @@ export async function login(data: LoginRequest): Promise<AuthResponse> {
   });
 
   if (!response.ok) {
-    throw new Error("Login failed");
+    const contentType = response.headers.get("content-type");
+    let errorMessage = "Login failed";
+
+    if (contentType && contentType.includes("application/json")) {
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData?.message || errorData?.error || "Login failed";
+      } catch {
+        // Fallback to default error message
+      }
+    } else {
+      // Try to get text response as error message
+      try {
+        const text = await response.text();
+        if (text && text.length < 200) {
+          errorMessage = text;
+        }
+      } catch {
+        // Fallback to default error message
+      }
+    }
+
+    throw new Error(errorMessage);
   }
 
   return response.json();

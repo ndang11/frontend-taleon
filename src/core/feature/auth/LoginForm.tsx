@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { Lock, Mail } from "lucide-react";
@@ -18,6 +19,7 @@ type LoginFormData = z.infer<typeof loginSchema>;
 
 export function LoginForm() {
   const router = useRouter();
+  const [loginError, setLoginError] = useState<string | null>(null);
   const {
     register,
     handleSubmit,
@@ -32,8 +34,8 @@ export function LoginForm() {
       setAuthData(data);
       router.push("/me");
     },
-    onError: (err: any) => {
-      console.error("Login failed", err);
+    onError: (err: Error) => {
+      setLoginError(err.message);
     },
   });
 
@@ -99,10 +101,10 @@ export function LoginForm() {
         {loginMutation.isPending ? "Signing in..." : "Sign In"}
       </button>
 
-      {loginMutation.isError && (
+      {loginError && (
         <div className="rounded-xl bg-red-50 dark:bg-red-900/20 p-4 border border-red-200 dark:border-red-800">
           <p className="text-sm text-red-700 dark:text-red-400 font-medium">
-            Login failed. Please check your credentials and try again.
+            {loginError}
           </p>
         </div>
       )}
