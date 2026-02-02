@@ -1,10 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import type { Post } from "@/core/types/post";
+
+interface PostFormData {
+  title?: string;
+  content?: string | object;
+  isPublic?: boolean;
+  [key: string]: unknown;
+}
 
 interface PostFormProps {
-  post?: Partial<Post>;
+  post?: PostFormData | null;
   onSuccess: () => void;
   onCancel: () => void;
 }
