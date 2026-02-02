@@ -2,6 +2,7 @@
 "use client";
 
 import { Bold, Code, ImageIcon, Italic, Video } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/context/auth.provider";
 import TiptapEditor from "@/core/components/molecule/dashboard/editor/tipTapEditor";
@@ -9,6 +10,15 @@ import { fetcher } from "@/core/lib/api-client";
 
 export default function NewStoryPage() {
   const { user } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    const token = localStorage.getItem("access_token");
+    if (!token) {
+      alert("Your session has expired. Please log in again.");
+      router.push("/login");
+    }
+  }, [router.push]);
   const [postId, setPostId] = useState<string | null>(null);
   const [title, setTitle] = useState("");
   const [saveStatus, setSaveStatus] = useState<
@@ -43,13 +53,19 @@ export default function NewStoryPage() {
     }
     setIsPublishing(true);
     try {
+      // First, save any pending changes
       const content = editorRef.current?.getJSON();
-      await fetcher.patch(`/posts/${postId}/autosave`, {
-        content,
-        title,
-        status: "published",
-      });
+      if (content) {
+        await fetcher.patch(`/posts/${postId}/autosave`, {
+          content,
+          title,
+        });
+      }
+      // Then publish using the dedicated endpoint
+      await fetcher.patch(`/posts/${postId}/publish`, {});
       setSaveStatus("Published");
+      alert("Published successfully!");
+      router.push("/dashboard");
     } catch (err) {
       console.error("Publish failed", err);
       setSaveStatus("Error");

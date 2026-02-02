@@ -9,6 +9,14 @@ const nextConfig = {
       },
     ],
   },
+  async rewrites() {
+    return [
+      {
+        source: '/me',
+        destination: '/api/me',
+      },
+    ];
+  },
 };
 
 export default nextConfig;

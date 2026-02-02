@@ -28,19 +28,22 @@ export interface Post {
   title: string;
   slug: string;
   content: PostContent;
-  status: "draft" | "published" | "unpublished";
+  status: "draft" | "published" | "unpublished" | "archived";
   authorId: AuthorInfo | string;
   tenantId?: string;
   readingTime?: number;
   wordCount?: number;
   createdAt: string;
   updatedAt: string;
+  publishedAt?: string;
   category?: string;
   subtitle?: string;
   image?: string;
   isPublic?: boolean;
   likeCount?: number;
   commentCount?: number;
+  viewCount?: number;
+  tags?: string[];
 }
 
 export interface PostsResponse {
