@@ -75,7 +75,6 @@ export default function ProfilePage() {
           bio: data.bio || "",
         });
 
-        // Load user stories
         setStoriesLoading(true);
         try {
           const storiesData = await fetchUserStories(userId, token);

@@ -38,7 +38,7 @@ export default function landingPageHeader() {
               href="/me"
               className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg text-sm font-medium transition-all duration-200"
             >
-              Profile
+              My Dashboard
             </Link>
           ) : (
             <Link

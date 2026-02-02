@@ -114,7 +114,7 @@ export default function LibraryPage() {
 
     try {
       setProcessingId(postId);
-      await deletePost(postId, "");
+      await deletePost(postId);
       await loadPosts();
     } catch (err: any) {
       setError(err.message || "Failed to delete story");
