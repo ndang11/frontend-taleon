@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Archive,
   BarChart2,
   BookOpen,
   Clock,
@@ -13,24 +14,28 @@ import Link from "next/link";
 import { useState } from "react";
 import { useAuth } from "@/context/auth.provider";
 import { StoryCard } from "@/core/components/molecule/dashboard/StoryCard";
-import { useMyPosts } from "@/hook/useStories";
+import { useMyPosts, useTenantPublishedPosts } from "@/hook/useStories";
 
 export default function HomeDashboard() {
   const { user } = useAuth();
   const { data: postsData, isLoading, error } = useMyPosts(1, 10);
-  const [activeTab, setActiveTab] = useState<"recent" | "drafts" | "published">(
-    "recent",
-  );
+  const { data: publishedPostsData } = useTenantPublishedPosts(1, 10);
+  const [activeTab, setActiveTab] = useState<
+    "recent" | "drafts" | "published" | "archived"
+  >("published");
 
   const posts = postsData?.posts || [];
   const drafts = posts.filter((p) => p.status === "draft");
   const published = posts.filter((p) => p.status === "published");
+  const archived = posts.filter((p) => p.status === "archived");
+  const allPublishedPosts = publishedPostsData?.posts || [];
 
   const stats = {
     total: posts.length,
     drafts: drafts.length,
     published: published.length,
-    totalViews: 0, // Would come from API
+    archived: archived.length,
+    totalViews: 0,
   };
 
   const formatDate = (dateString: string) => {
@@ -41,9 +46,31 @@ export default function HomeDashboard() {
     });
   };
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+            Access Denied
+          </h1>
+          <p className="text-gray-500">
+            Please log in to access your dashboard.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-white">
-      {/* Header Section */}
       <div className="border-b max-w-7xl mt-4 border-gray-200 pb-6 mb-8">
         <div className="flex items-center w-full justify-between mb-6">
           <div>
@@ -63,8 +90,7 @@ export default function HomeDashboard() {
           </Link>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           <StatCard
             icon={<FileText className="w-5 h-5" />}
             label="Total Stories"
@@ -80,8 +106,14 @@ export default function HomeDashboard() {
           <StatCard
             icon={<TrendingUp className="w-5 h-5" />}
             label="Published"
-            value={stats.published}
+            value={allPublishedPosts.length}
             color="bg-green-50 text-green-600"
+          />
+          <StatCard
+            icon={<Archive className="w-5 h-5" />}
+            label="Archived"
+            value={stats.archived}
+            color="bg-red-50 text-red-600"
           />
           <StatCard
             icon={<BarChart2 className="w-5 h-5" />}
@@ -92,7 +124,6 @@ export default function HomeDashboard() {
         </div>
       </div>
 
-      {/* Quick Actions */}
       <div className="mb-8">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">
           Quick Actions
@@ -119,7 +150,6 @@ export default function HomeDashboard() {
         </div>
       </div>
 
-      {/* Stories Section */}
       <div>
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-lg font-semibold text-gray-900">Your Stories</h2>
@@ -140,7 +170,13 @@ export default function HomeDashboard() {
               active={activeTab === "published"}
               onClick={() => setActiveTab("published")}
             >
-              Published ({published.length})
+              Published ({allPublishedPosts.length})
+            </TabButton>
+            <TabButton
+              active={activeTab === "archived"}
+              onClick={() => setActiveTab("archived")}
+            >
+              Archived ({archived.length})
             </TabButton>
           </div>
         </div>
@@ -165,9 +201,11 @@ export default function HomeDashboard() {
               ? posts
               : activeTab === "drafts"
                 ? drafts
-                : published
+                : activeTab === "published"
+                  ? allPublishedPosts
+                  : archived
             ).map((post) => (
-              <StoryCard key={post._id} post={post} isOwner={true} />
+              <StoryCard key={post._id} post={post} isOwner={false} />
             ))}
           </div>
         )}
@@ -175,10 +213,6 @@ export default function HomeDashboard() {
     </div>
   );
 }
-
-// ============================================
-// Components
-// ============================================
 
 function StatCard({
   icon,

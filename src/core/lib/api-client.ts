@@ -1,3 +1,4 @@
+import Cookies from "js-cookie";
 import type {
   AuthResponse,
   RegisterRequest,
@@ -7,15 +8,23 @@ import type {
 // API Configuration
 // ============================================
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
 // ============================================
 // Auth Headers Helper
 // ============================================
 
 export function getAuthHeaders(): Record<string, string> {
-  const token =
-    typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
+  if (typeof window === "undefined")
+    return { "Content-Type": "application/json" };
+
+  const token = localStorage.getItem("access_token");
+
+  // If this logs "TOKEN IS MISSING", you need to check your login logic
+  if (!token) {
+    console.error("DEBUG: No token found in localStorage under 'access_token'");
+  }
+
   return {
     "Content-Type": "application/json",
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -135,17 +144,22 @@ export interface Post {
   title: string;
   slug: string;
   content: PostContent;
-  status: "draft" | "published" | "unpublished";
+  status: "draft" | "published" | "unpublished" | "archived";
   authorId: AuthorInfo | string;
   tenantId?: string;
   readingTime?: number;
   wordCount?: number;
   createdAt: string;
   updatedAt: string;
+  publishedAt?: string;
   category?: string;
   subtitle?: string;
   image?: string;
   isPublic?: boolean;
+  likeCount?: number;
+  commentCount?: number;
+  viewCount?: number;
+  tags?: string[];
 }
 
 export interface PostsResponse {
@@ -285,10 +299,17 @@ export async function autoSave(
   postId: string,
   content: any,
   title?: string,
-): Promise<Post> {
+): Promise<Post | any> {
+  const headers = getAuthHeaders();
+
+  // Debug log to catch 401s early
+  if (!headers.Authorization) {
+    console.warn("Autosave attempt without Token!");
+  }
+
   const response = await fetch(`${API_BASE_URL}/posts/${postId}/autosave`, {
     method: "PATCH",
-    headers: getAuthHeaders(),
+    headers: headers,
     body: JSON.stringify({ content, title }),
   });
 
@@ -296,26 +317,31 @@ export async function autoSave(
     const error = await response
       .json()
       .catch(() => ({ message: "Autosave failed" }));
-    throw new Error(error.message || "Autosave failed");
+    // Attach status to error for the hook to handle
+    const err = new Error(error.message || "Autosave failed");
+    (err as any).status = response.status;
+    throw err;
   }
 
-  return response.json();
+  // CHECK IF THE RESPONSE IS EMPTY BEFORE PARSING
+  const text = await response.text();
+  return text ? JSON.parse(text) : {}; // If empty, return an empty object instead of crashing
 }
 
 /**
  * Publish a post
- * POST /posts/:id/publish
+ * PATCH /posts/:id/publish
  */
 export async function publishPost(postId: string): Promise<Post> {
   const response = await fetch(`${API_BASE_URL}/posts/${postId}/publish`, {
-    method: "POST",
+    method: "PATCH", // Changed from POST to PATCH to match NestJS best practice
     headers: getAuthHeaders(),
   });
 
   if (!response.ok) {
     const error = await response
       .json()
-      .catch(() => ({ message: "Failed to publish post" }));
+      .catch(() => ({ message: "Failed to publish" }));
     throw new Error(error.message || "Failed to publish post");
   }
 
@@ -381,6 +407,43 @@ export async function deletePost(postId: string): Promise<{ message: string }> {
 }
 
 /**
+ * Get published post by slug
+ * GET /posts/slug/:slug
+ */
+export async function getPublishedPostBySlug(slug: string): Promise<Post> {
+  const response = await fetch(`${API_BASE_URL}/posts/slug/${slug}`);
+
+  if (!response.ok) {
+    const error = await response
+      .json()
+      .catch(() => ({ message: "Post not found" }));
+    throw new Error(error.message || "Post not found");
+  }
+
+  return response.json();
+}
+
+/**
+ * Get a user's post by slug (authenticated)
+ * GET /posts/slug/:slug
+ */
+export async function getUserPost(slug: string): Promise<{ post: Post }> {
+  const response = await fetch(`${API_BASE_URL}/posts/slug/${slug}`, {
+    method: "GET",
+    headers: getAuthHeaders(),
+  });
+
+  if (!response.ok) {
+    const error = await response
+      .json()
+      .catch(() => ({ message: "Post not found" }));
+    throw new Error(error.message || "Post not found");
+  }
+
+  return response.json();
+}
+
+/**
  * Get user's posts (dashboard)
  * GET /posts/user?page=1&limit=10
  */
@@ -415,6 +478,47 @@ export async function getPublishedPosts(
 
   if (!response.ok) {
     throw new Error("Failed to fetch published posts");
+  }
+
+  return response.json();
+}
+
+export async function uploadProfileImage(
+  file: File,
+): Promise<{ url: string; fileId: string }> {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const response = await fetch(`${API_BASE_URL}/upload/profile-image`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+    },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to upload profile image");
+  }
+
+  return response.json();
+}
+
+/**
+ * Get tenant's published posts (dashboard)
+ * GET /posts/tenant-published?page=1&limit=10
+ */
+export async function getTenantPublishedPosts(
+  page: number = 1,
+  limit: number = 10,
+): Promise<PostsResponse> {
+  const response = await fetch(
+    `${API_BASE_URL}/posts/tenant-published?page=${page}&limit=${limit}`,
+    { headers: getAuthHeaders() },
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch tenant published posts");
   }
 
   return response.json();
@@ -567,10 +671,17 @@ export async function getUserProfile(
     throw new Error("User ID and token are required");
   }
 
+  const activeToken = token || localStorage.getItem("access_token");
+
+  if (!activeToken) {
+    console.error("Get profile failed: No token found.");
+    throw new Error("You must be logged in to view your profile");
+  }
+
   const response = await fetch(`${API_BASE_URL}/users/${userId}`, {
     method: "GET",
     headers: {
-      Authorization: `Bearer ${token}`,
+      Authorization: `Bearer ${activeToken}`,
       "Content-Type": "application/json",
     },
     credentials: "include",
@@ -620,16 +731,28 @@ export async function updateUserProfile(
     website?: string;
     phone?: string;
   },
-  token: string,
+  token?: string,
 ): Promise<UserProfile> {
+  // Use the passed token, OR fall back to localStorage
+  const activeToken = token || localStorage.getItem("access_token");
+
+  if (!activeToken) {
+    console.error("Update failed: No token found.");
+    throw new Error("You must be logged in to update your profile");
+  }
+
   const response = await fetch(`${API_BASE_URL}/users/${userId}`, {
     method: "PUT",
     headers: {
-      Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
+      Authorization: `Bearer ${activeToken}`, // Ensure Bearer prefix is here!
     },
     body: JSON.stringify(data),
   });
+
+  if (response.status === 401) {
+    throw new Error("Session expired. Please log in again.");
+  }
 
   if (!response.ok) {
     throw new Error("Failed to update profile");

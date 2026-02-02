@@ -12,23 +12,20 @@ export interface User {
 
 export function setAuthData(data: AuthResponse) {
   // Store both the token and user info
-  // Use 'lax' or 'strict' and 'secure' for security
-  Cookies.set("access_token", data.accessToken, {
-    expires: 7,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-  });
+  // Use localStorage for token
+  localStorage.setItem("access_token", data.accessToken);
 
   Cookies.set("auth_user", JSON.stringify(data.user), { expires: 7 });
 }
 
 export function clearAuthData() {
-  Cookies.remove(TOKEN_KEY);
+  localStorage.removeItem(TOKEN_KEY);
   Cookies.remove(USER_KEY);
 }
 
 export function getToken(): string | null {
-  return Cookies.get(TOKEN_KEY) || null;
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem(TOKEN_KEY) || null;
 }
 
 export function getUser(): User | null {

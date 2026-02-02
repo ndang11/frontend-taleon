@@ -21,6 +21,7 @@ import {
   type Post,
   type UserProfile,
   updateUserProfile,
+  uploadProfileImage,
 } from "@/core/lib/api-client";
 
 export default function ProfilePage() {
@@ -36,6 +37,7 @@ export default function ProfilePage() {
     name: "",
     bio: "",
   });
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -86,7 +88,7 @@ export default function ProfilePage() {
       } catch (err: any) {
         if (authUser) {
           setProfile({
-            _id: authUser._id || authUser.id,
+            _id: authUser._id || authUser.id || "",
             name: authUser.name || "User",
             email: authUser.email || "",
             avatar: authUser.avatar,
@@ -130,22 +132,20 @@ export default function ProfilePage() {
   };
 
   const handleSave = async () => {
-    if (!profile?._id) return;
+    const token = localStorage.getItem("access_token");
+    const userId = authUser?._id || authUser?.id;
 
-    const token = Cookies.get("auth_token");
-    if (!token) {
-      setProfile({ ...profile, name: formData.name, bio: formData.bio });
+    if (!token || !userId) {
+      setProfile((prev) =>
+        prev ? { ...prev, name: formData.name, bio: formData.bio } : null,
+      );
       setIsEditing(false);
       return;
     }
 
     try {
       setSaving(true);
-      const updatedProfile = await updateUserProfile(
-        profile._id,
-        formData,
-        token,
-      );
+      const updatedProfile = await updateUserProfile(userId, formData, token);
       setProfile(updatedProfile);
       setIsEditing(false);
     } catch (err: any) {
@@ -157,6 +157,46 @@ export default function ProfilePage() {
 
   const handleChange = (field: "name" | "bio", value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleImageUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      setError("Please select a valid image file");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setError("Image size must be less than 5MB");
+      return;
+    }
+
+    try {
+      setUploadingImage(true);
+      setError("");
+
+      const result = await uploadProfileImage(file);
+
+      const userId = authUser?._id || authUser?.id;
+      if (userId) {
+        const updatedProfile = await updateUserProfile(
+          userId,
+          { ...formData, avatar: result.url },
+          localStorage.getItem("access_token") || undefined,
+        );
+        setProfile(updatedProfile);
+        setFormData((prev) => ({ ...prev, avatar: result.url }));
+      }
+    } catch (err: any) {
+      setError(err.message || "Failed to upload image");
+    } finally {
+      setUploadingImage(false);
+    }
   };
 
   if (loading) {
@@ -189,7 +229,6 @@ export default function ProfilePage() {
 
   return (
     <div className="max-w-4xl mx-auto px-6 pt-10">
-      {/* Header / Cover Area */}
       <div className="flex flex-col md:flex-row items-start md:items-end justify-between gap-6 mb-10">
         <div className="flex items-center gap-6">
           <div className="relative w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden border-4 border-white shadow-sm bg-gray-100">
@@ -204,6 +243,22 @@ export default function ProfilePage() {
               <div className="w-full h-full flex items-center justify-center text-4xl font-bold text-gray-300">
                 {profile.name?.charAt(0) || "U"}
               </div>
+            )}
+            {isEditing && (
+              <label className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center cursor-pointer rounded-full">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="hidden"
+                  disabled={uploadingImage}
+                />
+                {uploadingImage ? (
+                  <Loader2 size={20} className="text-white animate-spin" />
+                ) : (
+                  <Edit3 size={20} className="text-white" />
+                )}
+              </label>
             )}
           </div>
           <div>
@@ -267,7 +322,6 @@ export default function ProfilePage() {
         )}
       </div>
 
-      {/* Error Message */}
       {error && (
         <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
           {error}
@@ -275,7 +329,6 @@ export default function ProfilePage() {
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-        {/* Sidebar Info */}
         <div className="space-y-6">
           <div>
             <h3 className="text-sm font-bold uppercase tracking-wider text-gray-400 mb-2">
@@ -296,7 +349,6 @@ export default function ProfilePage() {
             )}
           </div>
 
-          {/* Additional Info */}
           {profile.location && (
             <div className="text-sm text-gray-600">
               <span className="font-medium">Location:</span> {profile.location}
@@ -328,7 +380,6 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* Main Content Area - User Stories */}
         <div className="md:col-span-2 border-t pt-6 md:border-t-0 md:pt-0">
           <h2 className="text-xl font-bold mb-6">Latest Stories</h2>
 
@@ -352,7 +403,7 @@ export default function ProfilePage() {
                       {story.title || "Untitled Story"}
                     </h3>
                     <p className="text-gray-500 text-sm line-clamp-2 mb-3">
-                      {story.content?.replace(/<[^>]*>/g, "").slice(0, 150)}...
+                      No content preview available...
                     </p>
                   </Link>
                   <div className="flex items-center gap-4 text-xs text-gray-400">

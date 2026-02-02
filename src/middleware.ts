@@ -1,20 +1,9 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-export function middleware(request: NextRequest) {
-  const token = request.cookies.get("access_token")?.value;
-
-  // Define protected routes
-  const protectedRoutes = ["/dashboard", "/editor"];
-
-  const isProtectedRoute = protectedRoutes.some((route) =>
-    request.nextUrl.pathname.startsWith(route),
-  );
-
-  if (isProtectedRoute && !token) {
-    // Redirect to login if not authenticated
-    return NextResponse.redirect(new URL("/login", request.url));
-  }
+export function middleware(_request: NextRequest) {
+  // Client-side authentication checks will handle token validation
+  // Middleware no longer checks for tokens since they are stored in localStorage
 
   return NextResponse.next();
 }

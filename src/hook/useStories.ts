@@ -6,7 +6,9 @@ import {
   getMyPosts,
   getPost,
   getPublishedPosts,
+  getTenantPublishedPosts,
   type Post,
+  publishPost,
 } from "@/core/lib/api-client";
 
 interface UseStoriesOptions {
@@ -23,6 +25,18 @@ export function usePublishedPosts(page: number = 1, limit: number = 10) {
   return useQuery({
     queryKey: ["published-posts", page, limit],
     queryFn: () => getPublishedPosts(page, limit),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+}
+
+// ============================================
+// Tenant Published Posts (Dashboard)
+// ============================================
+
+export function useTenantPublishedPosts(page: number = 1, limit: number = 10) {
+  return useQuery({
+    queryKey: ["tenant-published-posts", page, limit],
+    queryFn: () => getTenantPublishedPosts(page, limit),
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 }
@@ -49,6 +63,23 @@ export function usePost(postId: string) {
     queryFn: () => getPost(postId),
     enabled: !!postId,
     staleTime: 5 * 60 * 1000,
+  });
+}
+
+// ============================================
+// Publish Post
+// ============================================
+
+export function usePublishPost() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (postId: string) => publishPost(postId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["my-posts"] });
+      queryClient.invalidateQueries({ queryKey: ["published-posts"] });
+      queryClient.invalidateQueries({ queryKey: ["tenant-published-posts"] });
+    },
   });
 }
 

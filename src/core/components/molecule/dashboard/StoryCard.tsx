@@ -1,17 +1,20 @@
 "use client";
 
 import {
-  BookOpen,
   Clock,
   Edit,
   Eye,
+  Heart,
+  MessageCircle,
   MoreHorizontal,
+  Tag,
   Trash2,
-  User,
 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import type { Post } from "@/core/lib/api-client";
+import { useComments } from "../../../../hook/usePostInteractions";
+import { LikeButton } from "../../atom/LikeButton";
 
 interface StoryCardProps {
   post: Post;
@@ -30,6 +33,11 @@ export function StoryCard({
 }: StoryCardProps) {
   const [showMenu, setShowMenu] = useState(false);
 
+  const { data: commentsData } = useComments(post._id);
+  const commentsCount = Array.isArray(commentsData)
+    ? commentsData.length
+    : (commentsData as any)?.comments?.length || 0;
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "published":
@@ -43,11 +51,11 @@ export function StoryCard({
 
   const formatContent = (content: Post["content"]) => {
     if (!content || !content.blocks) return "";
-    return content.blocks
+    return `${content.blocks
       .filter((block) => block.type === "paragraph")
-      .map((block) => block.data.text || "")
+      .map((block) => (block.data as any).text || "")
       .join(" ")
-      .slice(0, 200);
+      .slice(0, 160)}...`;
   };
 
   const formatDate = (dateString: string) => {
@@ -56,15 +64,6 @@ export function StoryCard({
       day: "numeric",
       year: "numeric",
     });
-  };
-
-  const getReadingTime = (content: Post["content"], readingTime?: number) => {
-    if (readingTime) return `${readingTime} min read`;
-    if (!content || !content.blocks) return "0 min read";
-    const wordCount =
-      content.blocks.filter((b) => b.type === "paragraph").length * 150;
-    const minutes = Math.ceil(wordCount / 200);
-    return `${minutes} min read`;
   };
 
   return (
@@ -79,15 +78,13 @@ export function StoryCard({
             >
               {post.status.charAt(0).toUpperCase() + post.status.slice(1)}
             </span>
-            {post.readingTime && (
-              <span className="flex items-center gap-1 text-xs text-gray-500">
-                <Clock className="w-3.5 h-3.5" />
-                {post.readingTime} min
-              </span>
-            )}
           </div>
 
-          <Link href={`/story/${post.slug}`} className="block">
+          <Link
+            href={`/story/${post.slug}`}
+            className="block"
+            onClick={() => onView?.(post)}
+          >
             <h3 className="text-lg font-semibold text-gray-900 mb-1 line-clamp-1 hover:text-gray-600 transition-colors">
               {post.title || "Untitled Story"}
             </h3>
@@ -100,25 +97,31 @@ export function StoryCard({
           <div className="flex items-center gap-4 text-xs text-gray-400">
             <span className="flex items-center gap-1">
               <Clock className="w-3.5 h-3.5" />
-              {formatDate(post.createdAt)}
+              {formatDate(post.publishedAt || post.createdAt)}
             </span>
-            {post.authorId && (
+            <span className="flex items-center gap-1">
+              <Eye className="w-3.5 h-3.5" />
+              {(post as any).viewCount || 0} views
+            </span>
+            <span className="flex items-center gap-1">
+              <Heart className="w-3.5 h-3.5" />
+              {(post as any).likeCount || 0}
+            </span>
+            <span className="flex items-center gap-1">
+              <MessageCircle className="w-3.5 h-3.5" />
+              {commentsCount}
+            </span>
+            {post.category && (
               <span className="flex items-center gap-1">
-                <User className="w-3.5 h-3.5" />
-                {post.authorId.name || "Anonymous"}
+                <Tag className="w-3.5 h-3.5" />
+                {post.category}
               </span>
             )}
           </div>
         </div>
 
         <div className="flex items-center gap-2">
-          <Link
-            href={`/story/${post.slug}`}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-          >
-            <Eye className="w-3.5 h-3.5" />
-            Read
-          </Link>
+          <LikeButton postId={post._id} className="text-sm" />
 
           {isOwner && (
             <div className="relative">
@@ -130,7 +133,7 @@ export function StoryCard({
               </button>
 
               {showMenu && (
-                <div className="absolute right-0 top-full mt-1 w-40 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-10">
+                <div className="absolute right-0 top-full mt-1 w-40 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-50">
                   <button
                     onClick={() => {
                       onEdit?.(post);

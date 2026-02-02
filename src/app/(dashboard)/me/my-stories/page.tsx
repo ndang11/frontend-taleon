@@ -3,61 +3,19 @@
 import { AlertCircle, BookOpen, Plus } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useState } from "react";
+import { useCallback } from "react";
 import { useAuth } from "@/context/auth.provider";
 import { StoryCard } from "@/core/components/molecule/dashboard/StoryCard";
-import {
-  useDeleteStory,
-  useMyStories,
-  useStoriesStats,
-} from "@/hook/useStories";
+import { useTenantPublishedPosts } from "@/hook/useStories";
 
 export default function MyStoriesPage() {
   const { user } = useAuth();
   const router = useRouter();
-  const [error, setError] = useState("");
 
-  const tenantId = user?.tenantId || "";
-  const userId = user?.userId || "";
-  const token = user?.token || "";
+  const { data: postsData, isLoading, isError } = useTenantPublishedPosts();
 
-  const {
-    data: posts,
-    isLoading,
-    isError,
-  } = useMyStories({
-    tenantId,
-    userId,
-    token,
-  });
-
-  const stats = useStoriesStats(posts);
-
-  const deleteMutation = useDeleteStory({
-    tenantId,
-    userId,
-    token,
-  });
-
-  const handleEdit = useCallback(
-    (post: any) => {
-      router.push(`/new-story?edit=${post._id}`);
-    },
-    [router],
-  );
-
-  const handleDelete = useCallback(
-    async (post: any) => {
-      if (confirm("Are you sure you want to delete this story?")) {
-        try {
-          await deleteMutation.mutateAsync(post._id);
-        } catch (err: any) {
-          setError(err.message || "Failed to delete story");
-        }
-      }
-    },
-    [deleteMutation],
-  );
+  const posts = postsData?.posts || [];
+  const totalPosts = postsData?.total || 0;
 
   const handleView = useCallback(
     (post: any) => {
@@ -77,7 +35,7 @@ export default function MyStoriesPage() {
             Please log in
           </h3>
           <p className="text-gray-500 mb-6">
-            You need to be logged in to view your stories.
+            You need to be logged in to view published stories.
           </p>
           <Link
             href="/login"
@@ -95,8 +53,12 @@ export default function MyStoriesPage() {
       {/* Header */}
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">My Stories</h1>
-          <p className="text-gray-500 mt-1">Manage your own stories</p>
+          <h1 className="text-3xl font-bold text-gray-900">
+            Published Stories
+          </h1>
+          <p className="text-gray-500 mt-1">
+            All published stories in your workspace
+          </p>
         </div>
         <Link
           href="/new-story"
@@ -108,34 +70,12 @@ export default function MyStoriesPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-1 gap-4 mb-8 max-w-xs">
         <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <p className="text-sm text-gray-500">Total</p>
-          <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
-        </div>
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <p className="text-sm text-green-600">Published</p>
-          <p className="text-2xl font-bold text-green-600">{stats.published}</p>
-        </div>
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <p className="text-sm text-gray-600">Drafts</p>
-          <p className="text-2xl font-bold text-gray-600">{stats.drafts}</p>
-        </div>
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <p className="text-sm text-yellow-600">Unpublished</p>
-          <p className="text-2xl font-bold text-yellow-600">
-            {stats.unpublished}
-          </p>
+          <p className="text-sm text-gray-500">Total Published</p>
+          <p className="text-2xl font-bold text-gray-900">{totalPosts}</p>
         </div>
       </div>
-
-      {/* Error Message */}
-      {error && (
-        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm flex items-center gap-2">
-          <AlertCircle className="w-4 h-4" />
-          {error}
-        </div>
-      )}
 
       {/* Loading State */}
       {isLoading ? (
@@ -148,19 +88,19 @@ export default function MyStoriesPage() {
             <AlertCircle className="w-8 h-8 text-red-400" />
           </div>
           <h3 className="text-lg font-medium text-gray-900 mb-2">
-            Failed to load your stories
+            Failed to load published stories
           </h3>
           <p className="text-gray-500 mb-6">Please try again later.</p>
         </div>
-      ) : posts?.length === 0 ? (
+      ) : posts.length === 0 ? (
         <div className="text-center py-20">
           <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <BookOpen className="w-8 h-8 text-gray-400" />
           </div>
           <h3 className="text-lg font-medium text-gray-900 mb-2">
-            No stories yet
+            No published stories yet
           </h3>
-          <p className="text-gray-500 mb-6">Start writing your first story!</p>
+          <p className="text-gray-500 mb-6">Be the first to publish a story!</p>
           <Link
             href="/new-story"
             className="inline-flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800 transition-colors"
@@ -171,13 +111,11 @@ export default function MyStoriesPage() {
         </div>
       ) : (
         <div className="grid gap-4">
-          {posts?.map((post) => (
+          {posts.map((post) => (
             <StoryCard
               key={post._id}
               post={post}
-              isOwner={true}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
+              isOwner={false}
               onView={handleView}
             />
           ))}
