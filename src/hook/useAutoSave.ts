@@ -18,7 +18,15 @@ export function useEditorAutosave(postId: string | null) {
       } catch (error: any) {
         console.error("Autosave failed", error);
 
-        if (error.status === 401) {
+        // Handle network errors gracefully
+        if (
+          error.message === "Failed to fetch" ||
+          error.message?.includes("network") ||
+          error.message?.includes("Connection")
+        ) {
+          // Network error - server might be asleep, don't show error to user
+          setSaveStatus("idle");
+        } else if (error.status === 401 || error.message?.includes("401")) {
           setSaveStatus("unauthorized");
         } else {
           setSaveStatus("error");

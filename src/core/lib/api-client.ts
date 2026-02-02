@@ -30,7 +30,7 @@ const request = async <T>(
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     ...options,
     headers: {
-      "Content-Type": "application/json",
+      ...getAuthHeaders(),
       ...options.headers,
     },
     credentials: "include",
@@ -74,6 +74,10 @@ export const api = async <T>(
 ): Promise<T> => {
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     ...options,
+    headers: {
+      ...getAuthHeaders(),
+      ...options.headers,
+    },
     credentials: "include",
   });
   if (!response.ok) {
