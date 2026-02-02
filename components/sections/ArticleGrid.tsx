@@ -1,4 +1,4 @@
-import ArticleCard from "@/components/cards/ArticleCard";
+import ArticleCard from "../cards/ArticleCard";
 
 interface Article {
   id: string;

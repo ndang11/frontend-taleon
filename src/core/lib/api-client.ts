@@ -4,15 +4,8 @@ import type {
   RegisterRequest,
 } from "../../core/types/auth.types";
 
-// ============================================
-// API Configuration
-// ============================================
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
-
-// ============================================
-// Auth Headers Helper
-// ============================================
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
 
 export function getAuthHeaders(): Record<string, string> {
   if (typeof window === "undefined")
@@ -20,7 +13,6 @@ export function getAuthHeaders(): Record<string, string> {
 
   const token = localStorage.getItem("access_token");
 
-  // If this logs "TOKEN IS MISSING", you need to check your login logic
   if (!token) {
     console.error("DEBUG: No token found in localStorage under 'access_token'");
   }
@@ -30,10 +22,6 @@ export function getAuthHeaders(): Record<string, string> {
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
 }
-
-// ============================================
-// Base Request Handler
-// ============================================
 
 const request = async <T>(
   endpoint: string,
@@ -55,7 +43,6 @@ const request = async <T>(
     throw new Error(error.message || `Error ${response.status}`);
   }
 
-  // Check if the response body exists and isn't empty
   const text = await response.text();
   return text ? JSON.parse(text) : ({} as T);
 };
@@ -95,10 +82,6 @@ export const api = async <T>(
   return response.json();
 };
 
-// ============================================
-// Interfaces
-// ============================================
-
 export interface LoginRequest {
   email: string;
   password: string;
@@ -117,7 +100,6 @@ export interface BlogResponse {
   userId: string;
 }
 
-// Post-related interfaces matching backend API
 export interface PostContent {
   blocks: ContentBlock[];
   time?: number;
@@ -176,10 +158,6 @@ export interface FetchPostsParams {
   status?: string;
 }
 
-// ============================================
-// Permission Helper
-// ============================================
-
 export function canEditPost(
   post: { authorId: string | AuthorInfo },
   currentUserId: string,
@@ -188,10 +166,6 @@ export function canEditPost(
     typeof post.authorId === "string" ? post.authorId : post.authorId._id;
   return authorId === currentUserId;
 }
-
-// ============================================
-// Auth Functions
-// ============================================
 
 export async function login(data: LoginRequest): Promise<AuthResponse> {
   const response = await fetch(`${API_BASE_URL}/auth/login`, {
@@ -225,10 +199,6 @@ export async function register(data: RegisterRequest): Promise<AuthResponse> {
   return response.json();
 }
 
-// ============================================
-// Blog Functions
-// ============================================
-
 export async function createBlog(
   data: CreateBlogRequest,
   token: string,
@@ -257,13 +227,9 @@ export function generateSlug(name: string): string {
     .replace(/^-|-$/g, "");
 }
 
-// ============================================
-// POST API Functions (Taleon Posts API)
-// ============================================
-
 export interface CreatePostRequest {
   title: string;
-  content: any; // Editor.js blocks
+  content: any;
   category?: string;
   image?: string;
   subtitle?: string;
@@ -302,7 +268,6 @@ export async function autoSave(
 ): Promise<Post | any> {
   const headers = getAuthHeaders();
 
-  // Debug log to catch 401s early
   if (!headers.Authorization) {
     console.warn("Autosave attempt without Token!");
   }
@@ -317,15 +282,13 @@ export async function autoSave(
     const error = await response
       .json()
       .catch(() => ({ message: "Autosave failed" }));
-    // Attach status to error for the hook to handle
     const err = new Error(error.message || "Autosave failed");
     (err as any).status = response.status;
     throw err;
   }
 
-  // CHECK IF THE RESPONSE IS EMPTY BEFORE PARSING
   const text = await response.text();
-  return text ? JSON.parse(text) : {}; // If empty, return an empty object instead of crashing
+  return text ? JSON.parse(text) : {};
 }
 
 /**
@@ -334,7 +297,7 @@ export async function autoSave(
  */
 export async function publishPost(postId: string): Promise<Post> {
   const response = await fetch(`${API_BASE_URL}/posts/${postId}/publish`, {
-    method: "PATCH", // Changed from POST to PATCH to match NestJS best practice
+    method: "PATCH",
     headers: getAuthHeaders(),
   });
 
@@ -545,10 +508,6 @@ export async function getPost(
   return response.json();
 }
 
-// ============================================
-// Like API Functions
-// ============================================
-
 export interface LikeResponse {
   liked: boolean;
   likeCount: number;
@@ -573,10 +532,6 @@ export async function toggleLike(postId: string): Promise<LikeResponse> {
 
   return response.json();
 }
-
-// ============================================
-// Comment API Functions
-// ============================================
 
 export interface Comment {
   _id: string;
@@ -633,10 +588,6 @@ export async function getComments(postId: string): Promise<Comment[]> {
 
   return response.json();
 }
-
-// ============================================
-// User Functions
-// ============================================
 
 export interface UserProfile {
   _id: string;
@@ -696,12 +647,10 @@ export async function getUserProfile(
 
   const userData = await response.json();
 
-  // Validate the response structure
   if (!userData || typeof userData !== "object") {
     throw new Error("Invalid profile response format");
   }
 
-  // Ensure required fields exist
   const profile: UserProfile = {
     _id: userData._id || userId,
     name: userData.name || "Unknown User",
@@ -733,7 +682,6 @@ export async function updateUserProfile(
   },
   token?: string,
 ): Promise<UserProfile> {
-  // Use the passed token, OR fall back to localStorage
   const activeToken = token || localStorage.getItem("access_token");
 
   if (!activeToken) {
@@ -745,7 +693,7 @@ export async function updateUserProfile(
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${activeToken}`, // Ensure Bearer prefix is here!
+      Authorization: `Bearer ${activeToken}`,
     },
     body: JSON.stringify(data),
   });
@@ -806,10 +754,6 @@ export async function isFollowing(
 
   return response.json();
 }
-
-// ============================================
-// Story Fetching Functions (Legacy)
-// ============================================
 
 export async function fetchPosts(
   params: FetchPostsParams = {},
@@ -883,7 +827,6 @@ export async function updatePostStatus(
   return response.json();
 }
 
-// Story-specific functions
 export async function fetchStories(
   tenantId: string,
   token: string,
@@ -1056,10 +999,6 @@ export async function fetchUserStories(
 
   return response.json();
 }
-
-// ============================================
-// Public Posts
-// ============================================
 
 export interface PublicPost {
   id: string;
