@@ -38,7 +38,7 @@ export function Hero() {
                 href="/blog"
                 className="border-2 border-gray-300 text-black px-8 py-4 rounded-xl font-semibold text-center hover:bg-gray-50 transition-all duration-200"
               >
-                See Examples
+                Read Stories
               </Link>
             </div>
           </div>

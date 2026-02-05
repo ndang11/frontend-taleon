@@ -48,10 +48,10 @@ export default function HeroArticleCard({
           {excerpt}
         </p>
 
-        <div className="flex items-center gap-3 text-sm text-muted-foreground">
-          <span>{author}</span>
-          <span className="h-1 w-1 rounded-full bg-muted-foreground" />
-          <span>{time}</span>
+        <div className="flex items-center gap-3 text-sm">
+          <span className="text-blue-600 font-medium">{author}</span>
+          <span className="h-1 w-1 rounded-full bg-gray-400" />
+          <span className="text-gray-500">{time}</span>
         </div>
       </div>
     </article>

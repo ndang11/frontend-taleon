@@ -4,12 +4,16 @@ import {
   BookOpen,
   Clock,
   Edit3,
+  Image as ImageIcon,
   MoreVertical,
   Send,
   Trash2,
+  User,
 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
+import { SuccessDialog } from "@/components/ui/SuccessDialog";
 import { useAuth } from "@/context/auth.provider";
 import {
   deletePost,
@@ -60,6 +64,9 @@ export default function LibraryPage() {
   const [activeTab, setActiveTab] = useState<TabType>("drafts");
   const [error, setError] = useState("");
   const [processingId, setProcessingId] = useState<string | null>(null);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [showUnpublishSuccess, setShowUnpublishSuccess] = useState(false);
 
   const loadPosts = useCallback(async () => {
     if (!user?._id) return;
@@ -90,6 +97,8 @@ export default function LibraryPage() {
       setProcessingId(postId);
       await updatePostStatus(postId, "published", "");
       await loadPosts();
+      setSuccessMessage("Your story has been published successfully!");
+      setShowSuccess(true);
     } catch (err: any) {
       setError(err.message || "Failed to publish story");
     } finally {
@@ -97,11 +106,17 @@ export default function LibraryPage() {
     }
   };
 
+  const handleSuccessClose = () => {
+    setShowSuccess(false);
+    setSuccessMessage("");
+  };
+
   const handleUnpublish = async (postId: string) => {
     try {
       setProcessingId(postId);
       await updatePostStatus(postId, "unpublished", "");
       await loadPosts();
+      setShowUnpublishSuccess(true);
     } catch (err: any) {
       setError(err.message || "Failed to unpublish story");
     } finally {
@@ -214,7 +229,30 @@ export default function LibraryPage() {
               key={post._id}
               className="bg-white border border-gray-200 rounded-xl p-5 hover:border-gray-300 transition-colors"
             >
-              <div className="flex items-start justify-between gap-4">
+              <div className="flex gap-4">
+                {/* Thumbnail Image */}
+                <Link
+                  href={`/new-story?edit=${post._id}`}
+                  className="flex-shrink-0"
+                >
+                  {post.image ? (
+                    <div className="relative w-32 h-24 rounded-lg overflow-hidden bg-gray-100">
+                      <Image
+                        src={post.image}
+                        alt={post.title || "Post cover"}
+                        className="w-full h-full object-cover"
+                        width={128}
+                        height={96}
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-32 h-24 rounded-lg bg-gray-100 flex items-center justify-center">
+                      <ImageIcon className="w-8 h-8 text-gray-300" />
+                    </div>
+                  )}
+                </Link>
+
+                {/* Content */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-2">
                     <span
@@ -235,14 +273,24 @@ export default function LibraryPage() {
                       </span>
                     )}
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-1 line-clamp-1">
-                    {post.title || "Untitled Story"}
-                  </h3>
+                  <Link href={`/new-story?edit=${post._id}`} className="block">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-1 line-clamp-1 hover:text-blue-600 transition-colors">
+                      {post.title || "Untitled Story"}
+                    </h3>
+                  </Link>
                   <p className="text-gray-500 text-sm line-clamp-2 mb-3">
                     {extractTextFromContent(post.content).slice(0, 150) ||
                       "No content yet..."}
                   </p>
                   <div className="flex items-center gap-4 text-xs text-gray-400">
+                    <span className="flex items-center gap-1">
+                      <User className="w-3.5 h-3.5" />
+                      <span className="text-blue-600 font-medium">
+                        {typeof post.authorId === "object" && post.authorId
+                          ? (post.authorId as any).name || "You"
+                          : "You"}
+                      </span>
+                    </span>
                     <span className="flex items-center gap-1">
                       <Clock className="w-3.5 h-3.5" />
                       {new Date(post.updatedAt).toLocaleDateString("en-US", {
@@ -254,7 +302,8 @@ export default function LibraryPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                {/* Actions */}
+                <div className="flex items-center gap-2 flex-shrink-0">
                   {post.status === "draft" && (
                     <button
                       onClick={() => handlePublish(post._id)}
@@ -295,6 +344,23 @@ export default function LibraryPage() {
           ))}
         </div>
       )}
+
+      <SuccessDialog
+        isOpen={showSuccess}
+        onClose={handleSuccessClose}
+        title="Published!"
+        message={successMessage}
+        buttonText="Continue"
+        onButtonClick={handleSuccessClose}
+      />
+      <SuccessDialog
+        isOpen={showUnpublishSuccess}
+        onClose={() => setShowUnpublishSuccess(false)}
+        title="Unpublished"
+        message="Your story has been moved to drafts."
+        buttonText="Continue"
+        onButtonClick={() => setShowUnpublishSuccess(false)}
+      />
     </div>
   );
 }

@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { Lock, Mail } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { login as loginApi } from "../../lib/api-client";
@@ -35,11 +35,15 @@ export function LoginForm() {
       router.push("/me");
     },
     onError: (err: Error) => {
+      console.error("[LoginForm] Login failed:", err.message);
       setLoginError(err.message);
     },
   });
 
   const onSubmit = (data: LoginFormData) => {
+    console.log("[LoginForm] Submitting login request with:", {
+      email: data.email,
+    });
     loginMutation.mutate(data);
   };
 

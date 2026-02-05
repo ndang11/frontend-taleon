@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { AlertDialog } from "@/components/ui/AlertDialog";
 import TiptapEditor from "@/core/components/molecule/dashboard/editor/tipTapEditor";
 import { getPost, getUserPost } from "@/core/lib/api-client";
 
@@ -14,14 +15,16 @@ export default function EditPage({ params }: { params: { blogSlug: string } }) {
     "Saved" | "Saving..." | "Draft" | "Published" | "Error"
   >("Draft");
   const [wordCount, setWordCount] = useState(0);
+  const [showSessionExpired, setShowSessionExpired] = useState(false);
+  const [showPostNotFound, setShowPostNotFound] = useState(false);
+  const [showLoadFailed, setShowLoadFailed] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem("access_token");
     if (!token) {
-      alert("Your session has expired. Please log in again.");
-      router.push("/login");
+      setShowSessionExpired(true);
     }
-  }, [router.push]);
+  }, []);
 
   useEffect(() => {
     const loadPost = async () => {
@@ -31,13 +34,11 @@ export default function EditPage({ params }: { params: { blogSlug: string } }) {
           setPost(response.post);
           setTitle(response.post.title || "");
         } else {
-          alert("Post not found");
-          router.push("/me/stories");
+          setShowPostNotFound(true);
         }
       } catch (error) {
         console.error("Failed to load post", error);
-        alert("Failed to load post");
-        router.push("/me/stories");
+        setShowLoadFailed(true);
       } finally {
         setLoading(false);
       }
@@ -46,7 +47,7 @@ export default function EditPage({ params }: { params: { blogSlug: string } }) {
     if (params.blogSlug) {
       loadPost();
     }
-  }, [params.blogSlug, router.push]);
+  }, [params.blogSlug]);
 
   if (loading) {
     return (
@@ -95,6 +96,52 @@ export default function EditPage({ params }: { params: { blogSlug: string } }) {
           onReady={() => {}}
         />
       </main>
+
+      <AlertDialog
+        isOpen={showSessionExpired}
+        onClose={() => {
+          setShowSessionExpired(false);
+          router.push("/login");
+        }}
+        title="Session Expired"
+        message="Your session has expired. Please log in again."
+        buttonText="Login"
+        type="warning"
+        onButtonClick={() => {
+          setShowSessionExpired(false);
+          router.push("/login");
+        }}
+      />
+      <AlertDialog
+        isOpen={showPostNotFound}
+        onClose={() => {
+          setShowPostNotFound(false);
+          router.push("/me/stories");
+        }}
+        title="Post Not Found"
+        message="This post could not be found."
+        buttonText="Go to Stories"
+        type="error"
+        onButtonClick={() => {
+          setShowPostNotFound(false);
+          router.push("/me/stories");
+        }}
+      />
+      <AlertDialog
+        isOpen={showLoadFailed}
+        onClose={() => {
+          setShowLoadFailed(false);
+          router.push("/me/stories");
+        }}
+        title="Failed to Load"
+        message="Unable to load the post. Please try again."
+        buttonText="Go to Stories"
+        type="error"
+        onButtonClick={() => {
+          setShowLoadFailed(false);
+          router.push("/me/stories");
+        }}
+      />
     </div>
   );
 }
