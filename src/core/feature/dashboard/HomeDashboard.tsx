@@ -4,31 +4,57 @@ import {
   Archive,
   BarChart2,
   BookOpen,
-  Clock,
   FileText,
   Plus,
   SquarePen,
   TrendingUp,
 } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/context/auth.provider";
 import { StoryCard } from "@/core/components/molecule/dashboard/StoryCard";
 import { useMyPosts, useTenantPublishedPosts } from "@/hook/useStories";
 
 export default function HomeDashboard() {
   const { user } = useAuth();
-  const { data: postsData, isLoading, error } = useMyPosts(1, 10);
-  const { data: publishedPostsData } = useTenantPublishedPosts(1, 10);
+  const [mounted, setMounted] = useState(false);
+  const [token, setToken] = useState<string | null>(null);
+
+  // All hooks must be called unconditionally at the top level
+  const { data: postsData, isLoading, error } = useMyPosts(1, 50);
+  const { data: publishedPostsData, isLoading: publishedLoading } =
+    useTenantPublishedPosts(1, 50);
+  const isLoadingAny = isLoading || publishedLoading;
   const [activeTab, setActiveTab] = useState<
     "recent" | "drafts" | "published" | "archived"
-  >("published");
+  >("recent");
+
+  // Set mounted state after component mounts
+  useEffect(() => {
+    setToken(localStorage.getItem("access_token"));
+    setMounted(true);
+  }, []);
+
+  // Show loading spinner until mounted
+  if (!mounted) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+      </div>
+    );
+  }
 
   const posts = postsData?.posts || [];
   const drafts = posts.filter((p) => p.status === "draft");
   const published = posts.filter((p) => p.status === "published");
   const archived = posts.filter((p) => p.status === "archived");
-  const allPublishedPosts = publishedPostsData?.posts || [];
+  const allTenantPublishedPosts = publishedPostsData?.posts || [];
+  const userPublishedPosts =
+    publishedPostsData?.posts?.filter((p: any) =>
+      typeof p.authorId === "object"
+        ? p.authorId._id === user?._id
+        : p.authorId === user?._id,
+    ) || [];
 
   const stats = {
     total: posts.length,
@@ -46,24 +72,22 @@ export default function HomeDashboard() {
     });
   };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-      </div>
-    );
-  }
-
-  if (!user) {
+  if (!user || !token) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">
             Access Denied
           </h1>
-          <p className="text-gray-500">
+          <p className="text-gray-500 mb-4">
             Please log in to access your dashboard.
           </p>
+          <Link
+            href="/login"
+            className="inline-block bg-black hover:bg-gray-800 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+          >
+            Log In
+          </Link>
         </div>
       </div>
     );
@@ -106,7 +130,7 @@ export default function HomeDashboard() {
           <StatCard
             icon={<TrendingUp className="w-5 h-5" />}
             label="Published"
-            value={allPublishedPosts.length}
+            value={allTenantPublishedPosts.length}
             color="bg-green-50 text-green-600"
           />
           <StatCard
@@ -152,7 +176,9 @@ export default function HomeDashboard() {
 
       <div>
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-lg font-semibold text-gray-900">Your Stories</h2>
+          <h2 className="text-lg font-semibold text-gray-900">
+            Most Recent Stories
+          </h2>
           <div className="flex gap-2">
             <TabButton
               active={activeTab === "recent"}
@@ -170,7 +196,7 @@ export default function HomeDashboard() {
               active={activeTab === "published"}
               onClick={() => setActiveTab("published")}
             >
-              Published ({allPublishedPosts.length})
+              Published ({allTenantPublishedPosts.length})
             </TabButton>
             <TabButton
               active={activeTab === "archived"}
@@ -181,7 +207,7 @@ export default function HomeDashboard() {
           </div>
         </div>
 
-        {isLoading ? (
+        {isLoadingAny ? (
           <div className="space-y-4">
             {[1, 2, 3].map((i) => (
               <div key={i} className="animate-pulse">
@@ -193,19 +219,31 @@ export default function HomeDashboard() {
           <div className="text-center py-12">
             <p className="text-gray-500">Failed to load stories</p>
           </div>
-        ) : posts.length === 0 ? (
+        ) : posts.length === 0 && allTenantPublishedPosts.length === 0 ? (
           <EmptyState />
         ) : (
           <div className="space-y-4">
             {(activeTab === "recent"
-              ? posts
+              ? allTenantPublishedPosts.sort(
+                  (a: any, b: any) =>
+                    new Date(
+                      b.updatedAt || b.publishedAt || b.createdAt,
+                    ).getTime() -
+                    new Date(
+                      a.updatedAt || a.publishedAt || a.createdAt,
+                    ).getTime(),
+                )
               : activeTab === "drafts"
                 ? drafts
                 : activeTab === "published"
-                  ? allPublishedPosts
+                  ? userPublishedPosts
                   : archived
-            ).map((post) => (
-              <StoryCard key={post._id} post={post} isOwner={false} />
+            ).map((post: any) => (
+              <StoryCard
+                key={post._id}
+                post={post}
+                isOwner={posts.some((p) => p._id === post._id)}
+              />
             ))}
           </div>
         )}

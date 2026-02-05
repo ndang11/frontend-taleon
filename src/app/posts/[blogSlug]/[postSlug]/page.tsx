@@ -4,9 +4,10 @@ import { getPost } from "@/core/lib/api-client";
 export default async function PublicPostPage({
   params,
 }: {
-  params: { blogSlug: string; postSlug: string };
+  params: Promise<{ blogSlug: string; postSlug: string }>;
 }) {
-  const response = await getPost(params.postSlug);
+  const { postSlug } = await params;
+  const response = await getPost(postSlug);
 
   const post = "post" in response ? response.post : null;
 

@@ -10,8 +10,11 @@ export interface AuthResponse {
   accessToken: string;
   user: {
     id: string;
+    _id?: string;
     email: string;
     name: string;
     tenantId: string;
+    avatar?: string;
+    coverImage?: string;
   };
 }

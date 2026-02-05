@@ -172,6 +172,12 @@ export function canEditPost(
 }
 
 export async function login(data: LoginRequest): Promise<AuthResponse> {
+  console.log(
+    "[api-client] Sending login request to:",
+    `${API_BASE_URL}/auth/login`,
+  );
+  console.log("[api-client] Login data (email):", data.email);
+
   const response = await fetch(`${API_BASE_URL}/auth/login`, {
     method: "POST",
     headers: {
@@ -181,11 +187,42 @@ export async function login(data: LoginRequest): Promise<AuthResponse> {
     body: JSON.stringify(data),
   });
 
+  console.log("[api-client] Login response status:", response.status);
+
   if (!response.ok) {
-    throw new Error("Login failed");
+    const contentType = response.headers.get("content-type");
+    let errorMessage = "Login failed";
+
+    if (contentType?.includes("application/json")) {
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData?.message || errorData?.error || "Login failed";
+        console.error("[api-client] Login error response:", errorData);
+      } catch {
+        // Fallback to default error message
+      }
+    } else {
+      // Try to get text response as error message
+      try {
+        const text = await response.text();
+        if (text && text.length < 200) {
+          errorMessage = text;
+        }
+        console.error("[api-client] Login error (text):", text);
+      } catch {
+        // Fallback to default error message
+      }
+    }
+
+    throw new Error(errorMessage);
   }
 
-  return response.json();
+  const result = await response.json();
+  console.log(
+    "[api-client] Login successful, received token:",
+    result.accessToken ? "yes" : "no",
+  );
+  return result;
 }
 
 export async function register(data: RegisterRequest): Promise<AuthResponse> {
@@ -417,17 +454,103 @@ export async function getUserPost(slug: string): Promise<{ post: Post }> {
 export async function getMyPosts(
   page: number = 1,
   limit: number = 10,
+  retries: number = 2,
 ): Promise<PostsResponse> {
-  const response = await fetch(
-    `${API_BASE_URL}/posts/user?page=${page}&limit=${limit}`,
-    { headers: getAuthHeaders() },
-  );
+  let lastError: Error | null = null;
 
-  if (!response.ok) {
-    throw new Error("Failed to fetch posts");
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
+
+      const response = await fetch(
+        `${API_BASE_URL}/posts/user?page=${page}&limit=${limit}`,
+        {
+          headers: getAuthHeaders(),
+          signal: controller.signal,
+        },
+      );
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        throw new Error(
+          `Failed to fetch posts: ${response.status} ${response.statusText}`,
+        );
+      }
+
+      return response.json();
+    } catch (error) {
+      const err = error as Error;
+      lastError = err;
+
+      if (isServerUnavailableError(err)) {
+        console.warn(
+          `[getMyPosts] Server unavailable (attempt ${attempt + 1}/${retries + 1}):`,
+          err.message,
+        );
+
+        if (attempt >= retries) {
+          throw new ServerUnavailableError();
+        }
+      } else {
+        console.error(
+          `[getMyPosts] Attempt ${attempt + 1} failed:`,
+          err.message,
+        );
+
+        if (attempt >= retries) {
+          throw new Error(getUserFriendlyErrorMessage(err));
+        }
+      }
+
+      if (attempt < retries) {
+        const waitTime = 2 ** attempt * 1000;
+        await new Promise((resolve) => setTimeout(resolve, waitTime));
+      }
+    }
   }
 
-  return response.json();
+  throw lastError || new Error("Failed to fetch posts after multiple attempts");
+}
+
+/**
+ * Custom error for server unavailable (sleeping/connection issues)
+ */
+export class ServerUnavailableError extends Error {
+  constructor(
+    message: string = "The server is unavailable. It may be sleeping due to inactivity. Please wait a moment and try again.",
+  ) {
+    super(message);
+    this.name = "ServerUnavailableError";
+  }
+}
+
+/**
+ * Check if an error is due to server unavailability (connection reset, abort, etc.)
+ */
+function isServerUnavailableError(error: Error): boolean {
+  const message = error.message.toLowerCase();
+  return (
+    message.includes("signal is aborted") ||
+    message.includes("connection reset") ||
+    message.includes("net::err_connection_reset") ||
+    message.includes("net::err") ||
+    message.includes("failed to fetch") ||
+    message.includes("network error") ||
+    message.includes("socket hung up") ||
+    error.name === "AbortError"
+  );
+}
+
+/**
+ * Get user-friendly error message
+ */
+function getUserFriendlyErrorMessage(error: Error): string {
+  if (isServerUnavailableError(error)) {
+    return "The server is unavailable. This may be because:\n- The server is sleeping (free tier apps sleep after 15 minutes of inactivity)\n- There is a network issue\n\nPlease wait a moment and refresh the page, or contact support if the problem persists.";
+  }
+  return error.message || "An unexpected error occurred.";
 }
 
 /**
@@ -437,17 +560,70 @@ export async function getMyPosts(
 export async function getPublishedPosts(
   page: number = 1,
   limit: number = 10,
+  retries: number = 2,
 ): Promise<PostsResponse> {
-  const response = await fetch(
-    `${API_BASE_URL}/posts?page=${page}&limit=${limit}`,
-    { headers: getAuthHeaders() },
-  );
+  let lastError: Error | null = null;
 
-  if (!response.ok) {
-    throw new Error("Failed to fetch published posts");
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
+
+      const response = await fetch(
+        `${API_BASE_URL}/posts?page=${page}&limit=${limit}`,
+        {
+          headers: getAuthHeaders(),
+          signal: controller.signal,
+        },
+      );
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        throw new Error(
+          `Failed to fetch published posts: ${response.status} ${response.statusText}`,
+        );
+      }
+
+      return response.json();
+    } catch (error) {
+      const err = error as Error;
+      lastError = err;
+
+      // Check if it's a server unavailability error
+      if (isServerUnavailableError(err)) {
+        console.warn(
+          `[getPublishedPosts] Server unavailable (attempt ${attempt + 1}/${retries + 1}):`,
+          err.message,
+        );
+
+        // If this is the last attempt, throw a user-friendly error
+        if (attempt >= retries) {
+          throw new ServerUnavailableError();
+        }
+      } else {
+        console.error(
+          `[getPublishedPosts] Attempt ${attempt + 1} failed:`,
+          err.message,
+        );
+
+        if (attempt >= retries) {
+          throw new Error(getUserFriendlyErrorMessage(err));
+        }
+      }
+
+      if (attempt < retries) {
+        // Exponential backoff: 1s, 2s, 4s...
+        const waitTime = 2 ** attempt * 1000;
+        await new Promise((resolve) => setTimeout(resolve, waitTime));
+      }
+    }
   }
 
-  return response.json();
+  throw (
+    lastError ||
+    new Error("Failed to fetch published posts after multiple attempts")
+  );
 }
 
 export async function uploadProfileImage(
@@ -471,6 +647,49 @@ export async function uploadProfileImage(
   return response.json();
 }
 
+export async function uploadCoverImage(
+  file: File,
+): Promise<{ url: string; fileId: string }> {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const response = await fetch(`${API_BASE_URL}/upload/cover-image`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+    },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to upload cover image");
+  }
+
+  return response.json();
+}
+
+export async function uploadPostImage(file: File): Promise<{ url: string }> {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const response = await fetch(`${API_BASE_URL}/upload/post-image`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+    },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const error = await response
+      .json()
+      .catch(() => ({ message: "Failed to upload post image" }));
+    throw new Error(error.message || "Failed to upload post image");
+  }
+
+  return response.json();
+}
+
 /**
  * Get tenant's published posts (dashboard)
  * GET /posts/tenant-published?page=1&limit=10
@@ -486,6 +705,26 @@ export async function getTenantPublishedPosts(
 
   if (!response.ok) {
     throw new Error("Failed to fetch tenant published posts");
+  }
+
+  return response.json();
+}
+
+/**
+ * Get all tenant posts (published, drafts, archived)
+ * GET /posts/tenant-all?page=1&limit=50
+ */
+export async function getAllTenantPosts(
+  page: number = 1,
+  limit: number = 50,
+): Promise<PostsResponse> {
+  const response = await fetch(
+    `${API_BASE_URL}/posts/tenant-all?page=${page}&limit=${limit}`,
+    { headers: getAuthHeaders() },
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch all tenant posts");
   }
 
   return response.json();
@@ -532,6 +771,45 @@ export async function toggleLike(postId: string): Promise<LikeResponse> {
       .json()
       .catch(() => ({ message: "Failed to toggle like" }));
     throw new Error(error.message || "Failed to toggle like");
+  }
+
+  return response.json();
+}
+
+export async function getLikeCount(postId: string): Promise<number> {
+  const response = await fetch(`${API_BASE_URL}/likes/post/${postId}/count`);
+
+  if (!response.ok) {
+    return 0;
+  }
+
+  const data = await response.json();
+  return data || 0;
+}
+
+export async function hasUserLiked(postId: string): Promise<boolean> {
+  const response = await fetch(`${API_BASE_URL}/likes/post/${postId}/status`, {
+    headers: getAuthHeaders(),
+  });
+
+  if (!response.ok) {
+    return false;
+  }
+
+  const data = await response.json();
+  return data || false;
+}
+
+export async function incrementView(
+  postId: string,
+): Promise<{ viewCount: number }> {
+  const response = await fetch(`${API_BASE_URL}/posts/${postId}/view`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to increment view");
   }
 
   return response.json();
@@ -598,6 +876,7 @@ export interface UserProfile {
   name: string;
   email: string;
   avatar?: string;
+  coverImage?: string;
   bio?: string;
   location?: string;
   website?: string;
@@ -680,6 +959,7 @@ export async function updateUserProfile(
     email?: string;
     bio?: string;
     avatar?: string;
+    coverImage?: string;
     location?: string;
     website?: string;
     phone?: string;
@@ -713,47 +993,51 @@ export async function updateUserProfile(
   return response.json();
 }
 
-export async function followUser(userId: string, token: string): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/users/${userId}/follow`, {
+export async function followUser(
+  userId: string,
+): Promise<{ following: boolean; followersCount: number }> {
+  const response = await fetch(`${API_BASE_URL}/follows/${userId}`, {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+    headers: getAuthHeaders(),
   });
 
   if (!response.ok) {
-    throw new Error("Failed to follow user");
+    const error = await response
+      .json()
+      .catch(() => ({ message: "Failed to follow user" }));
+    throw new Error(error.message || "Failed to follow user");
   }
+
+  return response.json();
 }
 
 export async function unfollowUser(
   userId: string,
-  token: string,
-): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/users/${userId}/follow`, {
+): Promise<{ following: boolean; followersCount: number }> {
+  const response = await fetch(`${API_BASE_URL}/follows/${userId}`, {
     method: "DELETE",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+    headers: getAuthHeaders(),
   });
 
   if (!response.ok) {
-    throw new Error("Failed to unfollow user");
+    const error = await response
+      .json()
+      .catch(() => ({ message: "Failed to unfollow user" }));
+    throw new Error(error.message || "Failed to unfollow user");
   }
+
+  return response.json();
 }
 
 export async function isFollowing(
   userId: string,
-  token: string,
-): Promise<boolean> {
-  const response = await fetch(`${API_BASE_URL}/users/${userId}/is-following`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+): Promise<{ isFollowing: boolean }> {
+  const response = await fetch(`${API_BASE_URL}/follows/${userId}/status`, {
+    headers: getAuthHeaders(),
   });
 
   if (!response.ok) {
-    throw new Error("Failed to check follow status");
+    return { isFollowing: false };
   }
 
   return response.json();
@@ -987,7 +1271,7 @@ export async function updateStory(
 export async function fetchUserStories(
   userId: string,
   token: string,
-): Promise<Post[]> {
+): Promise<{ user: UserProfile; posts: Post[] }> {
   const response = await fetch(`${API_BASE_URL}/users/${userId}/stories`, {
     method: "GET",
     headers: {
@@ -1040,3 +1324,13 @@ export async function fetchPublicPosts(
 
   return response.json();
 }
+
+/**
+ * Transforms backend response to match Post interface perfectly
+ */
+export const mapPostData = (data: any): Post => {
+  return {
+    ...data,
+    id: data._id, // Map _id to id
+  };
+};

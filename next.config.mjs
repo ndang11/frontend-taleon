@@ -4,16 +4,16 @@ const nextConfig = {
   images: {
     remotePatterns: [
       {
-        protocol: 'https',
-        hostname: 'images.unsplash.com',
+        protocol: "https",
+        hostname: "images.unsplash.com",
       },
     ],
   },
   async rewrites() {
     return [
       {
-        source: '/me',
-        destination: '/api/me',
+        source: "/me",
+        destination: "/api/me",
       },
     ];
   },

@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   deletePost,
+  getAllTenantPosts,
   getMyPosts,
   getPost,
   getPublishedPosts,
@@ -37,6 +38,18 @@ export function useTenantPublishedPosts(page: number = 1, limit: number = 10) {
   return useQuery({
     queryKey: ["tenant-published-posts", page, limit],
     queryFn: () => getTenantPublishedPosts(page, limit),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+}
+
+// ============================================
+// All Tenant Posts (Dashboard - Most Recent)
+// ============================================
+
+export function useAllTenantPosts(page: number = 1, limit: number = 50) {
+  return useQuery({
+    queryKey: ["all-tenant-posts", page, limit],
+    queryFn: () => getAllTenantPosts(page, limit),
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 }
@@ -143,13 +156,13 @@ export function useStory(tenantId: string, storyId: string, token: string) {
 interface DeleteStoryOptions {
   tenantId: string;
   userId: string;
-  token: string;
+  token?: string;
 }
 
 export function useDeleteStory({
   tenantId,
   userId,
-  token,
+  token: _token,
 }: DeleteStoryOptions) {
   const queryClient = useQueryClient();
 
