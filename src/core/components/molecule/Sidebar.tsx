@@ -35,7 +35,7 @@ export function Sidebar() {
     <div className="flex h-full w-64 flex-col bg-white border-r border-gray-100">
       {/* Logo */}
       <div className="p-8 border-b border-gray-100">
-        <Link href="/me" className="flex items-center gap-2">
+        <Link href="/" className="flex items-center gap-2">
           <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
             <span className="text-white font-bold text-lg">T</span>
           </div>
