@@ -1,11 +1,10 @@
 "use client";
 
 import {
-  BookmarkIcon,
   Home,
+  Library,
   LogOut,
   Notebook,
-  NotebookTabs,
   TrendingUp,
   User,
   Users,
@@ -16,7 +15,7 @@ import { clearAuthData } from "@/core/lib/auth";
 
 const navigation = [
   { name: "Home", href: "/me", icon: Home },
-  { name: "Library", href: "/me/list", icon: BookmarkIcon },
+  { name: "Library", href: "/me/library", icon: Library },
   { name: "Profile", href: "/profile", icon: User },
   { name: "All Stories", href: "/me/stories", icon: Users },
   { name: "My Stories", href: "/me/my-stories", icon: Notebook },

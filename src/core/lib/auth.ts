@@ -6,8 +6,12 @@ const USER_KEY = "auth_user";
 
 export interface User {
   id: string;
+  _id?: string;
   email: string;
   name: string;
+  avatar?: string;
+  coverImage?: string;
+  bio?: string;
 }
 
 export function setAuthData(data: AuthResponse) {

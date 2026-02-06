@@ -21,7 +21,7 @@ export default function ArticleCard({
   href,
 }: ArticleCardProps) {
   return (
-    <article className="group rounded-2xl border overflow-hidden hover:shadow-lg transition">
+    <article className="group rounded-2xl border overflow-hidden shadow-[0_2px_8px_rgba(0,0,0,0.08)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.12)] transition-all duration-300">
       <Link href={href} className="relative block h-52">
         <Image
           src={image}
@@ -42,10 +42,10 @@ export default function ArticleCard({
 
         <p className="text-sm text-muted-foreground line-clamp-2">{excerpt}</p>
 
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <span>{author}</span>
-          <span>•</span>
-          <span>{time}</span>
+        <div className="flex items-center gap-2 text-xs">
+          <span className="text-blue-600 font-medium">{author}</span>
+          <span className="text-gray-400">•</span>
+          <span className="text-gray-500">{time}</span>
         </div>
       </div>
     </article>

@@ -2,16 +2,37 @@
 
 import Cookies from "js-cookie";
 import { createContext, useContext, useEffect, useState } from "react";
+import type { User } from "@/core/lib/auth";
 
 const AuthContext = createContext<{
-  user: any | null;
-  setUser: (user: any | null) => void;
+  user: User | null;
+  setUser: (user: User | null) => void;
+  refreshUser: () => Promise<void>;
   isLoading: boolean;
-}>({ user: null, setUser: () => {}, isLoading: true });
+}>({
+  user: null,
+  setUser: () => {},
+  refreshUser: async () => {},
+  isLoading: true,
+});
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  const refreshUser = async () => {
+    const userCookie = Cookies.get("auth_user");
+    if (userCookie && userCookie !== "undefined") {
+      try {
+        const userData = JSON.parse(userCookie);
+        setUser(userData);
+      } catch {
+        setUser(null);
+      }
+    } else {
+      setUser(null);
+    }
+  };
 
   useEffect(() => {
     const userCookie = Cookies.get("auth_user");
@@ -24,7 +45,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, setUser, isLoading }}>
+    <AuthContext.Provider value={{ user, setUser, refreshUser, isLoading }}>
       {children}
     </AuthContext.Provider>
   );
