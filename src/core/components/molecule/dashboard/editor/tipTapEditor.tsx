@@ -62,7 +62,7 @@ interface EditorControls {
 
 interface TiptapEditorProps {
   postId: string | null;
-  onStatusChange: (status: string) => void;
+  onStatusChange: (status: "Error" | "Published" | "Saving..." | "Saved" | "Draft") => void;
   onWordCountChange: (count: number) => void;
   onReady?: (controls: EditorControls) => void;
   initialContent?: object;

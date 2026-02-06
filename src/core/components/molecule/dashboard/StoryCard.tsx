@@ -84,12 +84,38 @@ export function StoryCard({
   };
 
   const formatContent = (content: Post["content"]) => {
-    if (!content || !content.blocks) return "";
-    return `${content.blocks
-      .filter((block) => block.type === "paragraph")
-      .map((block) => (block.data as any).text || "")
+    if (!content) return "";
+    
+    // Handle case where content is a JSON string
+    let parsedContent: any = content;
+    if (typeof content === "string") {
+      try {
+        parsedContent = JSON.parse(content);
+      } catch {
+        // If parsing fails, return the raw string truncated
+        const textContent = content as string;
+        return textContent.slice(0, 160) + (textContent.length > 160 ? "..." : "");
+      }
+    }
+    
+    // Handle case where parsedContent might be a string
+    if (typeof parsedContent === "string") {
+      return parsedContent.slice(0, 160) + (parsedContent.length > 160 ? "..." : "");
+    }
+    
+    // Handle case where parsedContent might not have blocks
+    if (!parsedContent || typeof parsedContent !== "object") {
+      return "";
+    }
+    
+    const blocks = parsedContent.blocks;
+    if (!blocks || !Array.isArray(blocks)) return "";
+    
+    return `${blocks
+      .filter((block: any) => block.type === "paragraph")
+      .map((block: any) => block.data?.text || "")
       .join(" ")
-      .slice(0, 160)}...`;
+      .slice(0, 160)}${blocks.length > 160 ? "..." : ""}`;
   };
 
   const formatDate = (dateString: string) => {
@@ -266,20 +292,20 @@ export function StoryCard({
 
       {/* Success Dialog */}
       <AlertDialog
-        open={showSuccess}
-        onOpenChange={setShowSuccess}
+        isOpen={showSuccess}
+        onClose={() => setShowSuccess(false)}
         title={successTitle}
-        description=""
-        cancelText="OK"
+        message=""
+        buttonText="OK"
       />
 
       {/* Error Dialog */}
       <AlertDialog
-        open={showError}
-        onOpenChange={setShowError}
+        isOpen={showError}
+        onClose={() => setShowError(false)}
         title="Error"
-        description={errorMessage}
-        cancelText="OK"
+        message={errorMessage}
+        buttonText="OK"
       />
     </div>
   );

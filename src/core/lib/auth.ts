@@ -9,6 +9,7 @@ export interface User {
   _id?: string;
   email: string;
   name: string;
+  tenantId?: string;
   avatar?: string;
   coverImage?: string;
   bio?: string;

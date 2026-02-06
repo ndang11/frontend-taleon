@@ -826,6 +826,7 @@ export interface Comment {
   postId: string;
   createdAt: string;
   updatedAt: string;
+  likeCount?: number;
 }
 
 /**
@@ -1032,7 +1033,7 @@ export async function unfollowUser(
 export async function isFollowing(
   userId: string,
 ): Promise<{ isFollowing: boolean }> {
-  const response = await fetch(`${API_BASE_URL}/follows/${userId}/status`, {
+  const response = await fetch(`${API_BASE_URL}/follows/check/${userId}`, {
     headers: getAuthHeaders(),
   });
 
