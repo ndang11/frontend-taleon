@@ -2,12 +2,9 @@
 
 import {
   Home,
-  Library,
   LogOut,
   Notebook,
   TrendingUp,
-  User,
-  Users,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -15,10 +12,7 @@ import { clearAuthData } from "@/core/lib/auth";
 
 const navigation = [
   { name: "Home", href: "/me", icon: Home },
-  { name: "Library", href: "/me/library", icon: Library },
-  { name: "Profile", href: "/profile", icon: User },
-  { name: "All Stories", href: "/me/stories", icon: Users },
-  { name: "My Stories", href: "/me/my-stories", icon: Notebook },
+  { name: "Stories", href: "/me/stories", icon: Notebook },
   { name: "Stats", href: "/me/stats", icon: TrendingUp },
 ];
 
