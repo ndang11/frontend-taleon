@@ -12,8 +12,13 @@ const nextConfig: NextConfig = {
         hostname: "res.cloudinary.com",
       },
       {
+<<<<<<< HEAD
         protocol: "http",
         hostname: "localhost",
+=======
+        protocol: "https",
+        hostname: "**.cloudinary.com",
+>>>>>>> d2a97cb (working on the search bar and the view stories)
       },
     ],
   },
