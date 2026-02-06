@@ -452,20 +452,26 @@ export async function getPublishedPosts(
 
 export async function uploadProfileImage(
   file: File,
-): Promise<{ url: string; fileId: string }> {
+): Promise<{ url: string; publicId: string }> {
   const formData = new FormData();
   formData.append("file", file);
+
+  const token = localStorage.getItem("access_token");
+  if (!token) {
+    throw new Error("You must be logged in to upload images");
+  }
 
   const response = await fetch(`${API_BASE_URL}/upload/profile-image`, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+      Authorization: `Bearer ${token}`,
     },
     body: formData,
   });
 
   if (!response.ok) {
-    throw new Error("Failed to upload profile image");
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || `Upload failed: ${response.status}`);
   }
 
   return response.json();
