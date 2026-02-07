@@ -357,14 +357,16 @@ export function Feed() {
                               />
                               {(post as any).likeCount || 0}
                             </button>
-                            <Link
-                              href={`/post/${post._id}#comments`}
-                              onClick={(e) => e.stopPropagation()}
-                              className="flex items-center gap-1.5 text-blue-600 hover:text-blue-700"
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                window.location.href = `/post/${post._id}#comments`;
+                              }}
+                              className="flex items-center gap-1.5 text-blue-600 hover:text-blue-700 cursor-pointer"
                             >
                               <MessageCircle className="w-4 h-4" />
                               {(post as any).commentCount || 0}
-                            </Link>
+                            </button>
                           </div>
                         </div>
                       </div>

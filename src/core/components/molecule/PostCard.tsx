@@ -1,8 +1,8 @@
 "use client";
 
+import { Bookmark, MinusCircle, MoreHorizontal } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { Bookmark, MoreHorizontal, MinusCircle } from "lucide-react";
 
 interface Author {
   name: string;
@@ -14,7 +14,7 @@ export interface PostCardData {
   title: string;
   content?: string | null;
   contentObject?: TiptapContent | null;
-  coverImage?: string;
+  image?: string;
   author?: Author;
   createdAt: string;
   updatedAt?: string;
@@ -41,25 +41,30 @@ interface TiptapContent {
 // Recursively extract text from Tiptap/ProseMirror JSON nodes
 function extractTextFromTiptap(node: TiptapNode | undefined): string {
   if (!node) return "";
-  
+
   // If node has text content, return it
   if (node.text) return node.text;
-  
+
   // If node has nested content, recursively extract text from all children
   if (node.content && Array.isArray(node.content)) {
-    return node.content.map(child => extractTextFromTiptap(child)).filter(Boolean).join(" ");
+    return node.content
+      .map((child) => extractTextFromTiptap(child))
+      .filter(Boolean)
+      .join(" ");
   }
-  
+
   return "";
 }
 
 // Helper function to extract text from content (handles both string and Tiptap/ProseMirror JSON)
-function getPostExcerpt(content: string | TiptapContent | null | undefined): string {
+function getPostExcerpt(
+  content: string | TiptapContent | null | undefined,
+): string {
   if (!content) return "";
 
   // If content is a string, strip HTML tags
   if (typeof content === "string") {
-    return content.replace(/<[^>]*>?/gm, "").slice(0, 150) + "...";
+    return `${content.replace(/<[^>]*>?/gm, "").slice(0, 150)}...`;
   }
 
   // If content is a Tiptap/ProseMirror JSON object
@@ -70,10 +75,10 @@ function getPostExcerpt(content: string | TiptapContent | null | undefined): str
         .map((node: TiptapNode) => extractTextFromTiptap(node))
         .filter(Boolean)
         .join(" ");
-      
-      if (text) return text.slice(0, 150) + "...";
+
+      if (text) return `${text.slice(0, 150)}...`;
     }
-    
+
     // Handle simple blocks format: { blocks: [...] }
     if (Array.isArray((content as Record<string, unknown>).blocks)) {
       const blocks = (content as Record<string, TiptapNode[]>).blocks;
@@ -81,8 +86,8 @@ function getPostExcerpt(content: string | TiptapContent | null | undefined): str
         .map((block: TiptapNode) => extractTextFromTiptap(block))
         .filter(Boolean)
         .join(" ");
-      
-      if (text) return text.slice(0, 150) + "...";
+
+      if (text) return `${text.slice(0, 150)}...`;
     }
   }
 
@@ -129,7 +134,10 @@ export function PostCard({ post }: PostCardProps) {
         </div>
 
         {/* Content */}
-        <Link href={`/story/${post.slug}`} className="block group-hover:opacity-90 transition-opacity">
+        <Link
+          href={`/story/${post.slug}`}
+          className="block group-hover:opacity-90 transition-opacity"
+        >
           <h2 className="text-xl font-bold text-gray-900 mb-2 font-serif leading-tight">
             {post.title}
           </h2>
@@ -151,13 +159,22 @@ export function PostCard({ post }: PostCardProps) {
             </span>
           </div>
           <div className="flex items-center gap-3">
-            <button className="text-gray-400 hover:text-gray-900 transition-colors" title="Bookmark">
+            <button
+              className="text-gray-400 hover:text-gray-900 transition-colors"
+              title="Bookmark"
+            >
               <Bookmark className="w-5 h-5" />
             </button>
-            <button className="text-gray-400 hover:text-gray-900 transition-colors" title="More options">
+            <button
+              className="text-gray-400 hover:text-gray-900 transition-colors"
+              title="More options"
+            >
               <MinusCircle className="w-5 h-5" />
             </button>
-            <button className="text-gray-400 hover:text-gray-900 transition-colors" title="Share">
+            <button
+              className="text-gray-400 hover:text-gray-900 transition-colors"
+              title="Share"
+            >
               <MoreHorizontal className="w-5 h-5" />
             </button>
           </div>
@@ -165,10 +182,13 @@ export function PostCard({ post }: PostCardProps) {
       </div>
 
       {/* Thumbnail Image */}
-      {post.coverImage && (
-        <Link href={`/story/${post.slug}`} className="flex-shrink-0 w-28 h-28 md:w-40 md:h-32 relative bg-gray-100 rounded-md overflow-hidden">
+      {post.image && (
+        <Link
+          href={`/story/${post.slug}`}
+          className="flex-shrink-0 w-28 h-28 md:w-40 md:h-32 relative bg-gray-100 rounded-md overflow-hidden"
+        >
           <Image
-            src={post.coverImage}
+            src={post.image}
             alt={post.title}
             fill
             className="object-cover"

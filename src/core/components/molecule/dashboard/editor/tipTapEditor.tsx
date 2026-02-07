@@ -16,6 +16,7 @@ import {
   AlertCircle,
   Bold,
   Code,
+  Copy,
   Heading1,
   Heading2,
   Heading3,
@@ -62,7 +63,9 @@ interface EditorControls {
 
 interface TiptapEditorProps {
   postId: string | null;
-  onStatusChange: (status: "Error" | "Published" | "Saving..." | "Saved" | "Draft") => void;
+  onStatusChange: (
+    status: "Error" | "Published" | "Saving..." | "Saved" | "Draft",
+  ) => void;
   onWordCountChange: (count: number) => void;
   onReady?: (controls: EditorControls) => void;
   initialContent?: object;
@@ -106,6 +109,10 @@ export default function TiptapEditor({
         heading: {
           levels: [1, 2, 3],
         },
+        // Exclude link and underline from StarterKit since we add them separately
+        // to avoid duplicate extension warnings
+        link: false,
+        underline: false,
       }),
       Underline,
       Link.configure({
@@ -257,6 +264,26 @@ export default function TiptapEditor({
         .run();
       setShowLinkInput(false);
       setLinkUrl("");
+    }
+  };
+
+  const handleCopyContent = async () => {
+    if (!editor) return;
+
+    const text = editor.getText();
+    const html = editor.getHTML();
+
+    try {
+      // Try to copy as rich text first (HTML)
+      await navigator.clipboard.write([
+        new ClipboardItem({
+          "text/html": new Blob([html], { type: "text/html" }),
+          "text/plain": new Blob([text], { type: "text/plain" }),
+        }),
+      ]);
+    } catch {
+      // Fallback to plain text
+      await navigator.clipboard.writeText(text);
     }
   };
 
@@ -547,6 +574,17 @@ export default function TiptapEditor({
               title="Add Image"
             >
               <ImageIcon className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Copy */}
+          <div className="relative flex items-center gap-1 px-2 border-l border-gray-200">
+            <button
+              onClick={handleCopyContent}
+              className="p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-600"
+              title="Copy Content"
+            >
+              <Copy className="w-4 h-4" />
             </button>
           </div>
         </div>

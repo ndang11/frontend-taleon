@@ -4,6 +4,7 @@ import {
   Clock,
   Edit,
   Eye,
+  Heart,
   MessageCircle,
   MoreHorizontal,
   Send,
@@ -44,12 +45,13 @@ export function StoryCard({
   const [showError, setShowError] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
+  // Use likeCount and commentCount from post data if available
+  const likeCount = (post as any).likeCount ?? 0;
+  const commentCount = (post as any).commentCount ?? 0;
+
   const { data: commentsData, isLoading: loadingComments } = useComments(
     post._id,
   );
-  const commentsCount = Array.isArray(commentsData)
-    ? commentsData.length
-    : (commentsData as any)?.comments?.length || 0;
 
   const createComment = useCreateComment();
 
@@ -85,7 +87,7 @@ export function StoryCard({
 
   const formatContent = (content: Post["content"]) => {
     if (!content) return "";
-    
+
     // Handle case where content is a JSON string
     let parsedContent: any = content;
     if (typeof content === "string") {
@@ -94,23 +96,27 @@ export function StoryCard({
       } catch {
         // If parsing fails, return the raw string truncated
         const textContent = content as string;
-        return textContent.slice(0, 160) + (textContent.length > 160 ? "..." : "");
+        return (
+          textContent.slice(0, 160) + (textContent.length > 160 ? "..." : "")
+        );
       }
     }
-    
+
     // Handle case where parsedContent might be a string
     if (typeof parsedContent === "string") {
-      return parsedContent.slice(0, 160) + (parsedContent.length > 160 ? "..." : "");
+      return (
+        parsedContent.slice(0, 160) + (parsedContent.length > 160 ? "..." : "")
+      );
     }
-    
+
     // Handle case where parsedContent might not have blocks
     if (!parsedContent || typeof parsedContent !== "object") {
       return "";
     }
-    
+
     const blocks = parsedContent.blocks;
     if (!blocks || !Array.isArray(blocks)) return "";
-    
+
     return `${blocks
       .filter((block: any) => block.type === "paragraph")
       .map((block: any) => block.data?.text || "")
@@ -175,8 +181,12 @@ export function StoryCard({
               {post.viewCount || 0} views
             </span>
             <span className="flex items-center gap-1">
+              <Heart className="w-3.5 h-3.5" />
+              {likeCount} likes
+            </span>
+            <span className="flex items-center gap-1">
               <MessageCircle className="w-3.5 h-3.5" />
-              {commentsCount} comments
+              {commentCount} comments
             </span>
             {post.category && (
               <span className="flex items-center gap-1">
@@ -237,8 +247,8 @@ export function StoryCard({
           className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-2"
         >
           <MessageCircle className="w-4 h-4" />
-          {commentsCount > 0
-            ? `Show ${commentsCount} comments`
+          {commentCount > 0
+            ? `Show ${commentCount} comments`
             : "Write a comment"}
         </button>
 
