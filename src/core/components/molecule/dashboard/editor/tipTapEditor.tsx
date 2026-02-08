@@ -181,6 +181,12 @@ export default function TiptapEditor({
   });
 
   useEffect(() => {
+    if (editor && _initialContent) {
+      editor.commands.setContent(_initialContent);
+    }
+  }, [editor, _initialContent]);
+
+  useEffect(() => {
     if (editor) {
       onReady?.({
         toggleBold: () => editor.chain().focus().toggleBold().run(),

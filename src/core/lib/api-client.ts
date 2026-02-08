@@ -777,14 +777,16 @@ export async function toggleLike(postId: string): Promise<LikeResponse> {
 }
 
 export async function getLikeCount(postId: string): Promise<number> {
-  const response = await fetch(`${API_BASE_URL}/likes/post/${postId}/count`);
+  const response = await fetch(`${API_BASE_URL}/likes/post/${postId}/count`, {
+    headers: getAuthHeaders(),
+  });
 
   if (!response.ok) {
     return 0;
   }
 
   const data = await response.json();
-  return data || 0;
+  return data?.likeCount ?? 0;
 }
 
 export async function hasUserLiked(postId: string): Promise<boolean> {
@@ -797,7 +799,7 @@ export async function hasUserLiked(postId: string): Promise<boolean> {
   }
 
   const data = await response.json();
-  return data || false;
+  return data?.liked ?? false;
 }
 
 export async function incrementView(

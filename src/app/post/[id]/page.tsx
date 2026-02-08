@@ -379,7 +379,12 @@ export default function PostDetailsPage({
     const fetchPost = async () => {
       try {
         const { id } = await params;
-        const response = await fetch(`${API_BASE_URL}/posts/${id}`, {
+
+        // Check if id looks like a slug (contains hyphens) or an ObjectId
+        const isSlug = id.includes("-");
+        const endpoint = isSlug ? `/posts/slug/public/${id}` : `/posts/${id}`;
+
+        const response = await fetch(`${API_BASE_URL}${endpoint}`, {
           headers: { "Content-Type": "application/json" },
           cache: "no-store",
         });

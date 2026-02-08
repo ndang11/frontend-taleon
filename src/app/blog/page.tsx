@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import LandingPageHeader from "@/core/components/molecule/landingPage/landingPageHeader";
 import type { Post } from "@/core/lib/api-client";
@@ -20,6 +21,7 @@ import { useToggleLike } from "@/hook/usePostInteractions";
 import { Footer } from "../../core/components/molecule/Footer";
 
 export default function BlogPage() {
+  const router = useRouter();
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [posts, setPosts] = useState<Post[]>([]);
@@ -355,14 +357,16 @@ export default function BlogPage() {
                             />
                             {(post as any).likeCount || 0}
                           </button>
-                          <Link
-                            href={`/post/${post._id}#comments`}
-                            onClick={(e) => e.stopPropagation()}
-                            className="flex items-center gap-1.5 text-blue-600 hover:text-blue-700"
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              router.push(`/post/${post._id}#comments`);
+                            }}
+                            className="flex items-center gap-1.5 text-blue-600 hover:text-blue-700 cursor-pointer"
                           >
                             <MessageCircle className="w-4 h-4" />
                             {(post as any).commentCount || 0}
-                          </Link>
+                          </button>
                         </div>
                       </div>
                     </div>

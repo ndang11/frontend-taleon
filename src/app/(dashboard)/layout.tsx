@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, SquarePen } from "lucide-react";
+import { Search, SquarePen, User } from "lucide-react";
 import Link from "next/link";
 import { AuthProvider, useAuth } from "@/context/auth.provider";
 import { Sidebar } from "@/core/components/molecule/Sidebar";
@@ -37,10 +37,16 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
               Write
             </Link>
 
-            {/* User Avatar */}
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-sm font-medium">
-              {user?.name?.[0]?.toUpperCase() || "U"}
-            </div>
+            {/* User Profile */}
+            <Link
+              href="/me/profile"
+              className="flex items-center gap-2 p-2 rounded-full hover:bg-gray-100 transition-colors"
+              title="Profile"
+            >
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-sm font-medium">
+                {user?.name?.[0]?.toUpperCase() || "U"}
+              </div>
+            </Link>
           </div>
         </header>
 
