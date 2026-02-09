@@ -13,6 +13,9 @@ export interface User {
   avatar?: string;
   coverImage?: string;
   bio?: string;
+  location?: string;
+  website?: string;
+  phone?: string;
 }
 
 export function setAuthData(data: AuthResponse) {

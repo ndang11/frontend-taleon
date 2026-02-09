@@ -1,11 +1,13 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import {
   Bookmark,
   Calendar,
   ChevronLeft,
   Eye,
   Heart,
+  HeartOff,
   MessageCircle,
   MessageSquare,
   MoreHorizontal,
@@ -17,8 +19,14 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
+import { useAuth } from "@/context/auth.provider";
 import { FollowButton } from "@/core/components/molecule/FollowButton";
-import { mapPostData } from "@/core/lib/api-client";
+import {
+  createComment,
+  incrementView,
+  mapPostData,
+} from "@/core/lib/api-client";
+import { useToggleLike } from "@/hook/usePostInteractions";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
@@ -238,6 +246,7 @@ function renderTipTapContent(content: any) {
                   alt={node.attrs?.alt || "Post image"}
                   fill
                   className="object-cover"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 90vw, 1200px"
                 />
               </div>
               {node.attrs?.title && (
@@ -630,6 +639,7 @@ export default function PostDetailsPage({
                 fill
                 className="object-cover"
                 priority
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 90vw, 1200px"
               />
             </div>
           )}

@@ -21,7 +21,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   const refreshUser = async () => {
+    const token = localStorage.getItem("access_token");
     const userCookie = Cookies.get("auth_user");
+
+    // Try to get fresh user data from backend
+    if (token && userCookie && userCookie !== "undefined") {
+      try {
+        const parsedUser = JSON.parse(userCookie);
+        const userId = parsedUser._id || parsedUser.id;
+
+        if (userId) {
+          const API_BASE_URL =
+            process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
+          const response = await fetch(`${API_BASE_URL}/users/${userId}`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          if (response.ok) {
+            const freshUser = await response.json();
+            // Update cookie with fresh data
+            Cookies.set("auth_user", JSON.stringify(freshUser), { expires: 7 });
+            setUser(freshUser);
+            return;
+          }
+        }
+      } catch (error) {
+        console.error("Failed to refresh user data:", error);
+      }
+    }
+
+    // Fallback to cookie data
     if (userCookie && userCookie !== "undefined") {
       try {
         const userData = JSON.parse(userCookie);

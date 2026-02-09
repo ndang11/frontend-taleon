@@ -1,8 +1,9 @@
 "use client";
 
-import { Search, SquarePen, User } from "lucide-react";
+import { Search, SquarePen } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
-import { AuthProvider, useAuth } from "@/context/auth.provider";
+import { useAuth } from "@/context/auth.provider";
 import { Sidebar } from "@/core/components/molecule/Sidebar";
 
 function DashboardContent({ children }: { children: React.ReactNode }) {
@@ -40,12 +41,25 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
             {/* User Profile */}
             <Link
               href="/me/profile"
-              className="flex items-center gap-2 p-2 rounded-full hover:bg-gray-100 transition-colors"
+              className="flex items-center gap-2 p-1 rounded-full hover:bg-gray-100 transition-colors border border-gray-200"
               title="Profile"
             >
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-sm font-medium">
-                {user?.name?.[0]?.toUpperCase() || "U"}
-              </div>
+              {user?.avatar ? (
+                <div className="w-8 h-8 rounded-full overflow-hidden relative">
+                  <Image
+                    src={user.avatar}
+                    alt={user.name || "User"}
+                    fill
+                    className="object-cover"
+                    sizes="32px"
+                    unoptimized
+                  />
+                </div>
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-sm font-medium">
+                  {user?.name?.[0]?.toUpperCase() || "U"}
+                </div>
+              )}
             </Link>
           </div>
         </header>
@@ -64,9 +78,5 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <AuthProvider>
-      <DashboardContent>{children}</DashboardContent>
-    </AuthProvider>
-  );
+  return <DashboardContent>{children}</DashboardContent>;
 }

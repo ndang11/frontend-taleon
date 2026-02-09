@@ -1,6 +1,13 @@
 "use client";
 
-import { Bookmark, MinusCircle, MoreHorizontal } from "lucide-react";
+import {
+  Bookmark,
+  Eye,
+  Heart,
+  MessageCircle,
+  MinusCircle,
+  MoreHorizontal,
+} from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -21,6 +28,10 @@ export interface PostCardData {
   readTime?: string;
   tags?: string[];
   slug: string;
+  viewCount?: number;
+  likeCount?: number;
+  commentCount?: number;
+  shareCount?: number;
 }
 
 // Types for Tiptap/ProseMirror JSON content
@@ -122,6 +133,7 @@ export function PostCard({ post }: PostCardProps) {
                 alt={post.author.name}
                 fill
                 className="object-cover"
+                unoptimized
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-[10px] font-bold text-gray-500">
@@ -158,24 +170,44 @@ export function PostCard({ post }: PostCardProps) {
               {post.readTime || "3 min read"}
             </span>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
+            {/* Views */}
+            <div
+              className="flex items-center gap-1 text-gray-400"
+              title="Views"
+            >
+              <Eye className="w-4 h-4" />
+              <span className="text-xs font-medium">{post.viewCount || 0}</span>
+            </div>
+            {/* Likes */}
+            <div
+              className="flex items-center gap-1 text-gray-400"
+              title="Likes"
+            >
+              <Heart className="w-4 h-4" />
+              <span className="text-xs font-medium">{post.likeCount || 0}</span>
+            </div>
+            {/* Comments */}
+            <div
+              className="flex items-center gap-1 text-gray-400"
+              title="Comments"
+            >
+              <MessageCircle className="w-4 h-4" />
+              <span className="text-xs font-medium">
+                {post.commentCount || 0}
+              </span>
+            </div>
             <button
               className="text-gray-400 hover:text-gray-900 transition-colors"
               title="Bookmark"
             >
-              <Bookmark className="w-5 h-5" />
+              <Bookmark className="w-4 h-4" />
             </button>
             <button
               className="text-gray-400 hover:text-gray-900 transition-colors"
               title="More options"
             >
-              <MinusCircle className="w-5 h-5" />
-            </button>
-            <button
-              className="text-gray-400 hover:text-gray-900 transition-colors"
-              title="Share"
-            >
-              <MoreHorizontal className="w-5 h-5" />
+              <MinusCircle className="w-4 h-4" />
             </button>
           </div>
         </div>
@@ -189,6 +221,7 @@ export function PostCard({ post }: PostCardProps) {
             alt={post.title}
             fill
             className="object-cover"
+            unoptimized
           />
         </div>
       )}
