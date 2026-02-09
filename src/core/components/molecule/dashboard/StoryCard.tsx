@@ -45,6 +45,11 @@ export function StoryCard({
   const [showError, setShowError] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
+  // Auth check
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+  const isAuthenticated = !!token;
+
   // Use likeCount and commentCount from post data if available
   const likeCount = (post as any).likeCount ?? 0;
   const commentCount = (post as any).commentCount ?? 0;
@@ -59,6 +64,12 @@ export function StoryCard({
   const handleSubmitComment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newComment.trim()) return;
+
+    // Check if user is authenticated
+    if (!isAuthenticated) {
+      window.location.href = `/login?redirect=/post/${post._id}`;
+      return;
+    }
 
     try {
       await createComment.mutateAsync({
@@ -291,17 +302,38 @@ export function StoryCard({
                   type="text"
                   value={newComment}
                   onChange={(e) => setNewComment(e.target.value)}
-                  placeholder="Write a comment..."
+                  placeholder={
+                    isAuthenticated
+                      ? "Write a comment..."
+                      : "Log in to comment..."
+                  }
+                  disabled={!isAuthenticated}
                   className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                 />
                 <button
                   type="submit"
-                  disabled={!newComment.trim() || createComment.isPending}
+                  disabled={
+                    !newComment.trim() ||
+                    createComment.isPending ||
+                    !isAuthenticated
+                  }
                   className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
                 >
                   <Send className="w-4 h-4" />
                 </button>
               </form>
+
+              {!isAuthenticated && (
+                <p className="text-sm text-gray-500 mt-2">
+                  <a
+                    href={`/login?redirect=/post/${post._id}`}
+                    className="text-blue-600 hover:underline"
+                  >
+                    Log in
+                  </a>{" "}
+                  to comment
+                </p>
+              )}
 
               {/* Comments List */}
               {loadingComments ? (

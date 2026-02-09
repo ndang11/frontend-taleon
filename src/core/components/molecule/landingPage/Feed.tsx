@@ -57,6 +57,16 @@ export function Feed() {
     e.preventDefault();
     e.stopPropagation();
 
+    // Check if user is authenticated
+    const token =
+      typeof window !== "undefined"
+        ? localStorage.getItem("access_token")
+        : null;
+    if (!token) {
+      window.location.href = `/login?redirect=/post/${postId}`;
+      return;
+    }
+
     await toggleLikeMutation.mutateAsync(postId);
 
     // Dispatch event to notify other components

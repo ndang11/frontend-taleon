@@ -64,7 +64,7 @@ export function usePostInteractions({
 
   // Submit comment mutation
   const commentMutation = useMutation({
-    mutationFn: (data: CommentData) => createComment(postId, data),
+    mutationFn: (data: CommentData) => createComment(postId, data.content),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["comments", postId] });
     },

@@ -1337,3 +1337,105 @@ export const mapPostData = (data: any): Post => {
     id: data._id, // Map _id to id
   };
 };
+
+// ============================================
+// Notifications
+// ============================================
+
+export interface Notification {
+  _id: string;
+  userId: string;
+  fromUserId?: {
+    _id: string;
+    name: string;
+    avatar?: string;
+  };
+  type: "like" | "comment" | "follow";
+  postId?: {
+    _id: string;
+    title: string;
+  };
+  message: string;
+  isRead: boolean;
+  createdAt: string;
+}
+
+export interface NotificationsResponse {
+  notifications: Notification[];
+  unreadCount: number;
+}
+
+export async function getNotifications(): Promise<NotificationsResponse> {
+  const response = await fetch(`${API_BASE_URL}/notifications`, {
+    headers: getAuthHeaders(),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch notifications");
+  }
+
+  return response.json();
+}
+
+export async function getUnreadCount(): Promise<{ count: number }> {
+  const response = await fetch(`${API_BASE_URL}/notifications/count`, {
+    headers: getAuthHeaders(),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch unread count");
+  }
+
+  return response.json();
+}
+
+export async function markNotificationAsRead(
+  notificationId: string,
+): Promise<{ unreadCount: number }> {
+  const response = await fetch(
+    `${API_BASE_URL}/notifications/${notificationId}/read`,
+    {
+      method: "POST",
+      headers: getAuthHeaders(),
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed to mark notification as read");
+  }
+
+  return response.json();
+}
+
+export async function markAllNotificationsAsRead(): Promise<{
+  success: boolean;
+}> {
+  const response = await fetch(`${API_BASE_URL}/notifications/read-all`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to mark all notifications as read");
+  }
+
+  return response.json();
+}
+
+export async function deleteNotification(
+  notificationId: string,
+): Promise<{ success: boolean }> {
+  const response = await fetch(
+    `${API_BASE_URL}/notifications/${notificationId}`,
+    {
+      method: "DELETE",
+      headers: getAuthHeaders(),
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed to delete notification");
+  }
+
+  return response.json();
+}

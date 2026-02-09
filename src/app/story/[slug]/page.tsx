@@ -10,6 +10,35 @@ type ContentBlock = {
   data: Record<string, unknown>;
 };
 
+// Helper function to parse content
+function parseContent(content: unknown): { blocks: ContentBlock[] } | null {
+  if (!content) return null;
+
+  // If content is already an object with blocks
+  if (
+    typeof content === "object" &&
+    content !== null &&
+    (content as any).blocks
+  ) {
+    return content as { blocks: ContentBlock[] };
+  }
+
+  // If content is a string, try to parse it as JSON
+  if (typeof content === "string") {
+    try {
+      const parsed = JSON.parse(content);
+      if (parsed.blocks) {
+        return parsed as { blocks: ContentBlock[] };
+      }
+    } catch {
+      // If parsing fails, return null so string content is handled
+      return null;
+    }
+  }
+
+  return null;
+}
+
 // Helper component for dynamic headers
 function HeaderBlock({ level, text }: { level: number; text: string }) {
   const classes =
@@ -163,117 +192,148 @@ export default async function StoryPage({
 
       {/* Content */}
       <div className="prose prose-stone prose-lg max-w-none">
-        {post.content?.blocks?.map((block: any, index: number) => {
-          const key = block.id || `block-${index}`;
+        {/* Handle JSON blocks content */}
+        {(() => {
+          const parsedContent = parseContent(post.content);
+          if (parsedContent?.blocks) {
+            return parsedContent.blocks.map((block: any, index: number) => {
+              const key = block.id || `block-${index}`;
 
-          switch (block.type) {
-            case "paragraph":
-            case "text":
-              return (
-                <p key={key} className="mb-4 leading-relaxed">
-                  {(block.data as any).text}
-                </p>
-              );
+              switch (block.type) {
+                case "paragraph":
+                case "text":
+                  return (
+                    <p key={key} className="mb-4 leading-relaxed">
+                      {(block.data as any).text}
+                    </p>
+                  );
 
-            case "header": {
-              const level = (block.data as any).level || 2;
+                case "header": {
+                  const level = (block.data as any).level || 2;
+                  return (
+                    <HeaderBlock
+                      key={key}
+                      level={level}
+                      text={(block.data as any).text}
+                    />
+                  );
+                }
 
-              return (
-                <HeaderBlock
-                  key={key}
-                  level={level}
-                  text={(block.data as any).text}
-                />
-              );
-            }
+                case "list": {
+                  const listType = (block.data as any).style;
+                  if (listType === "unordered") {
+                    return (
+                      <ul key={key} className="list-disc pl-6 mb-4 space-y-2">
+                        {(block.data as any).items?.map(
+                          (item: any, i: number) => (
+                            <li key={`${i}-${item.content || item}`}>
+                              {item.content || item}
+                            </li>
+                          ),
+                        )}
+                      </ul>
+                    );
+                  }
+                  if (listType === "ordered") {
+                    return (
+                      <ol
+                        key={key}
+                        className="list-decimal pl-6 mb-4 space-y-2"
+                      >
+                        {(block.data as any).items?.map(
+                          (item: any, i: number) => (
+                            <li key={`${i}-${item.content || item}`}>
+                              {item.content || item}
+                            </li>
+                          ),
+                        )}
+                      </ol>
+                    );
+                  }
+                  return null;
+                }
 
-            case "list": {
-              const listType = (block.data as any).style;
-              if (listType === "unordered") {
-                return (
-                  <ul key={key} className="list-disc pl-6 mb-4 space-y-2">
-                    {(block.data as any).items?.map((item: any, i: number) => (
-                      <li key={`${i}-${item.content || item}`}>
-                        {item.content || item}
-                      </li>
-                    ))}
-                  </ul>
-                );
+                case "quote":
+                  return (
+                    <blockquote
+                      key={key}
+                      className="border-l-4 border-blue-500 pl-4 py-2 my-6 text-gray-700 italic bg-gray-50 rounded-r"
+                    >
+                      {(block.data as any).text}
+                      {(block.data as any).caption && (
+                        <footer className="text-sm text-gray-500 mt-2">
+                          — {(block.data as any).caption}
+                        </footer>
+                      )}
+                    </blockquote>
+                  );
+
+                case "code":
+                  return (
+                    <pre
+                      key={key}
+                      className="bg-gray-900 text-gray-100 rounded-lg p-4 overflow-x-auto my-6"
+                    >
+                      <code>{(block.data as any).code}</code>
+                    </pre>
+                  );
+
+                case "image":
+                  return (
+                    <figure key={key} className="my-8">
+                      <Image
+                        src={
+                          (block.data as any).file?.url ||
+                          (block.data as any).url
+                        }
+                        alt={(block.data as any).caption || "Image"}
+                        width={800}
+                        height={400}
+                        className="w-full rounded-lg"
+                      />
+                      {(block.data as any).caption && (
+                        <figcaption className="text-center text-sm text-gray-500 mt-2">
+                          {(block.data as any).caption}
+                        </figcaption>
+                      )}
+                    </figure>
+                  );
+
+                case "delimiter":
+                  return (
+                    <div
+                      key={key}
+                      className="flex items-center justify-center my-8"
+                    >
+                      <span className="text-2xl text-gray-300">***</span>
+                    </div>
+                  );
+
+                default:
+                  return null;
               }
-              if (listType === "ordered") {
-                return (
-                  <ol key={key} className="list-decimal pl-6 mb-4 space-y-2">
-                    {(block.data as any).items?.map((item: any, i: number) => (
-                      <li key={`${i}-${item.content || item}`}>
-                        {item.content || item}
-                      </li>
-                    ))}
-                  </ol>
-                );
-              }
-              return null;
-            }
-
-            case "quote":
-              return (
-                <blockquote
-                  key={key}
-                  className="border-l-4 border-blue-500 pl-4 py-2 my-6 text-gray-700 italic bg-gray-50 rounded-r"
-                >
-                  {(block.data as any).text}
-                  {(block.data as any).caption && (
-                    <footer className="text-sm text-gray-500 mt-2">
-                      — {(block.data as any).caption}
-                    </footer>
-                  )}
-                </blockquote>
-              );
-
-            case "code":
-              return (
-                <pre
-                  key={key}
-                  className="bg-gray-900 text-gray-100 rounded-lg p-4 overflow-x-auto my-6"
-                >
-                  <code>{(block.data as any).code}</code>
-                </pre>
-              );
-
-            case "image":
-              return (
-                <figure key={key} className="my-8">
-                  <Image
-                    src={
-                      (block.data as any).file?.url || (block.data as any).url
-                    }
-                    alt={(block.data as any).caption || "Image"}
-                    width={800}
-                    height={400}
-                    className="w-full rounded-lg"
-                  />
-                  {(block.data as any).caption && (
-                    <figcaption className="text-center text-sm text-gray-500 mt-2">
-                      {(block.data as any).caption}
-                    </figcaption>
-                  )}
-                </figure>
-              );
-
-            case "delimiter":
-              return (
-                <div
-                  key={key}
-                  className="flex items-center justify-center my-8"
-                >
-                  <span className="text-2xl text-gray-300">***</span>
-                </div>
-              );
-
-            default:
-              // Handle unknown block types gracefully
-              return null;
+            });
           }
-        })}
+
+          // Handle string content - strip HTML tags
+          const contentAny = post.content as unknown;
+          if (typeof contentAny === "string") {
+            const textContent = contentAny
+              .replace(/<[^>]*>/g, "")
+              .replace(/&nbsp;/g, " ")
+              .replace(/&/g, "&")
+              .replace(/</g, "<")
+              .replace(/>/g, ">")
+              .replace(/"/g, '"')
+              .trim();
+
+            if (textContent) {
+              return <p className="mb-4 leading-relaxed">{textContent}</p>;
+            }
+          }
+
+          return null;
+        })()}
       </div>
 
       {/* Tags */}

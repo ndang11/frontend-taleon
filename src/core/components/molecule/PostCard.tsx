@@ -120,7 +120,7 @@ export function PostCard({ post }: PostCardProps) {
 
   return (
     <Link
-      href={`/story/${post.slug}`}
+      href={`/post/${post._id}`}
       className="flex justify-between items-start py-8 border-b border-gray-100 group hover:bg-gray-50 transition-colors -mx-4 px-4 rounded-lg block"
     >
       <div className="flex-1 pr-8">

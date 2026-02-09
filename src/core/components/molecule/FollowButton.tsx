@@ -16,7 +16,17 @@ export function FollowButton({
   const [isFollowing, setIsFollowing] = useState(initialIsFollowing);
   const [loading, setLoading] = useState(false);
 
+  // Check if user is authenticated
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+  const isAuthenticated = !!token;
+
   const handleToggleFollow = async () => {
+    if (!isAuthenticated) {
+      window.location.href = `/login?redirect=/profile/${authorId}`;
+      return;
+    }
+
     if (loading) return;
 
     setLoading(true);

@@ -14,7 +14,7 @@ const mapPostToCardData = (post: any): PostCardData => ({
   _id: post._id,
   title: post.title,
   content: post.content,
-  coverImage: post.image,
+  image: post.image,
   author: typeof post.authorId === "object" ? post.authorId : undefined,
   createdAt: post.createdAt,
   updatedAt: post.updatedAt,

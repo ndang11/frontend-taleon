@@ -1,11 +1,17 @@
 "use client";
 
-import { useEditor, EditorContent } from "@tiptap/react";
-import StarterKit from '@tiptap/starter-kit';
-import Image from '@tiptap/extension-image';
-import Placeholder from '@tiptap/extension-placeholder';
-import { Bold, Italic, Image as ImageIcon, Heading1, Heading2 } from 'lucide-react';
-import { useEffect, useState, useRef } from 'react';
+import Image from "@tiptap/extension-image";
+import Placeholder from "@tiptap/extension-placeholder";
+import { EditorContent, useEditor } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import {
+  Bold,
+  Heading1,
+  Heading2,
+  Image as ImageIcon,
+  Italic,
+} from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 interface EditorProps {
   content: string;
@@ -13,12 +19,18 @@ interface EditorProps {
   onImageUpload: (file: File) => Promise<string>;
 }
 
-function BubbleMenu({ editor, children }: { editor: any; children: React.ReactNode }) {
+function BubbleMenu({
+  editor,
+  children,
+}: {
+  editor: any;
+  children: React.ReactNode;
+}) {
   const [position, setPosition] = useState({ top: 0, left: 0 });
   const [isVisible, setIsVisible] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  const updatePosition = () => {
+  const updatePosition = useCallback(() => {
     const { from, to } = editor.state.selection;
     if (from === to) {
       setIsVisible(false);
@@ -31,16 +43,16 @@ function BubbleMenu({ editor, children }: { editor: any; children: React.ReactNo
       left: coords.left,
     });
     setIsVisible(true);
-  };
+  }, [editor]);
 
   useEffect(() => {
-    editor.on('selectionUpdate', updatePosition);
-    editor.on('scrollIntoView', updatePosition);
+    editor.on("selectionUpdate", updatePosition);
+    editor.on("scrollIntoView", updatePosition);
     return () => {
-      editor.off('selectionUpdate', updatePosition);
-      editor.off('scrollIntoView', updatePosition);
+      editor.off("selectionUpdate", updatePosition);
+      editor.off("scrollIntoView", updatePosition);
     };
-  }, [editor]);
+  }, [editor, updatePosition]);
 
   if (!isVisible) return null;
 
@@ -55,19 +67,23 @@ function BubbleMenu({ editor, children }: { editor: any; children: React.ReactNo
   );
 }
 
-export default function Editor({ content, onChange, onImageUpload }: EditorProps) {
+export default function Editor({
+  content,
+  onChange,
+  onImageUpload,
+}: EditorProps) {
   const editor = useEditor({
     extensions: [
       StarterKit,
       Image,
       Placeholder.configure({
-        placeholder: 'Tell your story...',
+        placeholder: "Tell your story...",
       }),
     ],
     content: content,
     editorProps: {
       attributes: {
-        class: 'prose prose-lg max-w-none focus:outline-none min-h-[50vh]',
+        class: "prose prose-lg max-w-none focus:outline-none min-h-[50vh]",
       },
     },
     onUpdate: ({ editor }) => {
@@ -83,9 +99,9 @@ export default function Editor({ content, onChange, onImageUpload }: EditorProps
   }, [content, editor]);
 
   const handleImageUpload = async () => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*";
     input.onchange = async () => {
       if (input.files?.length) {
         const file = input.files[0];
@@ -106,26 +122,30 @@ export default function Editor({ content, onChange, onImageUpload }: EditorProps
         <BubbleMenu editor={editor}>
           <button
             onClick={() => editor.chain().focus().toggleBold().run()}
-            className={`p-1 hover:bg-gray-700 rounded ${editor.isActive('bold') ? 'text-blue-400' : ''}`}
+            className={`p-1 hover:bg-gray-700 rounded ${editor.isActive("bold") ? "text-blue-400" : ""}`}
           >
             <Bold size={18} />
           </button>
           <button
             onClick={() => editor.chain().focus().toggleItalic().run()}
-            className={`p-1 hover:bg-gray-700 rounded ${editor.isActive('italic') ? 'text-blue-400' : ''}`}
+            className={`p-1 hover:bg-gray-700 rounded ${editor.isActive("italic") ? "text-blue-400" : ""}`}
           >
             <Italic size={18} />
           </button>
           <div className="w-px h-4 bg-gray-700 mx-1" />
           <button
-            onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-            className={`p-1 hover:bg-gray-700 rounded ${editor.isActive('heading', { level: 1 }) ? 'text-blue-400' : ''}`}
+            onClick={() =>
+              editor.chain().focus().toggleHeading({ level: 1 }).run()
+            }
+            className={`p-1 hover:bg-gray-700 rounded ${editor.isActive("heading", { level: 1 }) ? "text-blue-400" : ""}`}
           >
             <Heading1 size={18} />
           </button>
           <button
-            onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-            className={`p-1 hover:bg-gray-700 rounded ${editor.isActive('heading', { level: 2 }) ? 'text-blue-400' : ''}`}
+            onClick={() =>
+              editor.chain().focus().toggleHeading({ level: 2 }).run()
+            }
+            className={`p-1 hover:bg-gray-700 rounded ${editor.isActive("heading", { level: 2 }) ? "text-blue-400" : ""}`}
           >
             <Heading2 size={18} />
           </button>
@@ -138,12 +158,15 @@ export default function Editor({ content, onChange, onImageUpload }: EditorProps
           </button>
         </BubbleMenu>
       )}
-      
+
       <EditorContent editor={editor} />
-      
+
       {/* Floating Action Button for Image (Medium style side button) */}
       <div className="fixed bottom-10 right-10 md:hidden">
-        <button onClick={handleImageUpload} className="bg-green-600 text-white p-4 rounded-full shadow-lg">
+        <button
+          onClick={handleImageUpload}
+          className="bg-green-600 text-white p-4 rounded-full shadow-lg"
+        >
           <ImageIcon size={24} />
         </button>
       </div>

@@ -4,6 +4,7 @@ import { Search, SquarePen } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useAuth } from "@/context/auth.provider";
+import { NotificationDropdown } from "@/core/components/molecule/dashboard/NotificationDropdown";
 import { Sidebar } from "@/core/components/molecule/Sidebar";
 
 function DashboardContent({ children }: { children: React.ReactNode }) {
@@ -29,6 +30,9 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
           </div>
 
           <div className="flex items-center space-x-4">
+            {/* Notifications */}
+            <NotificationDropdown />
+
             {/* Write Button */}
             <Link
               href="/new-story"

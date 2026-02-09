@@ -14,19 +14,20 @@ export default function landingPageHeader() {
           <Logo />
           <div className="hidden md:flex items-center gap-8">
             <Link
-              href="/about"
-              className="text-sm text-gray-600 hover:text-black transition-colors font-medium"
-            >
-              About Us
-            </Link>
-            <Link
               href="/blog"
               className="text-sm text-gray-600 hover:text-black transition-colors font-medium"
             >
               Discover
             </Link>
             <Link
-              href="/membership"
+              href="/about"
+              className="text-sm text-gray-600 hover:text-black transition-colors font-medium"
+            >
+              About Us
+            </Link>
+
+            <Link
+              href="/premium"
               className="text-sm text-gray-600 hover:text-black transition-colors font-medium"
             >
               Premium

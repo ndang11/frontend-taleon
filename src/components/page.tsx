@@ -1,21 +1,26 @@
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import Editor from '@/components/Editor';
-import { uploadPostImage, fetcher, getPost, Post } from '@/core/lib/api-client';
-import { ArrowLeft, MoreHorizontal } from 'lucide-react';
-import Link from 'next/link';
+import { ArrowLeft, MoreHorizontal } from "lucide-react";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
+import Editor from "@/components/Editor";
+import {
+  fetcher,
+  getPost,
+  type Post,
+  uploadPostImage,
+} from "@/core/lib/api-client";
 
 export default function NewStoryPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const editId = searchParams.get('edit');
+  const editId = searchParams.get("edit");
 
   const [postId, setPostId] = useState<string | null>(null);
-  const [title, setTitle] = useState('');
-  const [content, setContent] = useState('');
-  const [status, setStatus] = useState('Draft');
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
+  const [status, setStatus] = useState("Draft");
   const [isSaving, setIsSaving] = useState(false);
 
   // Initialize: Fetch existing post OR create a new draft immediately
@@ -24,26 +29,30 @@ export default function NewStoryPage() {
       try {
         if (editId) {
           const data = await getPost(editId);
-          if ('post' in data && data.post) {
+          if ("post" in data && data.post) {
             const post: Post = data.post;
             setPostId(post._id);
-            setTitle(post.title || '');
-            setContent(JSON.stringify(post.content) || '');
-            setStatus(post.status === 'published' ? 'Published' : 'Draft');
+            setTitle(post.title || "");
+            setContent(JSON.stringify(post.content) || "");
+            setStatus(post.status === "published" ? "Published" : "Draft");
           }
         } else {
           // Create a new draft immediately (Medium logic)
-          const newPost = await fetcher.post<Post>('/posts', {
-            title: 'Untitled Story',
-            content: '',
-            category: 'General'
+          const newPost = await fetcher.post<Post>("/posts", {
+            title: "Untitled Story",
+            content: "",
+            category: "General",
           });
           setPostId(newPost._id);
           // Update URL without reload
-          window.history.replaceState(null, '', `/new-story?edit=${newPost._id}`);
+          window.history.replaceState(
+            null,
+            "",
+            `/new-story?edit=${newPost._id}`,
+          );
         }
       } catch (error) {
-        console.error('Failed to initialize story:', error);
+        console.error("Failed to initialize story:", error);
       }
     };
 
@@ -51,31 +60,34 @@ export default function NewStoryPage() {
   }, [editId]);
 
   // Auto-save logic
-  const handleSave = useCallback(async (newContent?: any, newTitle?: string) => {
-    if (!postId) return;
-    
-    setIsSaving(true);
-    try {
-      await fetcher.patch(`/posts/${postId}/autosave`, {
-        content: newContent || content,
-        title: newTitle || title
-      });
-      setStatus('Saved');
-    } catch (error) {
-      setStatus('Error saving');
-    } finally {
-      setTimeout(() => setIsSaving(false), 1000);
-    }
-  }, [postId, content, title]);
+  const handleSave = useCallback(
+    async (newContent?: any, newTitle?: string) => {
+      if (!postId) return;
+
+      setIsSaving(true);
+      try {
+        await fetcher.patch(`/posts/${postId}/autosave`, {
+          content: newContent || content,
+          title: newTitle || title,
+        });
+        setStatus("Saved");
+      } catch (error) {
+        setStatus("Error saving");
+      } finally {
+        setTimeout(() => setIsSaving(false), 1000);
+      }
+    },
+    [postId, content, title],
+  );
 
   const handlePublish = async () => {
     if (!postId) return;
     try {
       setIsSaving(true);
-      await fetcher.patch(`/posts/${postId}`, { status: 'published' });
+      await fetcher.patch(`/posts/${postId}`, { status: "published" });
       router.push(`/me`); // Redirect to dashboard/my stories
     } catch (error) {
-      alert('Failed to publish story');
+      alert("Failed to publish story");
       setIsSaving(false);
     }
   };
@@ -85,8 +97,8 @@ export default function NewStoryPage() {
       const data = await uploadPostImage(file);
       return data.url; // Assuming API returns { url: "..." }
     } catch (error) {
-      console.error('Image upload failed:', error);
-      return '';
+      console.error("Image upload failed:", error);
+      return "";
     }
   };
 
@@ -99,11 +111,11 @@ export default function NewStoryPage() {
             <ArrowLeft size={20} />
           </Link>
           <span className="text-sm text-gray-500">
-            {isSaving ? 'Saving...' : status}
+            {isSaving ? "Saving..." : status}
           </span>
         </div>
         <div className="flex items-center gap-4">
-          <button 
+          <button
             onClick={handlePublish}
             className="bg-green-600 hover:bg-green-700 text-white px-4 py-1.5 rounded-full text-sm font-medium transition-colors"
           >
@@ -121,14 +133,20 @@ export default function NewStoryPage() {
           type="text"
           placeholder="Title"
           value={title}
-          onChange={(e) => { setTitle(e.target.value); handleSave(undefined, e.target.value); }}
+          onChange={(e) => {
+            setTitle(e.target.value);
+            handleSave(undefined, e.target.value);
+          }}
           className="w-full text-4xl md:text-5xl font-serif font-bold placeholder:text-gray-300 border-none focus:ring-0 p-0 mb-6 text-gray-900"
         />
-        
+
         {postId && (
-          <Editor 
-            content={content} 
-            onChange={(json) => { setContent(json); handleSave(json); }}
+          <Editor
+            content={content}
+            onChange={(json) => {
+              setContent(json);
+              handleSave(json);
+            }}
             onImageUpload={handleImageUpload}
           />
         )}
