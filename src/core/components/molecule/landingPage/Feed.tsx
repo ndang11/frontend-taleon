@@ -92,6 +92,24 @@ export function Feed() {
   const getExcerpt = (content: any) => {
     if (!content) return "";
 
+    // Handle plain HTML string
+    if (typeof content === "string") {
+      // Strip all HTML tags
+      const stripped = content
+        .replace(/<[^>]*>?/gm, "")
+        .replace(/&nbsp;/g, " ")
+        .replace(/&amp;/g, "&")
+        .replace(/&lt;/g, "<")
+        .replace(/&gt;/g, ">")
+        .replace(/&quot;/g, '"')
+        .trim();
+
+      if (!stripped) return "";
+
+      // Truncate to 200 characters
+      return stripped.length > 200 ? `${stripped.slice(0, 200)}...` : stripped;
+    }
+
     // Handle TipTap JSON format
     if (content.content && Array.isArray(content.content)) {
       const textContent: string[] = [];

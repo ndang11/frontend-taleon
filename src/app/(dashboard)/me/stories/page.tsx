@@ -45,9 +45,17 @@ function getPostExcerpt(
 ): string {
   if (!content) return "No content...";
 
-  // If content is a string, strip HTML tags
+  // If content is a plain HTML string, strip all HTML tags
   if (typeof content === "string") {
-    const stripped = content.replace(/<[^>]*>?/gm, "").trim();
+    const stripped = content
+      .replace(/<[^>]*>?/gm, "")
+      .replace(/&nbsp;/g, " ")
+      .replace(/&amp;/g, "&")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&quot;/g, '"')
+      .trim();
+
     if (!stripped) return "No content...";
     return `${stripped.slice(0, 100)}...`;
   }

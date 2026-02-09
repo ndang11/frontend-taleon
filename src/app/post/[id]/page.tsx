@@ -85,6 +85,36 @@ type SortOption = "newest" | "oldest" | "popular";
 function renderTipTapContent(content: any) {
   if (!content) return null;
 
+  // Handle plain HTML string - strip tags and show plain text
+  if (typeof content === "string") {
+    // Strip all HTML tags
+    const stripped = content
+      .replace(/<[^>]*>?/gm, "")
+      .replace(/&nbsp;/g, " ")
+      .replace(/&amp;/g, "&")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&quot;/g, '"')
+      .trim();
+
+    if (!stripped) return null;
+
+    // Split by double newlines (paragraphs) and render as paragraphs
+    const paragraphs = stripped.split(/\n\n+/);
+    return (
+      <div className="prose prose-lg max-w-none">
+        {paragraphs.map((para: string) => (
+          <p
+            key={para.slice(0, 30)}
+            className="mb-4 text-gray-700 leading-relaxed text-lg"
+          >
+            {para.replace(/\n/g, " ")}
+          </p>
+        ))}
+      </div>
+    );
+  }
+
   if (content.type === "doc" || content.content) {
     const renderNode = (node: any, key: string | number): React.ReactNode => {
       if (!node) return null;
