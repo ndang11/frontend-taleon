@@ -108,7 +108,10 @@ export function PostCard({ post }: PostCardProps) {
   });
 
   return (
-    <div className="flex justify-between items-start py-8 border-b border-gray-100 group hover:bg-gray-50 transition-colors -mx-4 px-4 rounded-lg">
+    <Link
+      href={`/story/${post.slug}`}
+      className="flex justify-between items-start py-8 border-b border-gray-100 group hover:bg-gray-50 transition-colors -mx-4 px-4 rounded-lg block"
+    >
       <div className="flex-1 pr-8">
         {/* Author Info */}
         <div className="flex items-center gap-2 mb-3">
@@ -134,17 +137,14 @@ export function PostCard({ post }: PostCardProps) {
         </div>
 
         {/* Content */}
-        <Link
-          href={`/story/${post.slug}`}
-          className="block group-hover:opacity-90 transition-opacity"
-        >
+        <div className="block group-hover:opacity-90 transition-opacity">
           <h2 className="text-xl font-bold text-gray-900 mb-2 font-serif leading-tight">
             {post.title}
           </h2>
           <p className="text-gray-600 font-serif text-base mb-4 line-clamp-2 md:line-clamp-3">
             {excerpt}
           </p>
-        </Link>
+        </div>
 
         {/* Footer */}
         <div className="flex items-center justify-between mt-4">
@@ -183,18 +183,15 @@ export function PostCard({ post }: PostCardProps) {
 
       {/* Thumbnail Image */}
       {post.image && (
-        <Link
-          href={`/story/${post.slug}`}
-          className="flex-shrink-0 w-28 h-28 md:w-40 md:h-32 relative bg-gray-100 rounded-md overflow-hidden"
-        >
+        <div className="flex-shrink-0 w-28 h-28 md:w-40 md:h-32 relative bg-gray-100 rounded-md overflow-hidden">
           <Image
             src={post.image}
             alt={post.title}
             fill
             className="object-cover"
           />
-        </Link>
+        </div>
       )}
-    </div>
+    </Link>
   );
 }
