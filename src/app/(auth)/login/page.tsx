@@ -7,7 +7,7 @@ export default function LoginPage() {
     <>
       <LandingPageHeader />
       <div className="min-h-screen flex items-center justify-center">
-        <div className="max-w-md w-full bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-1xl border border-white/20">
+        <div className="max-w-md w-full bg-white/80 backdrop-blur-sm p-8 rounded-xl shadow-lg border border-gray-200">
           <div className="mb-8">
             <h2 className="text-center text-4xl font-bold text-gray-900 mb-2">
               Welcome back
