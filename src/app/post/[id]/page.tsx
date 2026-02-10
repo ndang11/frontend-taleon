@@ -1,11 +1,13 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import {
   Bookmark,
   Calendar,
   ChevronLeft,
   Eye,
   Heart,
+  HeartOff,
   MessageCircle,
   MessageSquare,
   MoreHorizontal,
@@ -17,11 +19,19 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
+import { useAuth } from "@/context/auth.provider";
+import { LikeButton } from "@/core/components/atom/LikeButton";
+import { ShareButton } from "@/core/components/atom/ShareButton";
 import { FollowButton } from "@/core/components/molecule/FollowButton";
-import { mapPostData } from "@/core/lib/api-client";
+import {
+  createComment,
+  incrementView,
+  mapPostData,
+} from "@/core/lib/api-client";
+import { useToggleLike } from "@/hook/usePostInteractions";
 
 const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
+  process.env.NEXT_PUBLIC_API_URL || "https://taleon-sijl.onrender.com/api";
 
 interface AuthorInfo {
   _id: string;
@@ -74,6 +84,36 @@ type SortOption = "newest" | "oldest" | "popular";
 
 function renderTipTapContent(content: any) {
   if (!content) return null;
+
+  // Handle plain HTML string - strip tags and show plain text
+  if (typeof content === "string") {
+    // Strip all HTML tags
+    const stripped = content
+      .replace(/<[^>]*>?/gm, "")
+      .replace(/&nbsp;/g, " ")
+      .replace(/&amp;/g, "&")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&quot;/g, '"')
+      .trim();
+
+    if (!stripped) return null;
+
+    // Split by double newlines (paragraphs) and render as paragraphs
+    const paragraphs = stripped.split(/\n\n+/);
+    return (
+      <div className="prose prose-lg max-w-none">
+        {paragraphs.map((para: string) => (
+          <p
+            key={para.slice(0, 30)}
+            className="mb-4 text-gray-700 leading-relaxed text-lg"
+          >
+            {para.replace(/\n/g, " ")}
+          </p>
+        ))}
+      </div>
+    );
+  }
 
   if (content.type === "doc" || content.content) {
     const renderNode = (node: any, key: string | number): React.ReactNode => {
@@ -238,6 +278,7 @@ function renderTipTapContent(content: any) {
                   alt={node.attrs?.alt || "Post image"}
                   fill
                   className="object-cover"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 90vw, 1200px"
                 />
               </div>
               {node.attrs?.title && (
@@ -379,7 +420,12 @@ export default function PostDetailsPage({
     const fetchPost = async () => {
       try {
         const { id } = await params;
-        const response = await fetch(`${API_BASE_URL}/posts/${id}`, {
+
+        // Check if id looks like a slug (contains hyphens) or an ObjectId
+        const isSlug = id.includes("-");
+        const endpoint = isSlug ? `/posts/slug/public/${id}` : `/posts/${id}`;
+
+        const response = await fetch(`${API_BASE_URL}${endpoint}`, {
           headers: { "Content-Type": "application/json" },
           cache: "no-store",
         });
@@ -397,6 +443,13 @@ export default function PostDetailsPage({
           sortComments(allComments, sortBy);
         } else if (data._id) {
           setPost(mapPostData(data) as Post);
+        }
+
+        // Increment view count
+        try {
+          await incrementView(id);
+        } catch (viewErr) {
+          console.error("Failed to increment view count:", viewErr);
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load post");
@@ -418,24 +471,30 @@ export default function PostDetailsPage({
   const hasMoreComments = filteredComments.length > COMMENTS_PER_PAGE;
 
   const handleSubmitComment = async () => {
-    if (!newComment.trim()) return;
+    if (!post || !newComment.trim()) return;
+
+    // Check if user is authenticated
+    const token =
+      typeof window !== "undefined"
+        ? localStorage.getItem("access_token")
+        : null;
+    if (!token) {
+      window.location.href = `/login?redirect=/post/${post._id}`;
+      return;
+    }
 
     setIsSubmitting(true);
     try {
-      // Simulate comment submission - replace with actual API call
-      const newCommentObj: Comment = {
-        _id: Date.now().toString(),
-        content: newComment,
-        authorId: {
-          _id: "current-user",
-          name: "You",
-          email: "you@example.com",
-        },
-        createdAt: new Date().toISOString(),
-        likeCount: 0,
+      // Call actual API to create comment
+      const newCommentData = await createComment(post._id, newComment.trim());
+
+      // Cast to local Comment type
+      const newCommentTyped: Comment = {
+        ...newCommentData,
+        authorId: newCommentData.authorId as AuthorInfo,
       };
 
-      const updatedComments = [newCommentObj, ...comments];
+      const updatedComments = [newCommentTyped, ...comments];
       setComments(updatedComments);
       sortComments(updatedComments, sortBy);
       setNewComment("");
@@ -523,17 +582,6 @@ export default function PostDetailsPage({
             <ChevronLeft size={20} />
             <span className="text-sm font-medium">Back</span>
           </Link>
-          <div className="flex items-center gap-2">
-            <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-              <Bookmark size={20} className="text-gray-600" />
-            </button>
-            <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-              <Share2 size={20} className="text-gray-600" />
-            </button>
-            <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-              <MoreHorizontal size={20} className="text-gray-600" />
-            </button>
-          </div>
         </div>
       </nav>
 
@@ -625,6 +673,7 @@ export default function PostDetailsPage({
                 fill
                 className="object-cover"
                 priority
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 90vw, 1200px"
               />
             </div>
           )}
@@ -637,11 +686,7 @@ export default function PostDetailsPage({
                 <span className="font-medium">{post.viewCount || 0}</span>
                 <span className="text-gray-400">views</span>
               </div>
-              <div className="flex items-center gap-2 text-gray-600">
-                <Heart size={20} />
-                <span className="font-medium">{post.likeCount || 0}</span>
-                <span className="text-gray-400">likes</span>
-              </div>
+              <LikeButton postId={post._id} showCount={true} />
               <div className="flex items-center gap-2 text-gray-600">
                 <MessageSquare size={20} />
                 <span className="font-medium">{filteredComments.length}</span>
@@ -661,26 +706,35 @@ export default function PostDetailsPage({
 
         {/* Engagement Actions */}
         <div className="flex items-center gap-4 py-6 border-t border-b border-gray-100 mb-12">
-          <button className="flex items-center gap-2 px-6 py-3 bg-red-50 text-red-600 rounded-full hover:bg-red-100 transition-colors">
-            <Heart size={20} />
-            <span className="font-medium">{post.likeCount || 0}</span>
-          </button>
-          <button className="flex items-center gap-2 px-6 py-3 border border-gray-300 rounded-full hover:bg-gray-50 transition-colors">
+          <LikeButton postId={post._id} className="px-6 py-3" />
+          <button
+            onClick={() =>
+              document
+                .getElementById("comments")
+                ?.scrollIntoView({ behavior: "smooth" })
+            }
+            className="flex items-center gap-2 px-6 py-3 border border-gray-300 rounded-full hover:bg-gray-50 transition-colors"
+          >
             <MessageCircle size={20} className="text-gray-600" />
             <span className="font-medium text-gray-700">Comment</span>
           </button>
-          <button className="flex items-center gap-2 px-6 py-3 border border-gray-300 rounded-full hover:bg-gray-50 transition-colors">
-            <Share2 size={20} className="text-gray-600" />
-            <span className="font-medium text-gray-700">Share</span>
-          </button>
-          <button className="flex items-center gap-2 px-6 py-3 border border-gray-300 rounded-full hover:bg-gray-50 transition-colors ml-auto">
-            <Bookmark size={20} className="text-gray-600" />
-            <span className="font-medium text-gray-700">Save</span>
-          </button>
+          <ShareButton
+            postId={post._id}
+            postTitle={post.title}
+            postSlug={post.slug}
+            className="px-6 py-3"
+          />
+          <FollowButton
+            authorId={
+              typeof post.authorId === "string"
+                ? post.authorId
+                : post.authorId._id
+            }
+          />
         </div>
 
         {/* Comments Section */}
-        <section className="bg-gray-50 rounded-2xl p-8">
+        <section id="comments" className="bg-gray-50 rounded-2xl p-8">
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-2xl font-bold text-gray-900">
               Comments ({filteredComments.length})

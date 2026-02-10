@@ -19,6 +19,7 @@ import {
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { AlertDialog } from "@/components/ui/AlertDialog";
+import { ImageUpload } from "@/components/ui/ImageUpload";
 import { SuccessDialog } from "@/components/ui/SuccessDialog";
 import { useAuth } from "@/context/auth.provider";
 import TiptapEditor from "@/core/components/molecule/dashboard/editor/tipTapEditor";
@@ -41,6 +42,7 @@ function NewStoryContent() {
 
   const [postId, setPostId] = useState<string | null>(null);
   const [title, setTitle] = useState("");
+  const [coverImage, setCoverImage] = useState<string | undefined>(undefined);
   const [saveStatus, setSaveStatus] = useState<
     "Saved" | "Saving..." | "Draft" | "Published" | "Archived" | "Error"
   >("Draft");
@@ -61,6 +63,7 @@ function NewStoryContent() {
           if ("post" in response) {
             setPostId(response.post._id);
             setTitle(response.post.title || "");
+            setCoverImage(response.post.image);
             // Load content into editor if available
             if (editorRef.current && response.post.content) {
               editorRef.current.setContent(response.post.content);
@@ -74,7 +77,7 @@ function NewStoryContent() {
           // Creating new post
           const res: any = await fetcher.post("/posts", {
             title: "Untitled Story",
-            content: "",
+            content: "<p></p>", // Default empty content
             category: "General",
           });
           setPostId(res._id);
@@ -92,23 +95,47 @@ function NewStoryContent() {
   const handlePublish = async () => {
     if (!postId || !title.trim()) {
       setSaveStatus("Error");
+      alert("Please add a title before publishing!");
       return;
     }
+
+    // Get content as HTML for validation
+    const content = editorRef.current?.getHTML();
+    const isEmptyContent =
+      !content ||
+      content === "" ||
+      content === "<p></p>" ||
+      content === "<p><br></p>";
+
+    if (isEmptyContent) {
+      setSaveStatus("Error");
+      alert("Please add some content before publishing!");
+      return;
+    }
+
     setIsPublishing(true);
     try {
-      // Save any pending changes
-      const content = editorRef.current?.getJSON();
+      // Save any pending changes with autosave
       await fetcher.patch(`/posts/${postId}/autosave`, {
         content,
         title,
+        image: coverImage,
       });
-      // Then publish using the dedicated endpoint
-      await fetcher.patch(`/posts/${postId}/publish`, {});
+      // Publish using the dedicated endpoint with title and content
+      await fetcher.patch(`/posts/${postId}/publish`, {
+        title,
+        content,
+        image: coverImage,
+      });
       setSaveStatus("Published");
       setShowSuccess(true);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Publish failed", err);
       setSaveStatus("Error");
+      // Show user-friendly error
+      const errorMessage =
+        err.message || "Failed to publish. Please try again.";
+      alert(errorMessage);
     } finally {
       setIsPublishing(false);
     }
@@ -125,11 +152,13 @@ function NewStoryContent() {
     if (!postId) return;
     setSaveStatus("Saving...");
     try {
-      const content = editorRef.current?.getJSON();
+      // Get content as HTML
+      const content = editorRef.current?.getHTML();
       await fetcher.patch(`/posts/${postId}/autosave`, {
         content,
         title,
         status: "draft",
+        image: coverImage,
       });
       setSaveStatus("Draft");
     } catch (err) {
@@ -235,6 +264,16 @@ function NewStoryContent() {
           }}
           className="w-full text-4xl md:text-5xl font-serif font-bold outline-none mb-8 placeholder:text-gray-200 text-gray-900"
         />
+
+        {/* Cover Image */}
+        <div className="mb-8">
+          <ImageUpload
+            value={coverImage}
+            onChange={(value) => setCoverImage(value)}
+            onRemove={() => setCoverImage(undefined)}
+            disabled={isPublishing}
+          />
+        </div>
 
         {/* Editor */}
         {postId ? (

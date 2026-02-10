@@ -57,6 +57,16 @@ export function Feed() {
     e.preventDefault();
     e.stopPropagation();
 
+    // Check if user is authenticated
+    const token =
+      typeof window !== "undefined"
+        ? localStorage.getItem("access_token")
+        : null;
+    if (!token) {
+      window.location.href = `/login?redirect=/post/${postId}`;
+      return;
+    }
+
     await toggleLikeMutation.mutateAsync(postId);
 
     // Dispatch event to notify other components
@@ -81,6 +91,24 @@ export function Feed() {
 
   const getExcerpt = (content: any) => {
     if (!content) return "";
+
+    // Handle plain HTML string
+    if (typeof content === "string") {
+      // Strip all HTML tags
+      const stripped = content
+        .replace(/<[^>]*>?/gm, "")
+        .replace(/&nbsp;/g, " ")
+        .replace(/&amp;/g, "&")
+        .replace(/&lt;/g, "<")
+        .replace(/&gt;/g, ">")
+        .replace(/&quot;/g, '"')
+        .trim();
+
+      if (!stripped) return "";
+
+      // Truncate to 200 characters
+      return stripped.length > 200 ? `${stripped.slice(0, 200)}...` : stripped;
+    }
 
     // Handle TipTap JSON format
     if (content.content && Array.isArray(content.content)) {
@@ -357,14 +385,16 @@ export function Feed() {
                               />
                               {(post as any).likeCount || 0}
                             </button>
-                            <Link
-                              href={`/post/${post._id}#comments`}
-                              onClick={(e) => e.stopPropagation()}
-                              className="flex items-center gap-1.5 text-blue-600 hover:text-blue-700"
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                window.location.href = `/post/${post._id}#comments`;
+                              }}
+                              className="flex items-center gap-1.5 text-blue-600 hover:text-blue-700 cursor-pointer"
                             >
                               <MessageCircle className="w-4 h-4" />
                               {(post as any).commentCount || 0}
-                            </Link>
+                            </button>
                           </div>
                         </div>
                       </div>

@@ -1,30 +1,22 @@
 "use client";
 
-import {
-  Home,
-  Library,
-  LogOut,
-  Notebook,
-  TrendingUp,
-  User,
-  Users,
-} from "lucide-react";
+import { Home, LogOut, Notebook, TrendingUp, User } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useAuth } from "@/context/auth.provider";
 import { clearAuthData } from "@/core/lib/auth";
 
 const navigation = [
   { name: "Home", href: "/me", icon: Home },
-  { name: "Library", href: "/me/library", icon: Library },
-  { name: "Profile", href: "/profile", icon: User },
-  { name: "All Stories", href: "/me/stories", icon: Users },
-  { name: "My Stories", href: "/me/my-stories", icon: Notebook },
+  { name: "Stories", href: "/me/stories", icon: Notebook },
   { name: "Stats", href: "/me/stats", icon: TrendingUp },
+  { name: "Profile", href: "/me/profile", icon: User },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
+  const { user } = useAuth();
 
   const handleLogout = () => {
     clearAuthData();
@@ -35,11 +27,28 @@ export function Sidebar() {
     <div className="flex h-full w-64 flex-col bg-white border-r border-gray-100">
       {/* Logo */}
       <div className="p-8 border-b border-gray-100">
-        <Link href="/me" className="flex items-center gap-2">
+        <Link href="/" className="flex items-center gap-2">
           <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
             <span className="text-white font-bold text-lg">T</span>
           </div>
           <span className="font-bold text-xl text-gray-900">Taleon</span>
+        </Link>
+      </div>
+
+      {/* User Profile Section */}
+      <div className="p-4 border-b border-gray-100">
+        <Link
+          href="/me/profile"
+          className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors"
+        >
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-sm font-medium">
+            {user?.name?.[0]?.toUpperCase() || "U"}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-gray-900 truncate">
+              {user?.name || "User"}
+            </p>
+          </div>
         </Link>
       </div>
 

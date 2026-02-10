@@ -1,155 +1,240 @@
 "use client";
 
-import { AlertCircle, BookOpen } from "lucide-react";
+import { Loader2, MoreHorizontal } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useState } from "react";
-import { useAuth } from "@/context/auth.provider";
-import { StoryCard } from "@/core/components/molecule/dashboard/StoryCard";
-import { getToken } from "@/core/lib/auth";
-import { useDeleteStory, useStories } from "@/hook/useStories";
+import { useCallback, useEffect, useState } from "react";
+import { deletePost, getMyPosts } from "@/core/lib/api-client";
 
-export default function AllStoriesPage() {
-  const { user } = useAuth();
-  const router = useRouter();
-  const [error, setError] = useState("");
+// Types for Tiptap/ProseMirror JSON content
+interface TiptapNode {
+  type?: string;
+  text?: string;
+  content?: TiptapNode[];
+  attrs?: Record<string, unknown>;
+}
 
-  const tenantId = user?.tenantId || "";
-  const userId = user?.id || user?._id || "";
-  const token = getToken() || "";
+interface TiptapContent {
+  type?: string;
+  content?: TiptapNode[];
+  time?: number;
+  version?: string;
+}
 
-  const {
-    data: posts,
-    isLoading,
-    isError,
-  } = useStories({
-    tenantId,
-    userId,
-    token,
-  });
+// Recursively extract text from Tiptap/ProseMirror JSON nodes
+function extractTextFromTiptap(node: TiptapNode | undefined): string {
+  if (!node) return "";
 
-  const deleteMutation = useDeleteStory({
-    tenantId,
-    userId,
-    token,
-  });
+  // If node has text content, return it
+  if (node.text) return node.text;
 
-  const handleEdit = useCallback(
-    (post: any) => {
-      router.push(`/new-story?edit=${post._id}`);
-    },
-    [router],
-  );
-
-  const handleDelete = useCallback(
-    async (post: any) => {
-      if (confirm("Are you sure you want to delete this story?")) {
-        try {
-          await deleteMutation.mutateAsync(post._id);
-        } catch (err: any) {
-          setError(err.message || "Failed to delete story");
-        }
-      }
-    },
-    [deleteMutation],
-  );
-
-  const handleView = useCallback(
-    (post: any) => {
-      router.push(`/story/${post.slug}`);
-    },
-    [router],
-  );
-
-  if (!user) {
-    return (
-      <div className="max-w-5xl mx-auto px-6 py-10">
-        <div className="text-center py-20">
-          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <AlertCircle className="w-8 h-8 text-gray-400" />
-          </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
-            Please log in
-          </h3>
-          <p className="text-gray-500 mb-6">
-            You need to be logged in to view stories.
-          </p>
-          <Link
-            href="/login"
-            className="inline-flex items-center px-4 py-2 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800 transition-colors"
-          >
-            Log In
-          </Link>
-        </div>
-      </div>
-    );
+  // If node has nested content, recursively extract text from all children
+  if (node.content && Array.isArray(node.content)) {
+    return node.content
+      .map((child) => extractTextFromTiptap(child))
+      .filter(Boolean)
+      .join(" ");
   }
 
+  return "";
+}
+
+// Helper function to extract text from content (handles both string and Tiptap/ProseMirror JSON)
+function getPostExcerpt(
+  content: string | TiptapContent | null | undefined,
+): string {
+  if (!content) return "No content...";
+
+  // If content is a plain HTML string, strip all HTML tags
+  if (typeof content === "string") {
+    const stripped = content
+      .replace(/<[^>]*>?/gm, "")
+      .replace(/&nbsp;/g, " ")
+      .replace(/&amp;/g, "&")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&quot;/g, '"')
+      .trim();
+
+    if (!stripped) return "No content...";
+    return `${stripped.slice(0, 100)}...`;
+  }
+
+  // If content is a Tiptap/ProseMirror JSON object
+  if (typeof content === "object" && content !== null) {
+    // Handle Tiptap JSON format: { type: "doc", content: [...] }
+    if (Array.isArray(content.content)) {
+      const text = content.content
+        .map((node: TiptapNode) => extractTextFromTiptap(node))
+        .filter(Boolean)
+        .join(" ");
+
+      if (text) return `${text.slice(0, 100)}...`;
+    }
+
+    // Handle simple blocks format: { blocks: [...] }
+    if (Array.isArray((content as Record<string, unknown>).blocks)) {
+      const blocks = (content as Record<string, TiptapNode[]>).blocks;
+      const text = blocks
+        .map((block: TiptapNode) => extractTextFromTiptap(block))
+        .filter(Boolean)
+        .join(" ");
+
+      if (text) return `${text.slice(0, 100)}...`;
+    }
+  }
+
+  return "No content...";
+}
+
+export default function StoriesPage() {
+  const [posts, setPosts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<"drafts" | "published">("drafts");
+  const router = useRouter();
+
+  const loadMyPosts = useCallback(async () => {
+    try {
+      const data = await getMyPosts();
+      // The API returns { posts: [...], total: ... }
+      setPosts(data.posts || []);
+    } catch (error) {
+      console.error("Failed to load stories:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadMyPosts();
+  }, [loadMyPosts]);
+
+  const handleDelete = async (postId: string) => {
+    if (confirm("Are you sure you want to delete this story?")) {
+      try {
+        await deletePost(postId);
+        setPosts(posts.filter((p) => p._id !== postId));
+      } catch (error) {
+        alert("Failed to delete post");
+      }
+    }
+  };
+
+  // Filter posts based on status (assuming status field exists in post object from API)
+  // If status is not available, we might need to infer from the API response structure
+  const filteredPosts = posts.filter((post: any) => {
+    if (activeTab === "published")
+      return post.status === "published" || post.status === "public";
+    return (
+      post.status === "draft" || !post.status || post.status !== "published"
+    );
+  });
+
   return (
-    <div className="max-w-5xl mx-auto px-6 py-10">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">All Stories</h1>
-        <p className="text-gray-500 mt-1">Discover stories from all users</p>
-      </div>
-
-      {/* Error Message */}
-      {error && (
-        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm flex items-center gap-2">
-          <AlertCircle className="w-4 h-4" />
-          {error}
-        </div>
-      )}
-
-      {/* Loading State */}
-      {isLoading ? (
-        <div className="flex items-center justify-center py-20">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-        </div>
-      ) : isError ? (
-        <div className="text-center py-20">
-          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <AlertCircle className="w-8 h-8 text-red-400" />
-          </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
-            Failed to load stories
-          </h3>
-          <p className="text-gray-500 mb-6">Please try again later.</p>
-        </div>
-      ) : !posts?.posts || posts.posts.length === 0 ? (
-        <div className="text-center py-20">
-          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <BookOpen className="w-8 h-8 text-gray-400" />
-          </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
-            No stories yet
-          </h3>
-          <p className="text-gray-500 mb-6">
-            Be the first to share your story!
-          </p>
+    <div className="max-w-4xl mx-auto px-6 py-12">
+      <div className="flex items-center justify-between mb-8">
+        <h1 className="text-3xl font-bold font-serif text-gray-900">
+          Your stories
+        </h1>
+        <div className="flex gap-3">
           <Link
             href="/new-story"
-            className="inline-flex items-center px-4 py-2 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800 transition-colors"
+            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-full text-sm font-medium transition-colors"
           >
-            Write a Story
+            Write a story
           </Link>
+          <button className="px-4 py-2 border border-gray-300 rounded-full text-sm font-medium hover:border-gray-900 transition-colors">
+            Import a story
+          </button>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="flex gap-8 border-b border-gray-200 mb-8">
+        <button
+          onClick={() => setActiveTab("drafts")}
+          className={`pb-4 text-sm font-medium transition-colors ${
+            activeTab === "drafts"
+              ? "text-gray-900 border-b-2 border-gray-900"
+              : "text-gray-500 hover:text-gray-900"
+          }`}
+        >
+          Drafts {posts.filter((p: any) => p.status !== "published").length}
+        </button>
+        <button
+          onClick={() => setActiveTab("published")}
+          className={`pb-4 text-sm font-medium transition-colors ${
+            activeTab === "published"
+              ? "text-gray-900 border-b-2 border-gray-900"
+              : "text-gray-500 hover:text-gray-900"
+          }`}
+        >
+          Published {posts.filter((p: any) => p.status === "published").length}
+        </button>
+      </div>
+
+      {/* List */}
+      {loading ? (
+        <div className="flex justify-center py-12">
+          <Loader2 className="w-8 h-8 animate-spin text-gray-300" />
         </div>
       ) : (
-        <div className="grid gap-4">
-          {posts?.posts?.map((post) => (
-            <StoryCard
-              key={post._id}
-              post={post}
-              isOwner={
-                (typeof post.authorId === "object"
-                  ? post.authorId._id
-                  : post.authorId) === userId
-              }
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-              onView={handleView}
-            />
-          ))}
+        <div className="space-y-6">
+          {filteredPosts.length > 0 ? (
+            filteredPosts.map((post: any) => (
+              <div
+                key={post._id}
+                className="py-4 border-b border-gray-100 last:border-0"
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex-1 pr-4">
+                    <Link
+                      href={`/new-story?edit=${post._id}`}
+                      className="block group"
+                    >
+                      <h3 className="text-xl font-bold text-gray-900 mb-1 group-hover:underline decoration-gray-900 decoration-2 underline-offset-4">
+                        {post.title || "Untitled Story"}
+                      </h3>
+                      <p className="text-gray-500 text-sm mb-2 line-clamp-1">
+                        {getPostExcerpt(post.content)}
+                      </p>
+                    </Link>
+                    <div className="flex items-center gap-4 text-xs text-gray-500 mt-2">
+                      <span>
+                        Last edited{" "}
+                        {new Date(
+                          post.updatedAt || post.createdAt,
+                        ).toLocaleDateString()}
+                      </span>
+                      {post.status !== "published" && (
+                        <span className="bg-gray-100 px-2 py-0.5 rounded text-gray-600">
+                          Draft
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Link
+                      href={`/new-story?edit=${post._id}`}
+                      className="text-gray-400 hover:text-gray-900"
+                    >
+                      <MoreHorizontal className="w-5 h-5" />
+                    </Link>
+                    <button
+                      onClick={() => handleDelete(post._id)}
+                      className="text-gray-400 hover:text-red-600 transition-colors text-xs font-medium"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="py-12 text-center text-gray-500">
+              You have no {activeTab} stories.
+            </div>
+          )}
         </div>
       )}
     </div>

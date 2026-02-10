@@ -28,7 +28,9 @@ export function PublishButton({ postId }: { postId: string }) {
 
   const handleSuccessClose = () => {
     setShowSuccess(false);
-    router.push("/dashboard");
+    // Dispatch event to notify other components to refresh
+    window.dispatchEvent(new CustomEvent("post-published"));
+    router.push("/me");
   };
 
   return (
