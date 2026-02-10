@@ -51,14 +51,14 @@ export function RegisterForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
       {/* Name Field */}
       <div>
         <label className="block text-sm font-semibold mb-1">Full Name</label>
         <div className="relative">
           <input
             {...register("name")}
-            className="w-full rounded-xl pl-12 pr-4 py-3 border focus:ring-2"
+            className="w-full rounded-xl pl-12 pr-4 py-2 border focus:ring-2"
             placeholder="John Doe"
           />
           <User className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -75,7 +75,7 @@ export function RegisterForm() {
           <input
             {...register("email")}
             type="email"
-            className="w-full rounded-xl pl-12 pr-4 py-3 border focus:ring-2"
+            className="w-full rounded-xl pl-12 pr-4 py-2 border focus:ring-2"
             placeholder="email@example.com"
           />
           <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -92,7 +92,7 @@ export function RegisterForm() {
           <input
             {...register("password")}
             type="password"
-            className="w-full rounded-xl pl-12 pr-4 py-3 border focus:ring-2"
+            className="w-full rounded-xl pl-12 pr-4 py-2 border focus:ring-2"
             placeholder="••••••••"
           />
           <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -108,7 +108,7 @@ export function RegisterForm() {
         <div className="relative">
           <input
             {...register("blogName")}
-            className="w-full rounded-xl pl-12 pr-4 py-3 border focus:ring-2"
+            className="w-full rounded-xl pl-12 pr-4 py-2 border focus:ring-2"
             placeholder="Tech Chronicles"
           />
           <BookOpen className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
