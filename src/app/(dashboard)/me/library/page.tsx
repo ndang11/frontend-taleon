@@ -51,14 +51,12 @@ export default function LibraryPage() {
     }
   }, []);
 
-  // Load drafts on mount
   useEffect(() => {
     if (user) {
       loadDrafts();
     }
   }, [user, loadDrafts]);
 
-  // Load archived when tab changes
   useEffect(() => {
     if (activeTab === "archived" && !archivedData) {
       loadArchived();
