@@ -156,6 +156,7 @@ export function useCreateComment() {
         },
         postId,
         createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
         likeCount: 0,
       };
 

@@ -9,9 +9,13 @@ export interface User {
   _id?: string;
   email: string;
   name: string;
+  tenantId?: string;
   avatar?: string;
   coverImage?: string;
   bio?: string;
+  location?: string;
+  website?: string;
+  phone?: string;
 }
 
 export function setAuthData(data: AuthResponse) {

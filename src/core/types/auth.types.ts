@@ -16,5 +16,9 @@ export interface AuthResponse {
     tenantId: string;
     avatar?: string;
     coverImage?: string;
+    bio?: string;
+    location?: string;
+    website?: string;
+    phone?: string;
   };
 }

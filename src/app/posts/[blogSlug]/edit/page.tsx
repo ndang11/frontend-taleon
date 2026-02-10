@@ -11,6 +11,7 @@ export default function EditPage({ params }: { params: { blogSlug: string } }) {
   const [post, setPost] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [title, setTitle] = useState("");
+  const [initialContent, setInitialContent] = useState<any>(null);
   const [saveStatus, setSaveStatus] = useState<
     "Saved" | "Saving..." | "Draft" | "Published" | "Error"
   >("Draft");
@@ -33,6 +34,14 @@ export default function EditPage({ params }: { params: { blogSlug: string } }) {
         if ("post" in response) {
           setPost(response.post);
           setTitle(response.post.title || "");
+          // Parse content - it could be a JSON string or already an object
+          if (response.post.content) {
+            const content =
+              typeof response.post.content === "string"
+                ? JSON.parse(response.post.content)
+                : response.post.content;
+            setInitialContent(content);
+          }
         } else {
           setShowPostNotFound(true);
         }
@@ -91,6 +100,8 @@ export default function EditPage({ params }: { params: { blogSlug: string } }) {
 
         <TiptapEditor
           postId={post._id}
+          initialContent={initialContent}
+          contentFormat="json"
           onStatusChange={setSaveStatus}
           onWordCountChange={setWordCount}
           onReady={() => {}}

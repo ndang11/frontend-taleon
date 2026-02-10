@@ -5,7 +5,7 @@ import type {
 } from "../../core/types/auth.types";
 
 const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
+  process.env.NEXT_PUBLIC_API_URL || "https://taleon-sijl.onrender.com/api";
 
 export function getAuthHeaders(): Record<string, string> {
   if (typeof window === "undefined")
@@ -783,14 +783,16 @@ export async function toggleLike(postId: string): Promise<LikeResponse> {
 }
 
 export async function getLikeCount(postId: string): Promise<number> {
-  const response = await fetch(`${API_BASE_URL}/likes/post/${postId}/count`);
+  const response = await fetch(`${API_BASE_URL}/likes/post/${postId}/count`, {
+    headers: getAuthHeaders(),
+  });
 
   if (!response.ok) {
     return 0;
   }
 
   const data = await response.json();
-  return data || 0;
+  return data?.likeCount ?? 0;
 }
 
 export async function hasUserLiked(postId: string): Promise<boolean> {
@@ -803,7 +805,7 @@ export async function hasUserLiked(postId: string): Promise<boolean> {
   }
 
   const data = await response.json();
-  return data || false;
+  return data?.liked ?? false;
 }
 
 export async function incrementView(
@@ -832,6 +834,7 @@ export interface Comment {
   postId: string;
   createdAt: string;
   updatedAt: string;
+  likeCount?: number;
 }
 
 /**
@@ -1038,7 +1041,7 @@ export async function unfollowUser(
 export async function isFollowing(
   userId: string,
 ): Promise<{ isFollowing: boolean }> {
-  const response = await fetch(`${API_BASE_URL}/follows/${userId}/status`, {
+  const response = await fetch(`${API_BASE_URL}/follows/check/${userId}`, {
     headers: getAuthHeaders(),
   });
 
@@ -1340,3 +1343,105 @@ export const mapPostData = (data: any): Post => {
     id: data._id, // Map _id to id
   };
 };
+
+// ============================================
+// Notifications
+// ============================================
+
+export interface Notification {
+  _id: string;
+  userId: string;
+  fromUserId?: {
+    _id: string;
+    name: string;
+    avatar?: string;
+  };
+  type: "like" | "comment" | "follow";
+  postId?: {
+    _id: string;
+    title: string;
+  };
+  message: string;
+  isRead: boolean;
+  createdAt: string;
+}
+
+export interface NotificationsResponse {
+  notifications: Notification[];
+  unreadCount: number;
+}
+
+export async function getNotifications(): Promise<NotificationsResponse> {
+  const response = await fetch(`${API_BASE_URL}/notifications`, {
+    headers: getAuthHeaders(),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch notifications");
+  }
+
+  return response.json();
+}
+
+export async function getUnreadCount(): Promise<{ count: number }> {
+  const response = await fetch(`${API_BASE_URL}/notifications/count`, {
+    headers: getAuthHeaders(),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch unread count");
+  }
+
+  return response.json();
+}
+
+export async function markNotificationAsRead(
+  notificationId: string,
+): Promise<{ unreadCount: number }> {
+  const response = await fetch(
+    `${API_BASE_URL}/notifications/${notificationId}/read`,
+    {
+      method: "POST",
+      headers: getAuthHeaders(),
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed to mark notification as read");
+  }
+
+  return response.json();
+}
+
+export async function markAllNotificationsAsRead(): Promise<{
+  success: boolean;
+}> {
+  const response = await fetch(`${API_BASE_URL}/notifications/read-all`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to mark all notifications as read");
+  }
+
+  return response.json();
+}
+
+export async function deleteNotification(
+  notificationId: string,
+): Promise<{ success: boolean }> {
+  const response = await fetch(
+    `${API_BASE_URL}/notifications/${notificationId}`,
+    {
+      method: "DELETE",
+      headers: getAuthHeaders(),
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed to delete notification");
+  }
+
+  return response.json();
+}

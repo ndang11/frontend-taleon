@@ -4,8 +4,10 @@ import { Search, SquarePen, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import type React from "react";
 import { useEffect, useRef, useState } from "react";
-import { AuthProvider, useAuth } from "@/context/auth.provider";
+import { useAuth } from "@/context/auth.provider";
+import { NotificationDropdown } from "@/core/components/molecule/dashboard/NotificationDropdown";
 import { Sidebar } from "@/core/components/molecule/Sidebar";
 import type { Post } from "@/core/lib/api-client";
 import { useMyPosts, usePublishedPosts } from "@/hook/useStories";
@@ -31,9 +33,54 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
     (post, index, self) => index === self.findIndex((p) => p._id === post._id),
   );
 
-  const filteredStories = uniquePosts.filter((story) =>
-    story.title?.toLowerCase().includes(searchQuery.toLowerCase()),
-  );
+  const filteredStories = uniquePosts
+    .filter((story) => {
+      const query = searchQuery.toLowerCase();
+      const title = story.title?.toLowerCase() || "";
+      const content =
+        story.content?.blocks
+          ?.map((block: any) => block.data?.text || "")
+          .join(" ")
+          .toLowerCase() || "";
+      return title.includes(query) || content.includes(query);
+    })
+    .sort((a, b) => {
+      const query = searchQuery.toLowerCase();
+      const aTitle = a.title?.toLowerCase() || "";
+      const bTitle = b.title?.toLowerCase() || "";
+      const aContent =
+        a.content?.blocks
+          ?.map((block: any) => block.data?.text || "")
+          .join(" ")
+          .toLowerCase() || "";
+      const bContent =
+        b.content?.blocks
+          ?.map((block: any) => block.data?.text || "")
+          .join(" ")
+          .toLowerCase() || "";
+
+      const aTitleMatch = aTitle.includes(query);
+      const bTitleMatch = bTitle.includes(query);
+      const aContentMatch = aContent.includes(query);
+      const bContentMatch = bContent.includes(query);
+
+      // Title matches before content matches
+      if (aTitleMatch && !bTitleMatch) return -1;
+      if (!aTitleMatch && bTitleMatch) return 1;
+
+      // Exact title match first
+      if (aTitle === query) return -1;
+      if (bTitle === query) return 1;
+
+      // Title starts with query
+      const aTitleStarts = aTitle.startsWith(query);
+      const bTitleStarts = bTitle.startsWith(query);
+      if (aTitleStarts && !bTitleStarts) return -1;
+      if (!aTitleStarts && bTitleStarts) return 1;
+
+      // Alphabetical by title
+      return aTitle.localeCompare(bTitle);
+    });
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -77,7 +124,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
           {/* Search Bar */}
           <div className="flex-1 max-w-md" ref={searchRef}>
             <div className="relative">
-              <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input
                 type="text"
                 placeholder="Search stories..."
@@ -87,30 +134,30 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                   setShowResults(e.target.value.length > 0);
                 }}
                 onFocus={() => searchQuery.length > 0 && setShowResults(true)}
-                className="w-full pl-4 pr-10 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all"
+                className="w-full pl-4 pr-10 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 placeholder-gray-400"
               />
 
               {/* Search Results Dropdown */}
               {showResults && searchQuery.length > 0 && (
-                <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg max-h-80 overflow-y-auto z-50">
+                <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-xl max-h-80 overflow-y-auto z-50 divide-y divide-gray-100">
                   {filteredStories.length > 0 ? (
                     filteredStories.slice(0, 10).map((story: any) => (
                       <button
                         key={story._id}
                         type="button"
                         onClick={() => handleStoryClick(story)}
-                        className="w-full px-4 py-3 text-left hover:bg-gray-50 border-b border-gray-100 last:border-b-0 transition-colors"
+                        className="w-full px-4 py-3 text-left hover:bg-gray-50 transition-all duration-200 first:rounded-t-xl last:rounded-b-xl"
                       >
-                        <p className="text-sm font-medium text-gray-900 truncate">
+                        <p className="text-sm font-semibold text-gray-900 truncate leading-tight">
                           {story.title || "Untitled"}
                         </p>
-                        <p className="text-xs text-gray-500 mt-0.5">
+                        <p className="text-xs text-gray-600 mt-1 font-medium">
                           by {getAuthorName(story)}
                         </p>
                       </button>
                     ))
                   ) : (
-                    <div className="px-4 py-3 text-sm text-gray-500">
+                    <div className="px-4 py-3 text-sm text-gray-500 text-center">
                       No stories found matching "{searchQuery}"
                     </div>
                   )}
@@ -120,6 +167,9 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
           </div>
 
           <div className="flex items-center space-x-4">
+            {/* Notifications */}
+            <NotificationDropdown />
+
             {/* Write Button */}
             <Link
               href="/new-story"
@@ -129,10 +179,29 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
               Write
             </Link>
 
-            {/* User Avatar */}
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-sm font-medium">
-              {user?.name?.[0]?.toUpperCase() || "U"}
-            </div>
+            {/* User Profile */}
+            <Link
+              href="/me/profile"
+              className="flex items-center gap-2 p-1 rounded-full hover:bg-gray-100 transition-colors border border-gray-200"
+              title="Profile"
+            >
+              {user?.avatar ? (
+                <div className="w-8 h-8 rounded-full overflow-hidden relative">
+                  <Image
+                    src={user.avatar}
+                    alt={user.name || "User"}
+                    fill
+                    className="object-cover"
+                    sizes="32px"
+                    unoptimized
+                  />
+                </div>
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-sm font-medium">
+                  {user?.name?.[0]?.toUpperCase() || "U"}
+                </div>
+              )}
+            </Link>
           </div>
         </header>
 
@@ -141,30 +210,34 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
           <div className="max-w-4xl mx-auto px-6 py-8">
             {/* Selected Story from Search */}
             {selectedStory && (
-              <div className="mb-8 bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+              <div className="mb-8 bg-white border border-gray-200 rounded-2xl shadow-lg overflow-hidden">
                 {/* Story Header */}
-                <div className="p-6 border-b border-gray-100">
+                <div className="p-8 border-b border-gray-100">
                   <div className="flex items-start justify-between">
                     <div>
-                      <p className="text-xs text-blue-600 uppercase tracking-wide font-medium mb-2">
+                      <p className="text-xs text-blue-600 uppercase tracking-wide font-semibold mb-3">
                         Search Result
                       </p>
-                      <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                      <h1 className="text-4xl font-bold text-gray-900 mb-3 leading-tight">
                         {selectedStory.title || "Untitled"}
                       </h1>
                       {selectedStory.subtitle && (
-                        <p className="text-lg text-gray-600 mb-3">
+                        <p className="text-xl text-gray-600 mb-4 leading-relaxed">
                           {selectedStory.subtitle}
                         </p>
                       )}
-                      <div className="flex items-center gap-4 text-sm text-gray-500">
-                        <span>by {getAuthorName(selectedStory)}</span>
+                      <div className="flex items-center gap-6 text-sm text-gray-500">
+                        <span className="flex items-center gap-2">
+                          <span className="font-medium">
+                            by {getAuthorName(selectedStory)}
+                          </span>
+                        </span>
                         <span>•</span>
                         <span>{selectedStory.readingTime || 1} min read</span>
                         {selectedStory.publishedAt && (
                           <>
                             <span>•</span>
-                            <span>
+                            <span className="font-medium">
                               {new Date(
                                 selectedStory.publishedAt,
                               ).toLocaleDateString()}
@@ -176,16 +249,16 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                     <button
                       type="button"
                       onClick={clearSelectedStory}
-                      className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                      className="p-3 hover:bg-gray-100 rounded-full transition-colors duration-200"
                     >
-                      <X className="w-5 h-5 text-gray-500" />
+                      <X className="w-6 h-6 text-gray-500" />
                     </button>
                   </div>
                 </div>
 
                 {/* Story Content */}
-                <div className="p-6">
-                  <div className="prose prose-gray max-w-none">
+                <div className="p-8">
+                  <div className="prose prose-lg prose-gray max-w-none">
                     {selectedStory.content?.blocks?.map((block: any) => {
                       const blockKey =
                         block.id ||
@@ -194,7 +267,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                         return (
                           <p
                             key={blockKey}
-                            className="text-gray-700 leading-relaxed mb-4"
+                            className="text-gray-700 leading-relaxed mb-6 text-lg"
                           >
                             {block.data?.text || ""}
                           </p>
@@ -202,11 +275,11 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                       }
                       if (block.type === "header") {
                         const HeadingTag =
-                          `h${block.data?.level || 2}` as keyof JSX.IntrinsicElements;
+                          `h${block.data?.level || 2}` as keyof React.JSX.IntrinsicElements;
                         return (
                           <HeadingTag
                             key={blockKey}
-                            className="font-bold text-gray-900 mt-6 mb-3"
+                            className="font-bold text-gray-900 mt-8 mb-4 leading-tight"
                           >
                             {block.data?.text || ""}
                           </HeadingTag>
@@ -218,10 +291,12 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                         return (
                           <ListTag
                             key={blockKey}
-                            className="list-inside mb-4 text-gray-700"
+                            className="list-inside mb-6 text-gray-700 text-lg leading-relaxed"
                           >
                             {block.data?.items?.map((item: string) => (
-                              <li key={item}>{item}</li>
+                              <li key={item} className="mb-2">
+                                {item}
+                              </li>
                             ))}
                           </ListTag>
                         );
@@ -235,7 +310,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                             alt={block.data?.caption || "Story image"}
                             width={800}
                             height={450}
-                            className="rounded-lg my-4 max-w-full h-auto"
+                            className="rounded-xl my-8 max-w-full h-auto shadow-md"
                             unoptimized
                           />
                         ) : null;
@@ -246,21 +321,32 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                 </div>
 
                 {/* Story Footer */}
-                <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
-                  <div className="flex items-center gap-4 text-sm text-gray-500">
+                <div className="px-8 py-6 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
+                  <div className="flex items-center gap-6 text-sm text-gray-600">
                     {selectedStory.viewCount !== undefined && (
-                      <span>{selectedStory.viewCount} views</span>
+                      <span className="flex items-center gap-2">
+                        <span className="font-semibold">
+                          {selectedStory.viewCount}
+                        </span>{" "}
+                        views
+                      </span>
                     )}
                     {selectedStory.likeCount !== undefined && (
-                      <span>{selectedStory.likeCount} likes</span>
+                      <span className="flex items-center gap-2">
+                        <span className="font-semibold">
+                          {selectedStory.likeCount}
+                        </span>{" "}
+                        likes
+                      </span>
                     )}
                   </div>
-                  <Link
-                    href={`/story/${selectedStory.slug}`}
-                    className="inline-flex items-center px-4 py-2 bg-black text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors"
+                  <button
+                    type="button"
+                    onClick={() => router.push(`/story/${selectedStory.slug}`)}
+                    className="inline-flex items-center px-6 py-3 bg-black text-white rounded-xl text-sm font-semibold hover:bg-gray-800 transition-colors duration-200 shadow-md"
                   >
-                    Open Full Page
-                  </Link>
+                    View Details
+                  </button>
                 </div>
               </div>
             )}
@@ -277,9 +363,5 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <AuthProvider>
-      <DashboardContent>{children}</DashboardContent>
-    </AuthProvider>
-  );
+  return <DashboardContent>{children}</DashboardContent>;
 }

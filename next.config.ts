@@ -15,6 +15,10 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "**.cloudinary.com",
       },
+      {
+        protocol: "http",
+        hostname: "localhost",
+      },
     ],
   },
   transpilePackages: [
