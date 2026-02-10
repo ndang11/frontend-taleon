@@ -43,7 +43,7 @@ export function NotificationDropdown() {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const API_BASE_URL =
-    process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
+    process.env.NEXT_PUBLIC_API_URL || "https://taleon-sijl.onrender.com/api";
 
   const getAuthHeaders = () => {
     const token = localStorage.getItem("access_token");

@@ -32,7 +32,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         if (userId) {
           const API_BASE_URL =
-            process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
+            process.env.NEXT_PUBLIC_API_URL ||
+            "https://taleon-sijl.onrender.com/api";
           const response = await fetch(`${API_BASE_URL}/users/${userId}`, {
             headers: {
               Authorization: `Bearer ${token}`,
