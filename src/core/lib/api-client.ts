@@ -353,8 +353,8 @@ export async function publishPost(postId: string): Promise<Post> {
 }
 
 /**
- * Update a post (PUT)
- * PUT /posts/:id
+ * Update a post (PATCH)
+ * PATCH /posts/:id
  */
 export async function updatePost(
   postId: string,
@@ -367,7 +367,7 @@ export async function updatePost(
   },
 ): Promise<Post> {
   const response = await fetch(`${API_BASE_URL}/posts/${postId}`, {
-    method: "PUT",
+    method: "PATCH",
     headers: getAuthHeaders(),
     body: JSON.stringify(updates),
   });
