@@ -874,6 +874,28 @@ export async function getComments(postId: string): Promise<Comment[]> {
   return response.json();
 }
 
+/**
+ * Delete a comment
+ * DELETE /comments/:id
+ */
+export async function deleteComment(
+  commentId: string,
+): Promise<{ success: boolean }> {
+  const response = await fetch(`${API_BASE_URL}/comments/${commentId}`, {
+    method: "DELETE",
+    headers: getAuthHeaders(),
+  });
+
+  if (!response.ok) {
+    const error = await response
+      .json()
+      .catch(() => ({ message: "Failed to delete comment" }));
+    throw new Error(error.message || "Failed to delete comment");
+  }
+
+  return response.json();
+}
+
 export interface UserProfile {
   _id: string;
   name: string;
