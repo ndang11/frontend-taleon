@@ -33,7 +33,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (userId) {
           const API_BASE_URL =
             process.env.NEXT_PUBLIC_API_URL ||
-            "https://taleon-sijl.onrender.com/api";
+            "https://taleon-7rwt.onrender.com/api";
           const response = await fetch(`${API_BASE_URL}/users/${userId}`, {
             headers: {
               Authorization: `Bearer ${token}`,
