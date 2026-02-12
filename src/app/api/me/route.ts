@@ -10,7 +10,7 @@ export async function GET(request: Request) {
   const payload = JSON.parse(Buffer.from(parts[1], "base64").toString());
   const tenantId = payload.tenantId;
   const API_BASE_URL =
-    process.env.NEXT_PUBLIC_API_URL || "https://taleon-sijl.onrender.com";
+    process.env.NEXT_PUBLIC_API_URL || "https://taleon-7rwt.onrender.com";
   try {
     const response = await fetch(`${API_BASE_URL}/api/users/me`, {
       headers: {
@@ -45,7 +45,7 @@ export async function PUT(request: Request) {
   const payload = JSON.parse(Buffer.from(parts[1], "base64").toString());
   const tenantId = payload.tenantId;
   const API_BASE_URL =
-    process.env.NEXT_PUBLIC_API_URL || "https://taleon-sijl.onrender.com";
+    process.env.NEXT_PUBLIC_API_URL || "https://taleon-7rwt.onrender.com";
   const body = await request.json();
   try {
     const response = await fetch(`${API_BASE_URL}/api/users/me`, {

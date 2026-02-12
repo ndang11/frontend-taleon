@@ -5,7 +5,7 @@ import type {
 } from "../../core/types/auth.types";
 
 const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "https://taleon-sijl.onrender.com/api";
+  process.env.NEXT_PUBLIC_API_URL || "https://taleon-7rwt.onrender.com/api";
 
 export function getAuthHeaders(): Record<string, string> {
   if (typeof window === "undefined")
