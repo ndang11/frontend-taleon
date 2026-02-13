@@ -313,7 +313,6 @@ export async function autoSave(
     console.warn("Autosave attempt without Token!");
   }
 
-  // Ensure content is never undefined - convert to empty string if needed
   const safeContent = content === undefined ? "" : content;
   const safeTitle = title === undefined ? "" : title;
 
