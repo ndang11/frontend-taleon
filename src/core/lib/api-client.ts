@@ -316,6 +316,16 @@ export async function autoSave(
   const safeContent = content === undefined ? "" : content;
   const safeTitle = title === undefined ? "" : title;
 
+  console.log("[autoSave] Saving post:", postId);
+  console.log("[autoSave] Title:", safeTitle);
+  console.log("[autoSave] Content type:", typeof safeContent);
+  console.log(
+    "[autoSave] Content preview:",
+    typeof safeContent === "string"
+      ? safeContent.substring(0, 100)
+      : JSON.stringify(safeContent).substring(0, 100),
+  );
+
   const response = await fetch(`${API_BASE_URL}/posts/${postId}/autosave`, {
     method: "PATCH",
     headers: headers,
@@ -326,12 +336,14 @@ export async function autoSave(
     const error = await response
       .json()
       .catch(() => ({ message: "Autosave failed" }));
+    console.error("[autoSave] Failed:", error);
     const err = new Error(error.message || "Autosave failed");
     (err as any).status = response.status;
     throw err;
   }
 
   const text = await response.text();
+  console.log("[autoSave] Success:", text ? "yes" : "no response body");
   return text ? JSON.parse(text) : {};
 }
 
