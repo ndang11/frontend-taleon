@@ -42,7 +42,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
           if (response.ok) {
             const freshUser = await response.json();
-            // Update cookie with fresh data
             Cookies.set("auth_user", JSON.stringify(freshUser), { expires: 7 });
             setUser(freshUser);
             return;
