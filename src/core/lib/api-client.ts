@@ -319,12 +319,22 @@ export async function autoSave(
   console.log("[autoSave] Saving post:", postId);
   console.log("[autoSave] Title:", safeTitle);
   console.log("[autoSave] Content type:", typeof safeContent);
-  console.log(
-    "[autoSave] Content preview:",
-    typeof safeContent === "string"
-      ? safeContent.substring(0, 100)
-      : JSON.stringify(safeContent).substring(0, 100),
-  );
+
+  // Safely get content preview - avoid substring on undefined
+  const getContentPreview = (): string => {
+    if (safeContent === null) return "null";
+    if (typeof safeContent === "string") {
+      return safeContent.substring(0, 100) || "(empty string)";
+    }
+    try {
+      const jsonStr = JSON.stringify(safeContent);
+      return jsonStr.substring(0, 100) || "(empty object)";
+    } catch {
+      return "(non-serializable content)";
+    }
+  };
+
+  console.log("[autoSave] Content preview:", getContentPreview());
 
   const response = await fetch(`${API_BASE_URL}/posts/${postId}/autosave`, {
     method: "PATCH",

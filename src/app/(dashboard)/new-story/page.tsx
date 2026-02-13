@@ -99,7 +99,7 @@ function NewStoryContent() {
       return;
     }
 
-    // Get content as HTML for validation
+    // Get content as HTML from editor
     const content = editorRef.current?.getHTML();
     const isEmptyContent =
       !content ||
@@ -115,18 +115,27 @@ function NewStoryContent() {
 
     setIsPublishing(true);
     try {
-      // Save any pending changes with autosave
+      // CRITICAL: Save content with title FIRST before publishing
+      // This ensures the content is saved in HTML format
+      console.log(
+        "[handlePublish] Saving content to database:",
+        content.substring(0, 100),
+      );
       await fetcher.patch(`/posts/${postId}/autosave`, {
         content,
         title,
         image: coverImage,
       });
-      // Publish using the dedicated endpoint with title and content
+      console.log("[handlePublish] Content saved successfully");
+
+      // Now publish the post
       await fetcher.patch(`/posts/${postId}/publish`, {
         title,
         content,
         image: coverImage,
       });
+      console.log("[handlePublish] Post published successfully");
+
       setSaveStatus("Published");
       setShowSuccess(true);
     } catch (err: any) {
