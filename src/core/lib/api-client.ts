@@ -313,10 +313,14 @@ export async function autoSave(
     console.warn("Autosave attempt without Token!");
   }
 
+  // Ensure content is never undefined - convert to empty string if needed
+  const safeContent = content === undefined ? "" : content;
+  const safeTitle = title === undefined ? "" : title;
+
   const response = await fetch(`${API_BASE_URL}/posts/${postId}/autosave`, {
     method: "PATCH",
     headers: headers,
-    body: JSON.stringify({ content, title }),
+    body: JSON.stringify({ content: safeContent, title: safeTitle }),
   });
 
   if (!response.ok) {
@@ -337,6 +341,10 @@ export async function autoSave(
  * PATCH /posts/:id/publish
  */
 export async function publishPost(postId: string): Promise<Post> {
+  if (!postId) {
+    throw new Error("Post ID is required for publishing");
+  }
+
   const response = await fetch(`${API_BASE_URL}/posts/${postId}/publish`, {
     method: "PATCH",
     headers: getAuthHeaders(),
