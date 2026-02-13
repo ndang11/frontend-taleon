@@ -8,11 +8,13 @@ const AuthContext = createContext<{
   user: User | null;
   setUser: (user: User | null) => void;
   refreshUser: () => Promise<void>;
+  logout: () => void;
   isLoading: boolean;
 }>({
   user: null,
   setUser: () => {},
   refreshUser: async () => {},
+  logout: () => {},
   isLoading: true,
 });
 
@@ -64,6 +66,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const logout = () => {
+    Cookies.remove("access_token");
+    Cookies.remove("auth_user");
+    setUser(null);
+  };
+
   useEffect(() => {
     const userCookie = Cookies.get("auth_user");
     try {
@@ -75,7 +83,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, setUser, refreshUser, isLoading }}>
+    <AuthContext.Provider
+      value={{ user, setUser, refreshUser, logout, isLoading }}
+    >
       {children}
     </AuthContext.Provider>
   );
