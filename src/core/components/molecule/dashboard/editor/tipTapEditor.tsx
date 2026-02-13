@@ -168,7 +168,7 @@ export default function TiptapEditor({
       const currentTitle =
         (
           document.querySelector(
-            'input[placeholder="Tell your story..."]',
+            'input[placeholder="Title"]',
           ) as HTMLInputElement
         )?.value || "";
 

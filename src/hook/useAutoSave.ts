@@ -23,12 +23,20 @@ export function useEditorAutosave(
           let contentString: string;
           if (format === "json") {
             contentString =
-              typeof content === "string" ? content : JSON.stringify(content);
+              typeof content === "string"
+                ? content
+                : JSON.stringify(content || {});
           } else {
             contentString =
               typeof content === "string"
                 ? content
-                : (content as any).html || JSON.stringify(content, null, 2);
+                : (content as any)?.html ||
+                  JSON.stringify(content || {}, null, 2);
+          }
+
+          // Ensure contentString is not undefined
+          if (!contentString) {
+            contentString = "";
           }
 
           await autoSave(postId, contentString, title);
