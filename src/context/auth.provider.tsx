@@ -24,7 +24,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const token = localStorage.getItem("access_token");
     const userCookie = Cookies.get("auth_user");
 
-    // Try to get fresh user data from backend
     if (token && userCookie && userCookie !== "undefined") {
       try {
         const parsedUser = JSON.parse(userCookie);
