@@ -8,11 +8,13 @@ const AuthContext = createContext<{
   user: User | null;
   setUser: (user: User | null) => void;
   refreshUser: () => Promise<void>;
+  logout: () => void;
   isLoading: boolean;
 }>({
   user: null,
   setUser: () => {},
   refreshUser: async () => {},
+  logout: () => {},
   isLoading: true,
 });
 
@@ -24,7 +26,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const token = localStorage.getItem("access_token");
     const userCookie = Cookies.get("auth_user");
 
-    // Try to get fresh user data from backend
     if (token && userCookie && userCookie !== "undefined") {
       try {
         const parsedUser = JSON.parse(userCookie);
@@ -42,7 +43,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
           if (response.ok) {
             const freshUser = await response.json();
-            // Update cookie with fresh data
             Cookies.set("auth_user", JSON.stringify(freshUser), { expires: 7 });
             setUser(freshUser);
             return;
@@ -66,6 +66,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const logout = () => {
+    Cookies.remove("access_token");
+    Cookies.remove("auth_user");
+    setUser(null);
+  };
+
   useEffect(() => {
     const userCookie = Cookies.get("auth_user");
     try {
@@ -77,7 +83,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, setUser, refreshUser, isLoading }}>
+    <AuthContext.Provider
+      value={{ user, setUser, refreshUser, logout, isLoading }}
+    >
       {children}
     </AuthContext.Provider>
   );

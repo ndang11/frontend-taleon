@@ -313,22 +313,47 @@ export async function autoSave(
     console.warn("Autosave attempt without Token!");
   }
 
+  const safeContent = content === undefined ? "" : content;
+  const safeTitle = title === undefined ? "" : title;
+
+  console.log("[autoSave] Saving post:", postId);
+  console.log("[autoSave] Title:", safeTitle);
+  console.log("[autoSave] Content type:", typeof safeContent);
+
+  // Safely get content preview - avoid substring on undefined
+  const getContentPreview = (): string => {
+    if (safeContent === null) return "null";
+    if (typeof safeContent === "string") {
+      return safeContent.substring(0, 100) || "(empty string)";
+    }
+    try {
+      const jsonStr = JSON.stringify(safeContent);
+      return jsonStr.substring(0, 100) || "(empty object)";
+    } catch {
+      return "(non-serializable content)";
+    }
+  };
+
+  console.log("[autoSave] Content preview:", getContentPreview());
+
   const response = await fetch(`${API_BASE_URL}/posts/${postId}/autosave`, {
     method: "PATCH",
     headers: headers,
-    body: JSON.stringify({ content, title }),
+    body: JSON.stringify({ content: safeContent, title: safeTitle }),
   });
 
   if (!response.ok) {
     const error = await response
       .json()
       .catch(() => ({ message: "Autosave failed" }));
+    console.error("[autoSave] Failed:", error);
     const err = new Error(error.message || "Autosave failed");
     (err as any).status = response.status;
     throw err;
   }
 
   const text = await response.text();
+  console.log("[autoSave] Success:", text ? "yes" : "no response body");
   return text ? JSON.parse(text) : {};
 }
 
@@ -337,6 +362,10 @@ export async function autoSave(
  * PATCH /posts/:id/publish
  */
 export async function publishPost(postId: string): Promise<Post> {
+  if (!postId) {
+    throw new Error("Post ID is required for publishing");
+  }
+
   const response = await fetch(`${API_BASE_URL}/posts/${postId}/publish`, {
     method: "PATCH",
     headers: getAuthHeaders(),
@@ -748,7 +777,14 @@ export async function getPost(
     throw new Error(error.error || "Failed to fetch post");
   }
 
-  return response.json();
+  const data = await response.json();
+
+  // Apply mapPostData to ensure content is parsed
+  if (data.post) {
+    return { post: mapPostData(data.post) };
+  }
+
+  return { post: mapPostData(data) };
 }
 
 export interface LikeResponse {
@@ -1354,9 +1390,24 @@ export async function fetchPublicPosts(
  * Transforms backend response to match Post interface perfectly
  */
 export const mapPostData = (data: any): Post => {
+  // Handle content parsing - if content is a JSON string, parse it
+  let parsedContent = data.content;
+  if (typeof data.content === "string") {
+    try {
+      const parsed = JSON.parse(data.content);
+      // Check if it looks like TipTap JSON (has type: 'doc')
+      if (parsed && (parsed.type === "doc" || parsed.content)) {
+        parsedContent = parsed;
+      }
+    } catch {
+      // Not valid JSON, keep as string
+    }
+  }
+
   return {
     ...data,
     id: data._id, // Map _id to id
+    content: parsedContent,
   };
 };
 

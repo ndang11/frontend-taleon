@@ -50,11 +50,20 @@ export default function EditPostPage() {
           setCoverImage(loadedPost.image || null);
 
           if (loadedPost.content) {
-            const content =
-              typeof loadedPost.content === "string"
-                ? JSON.parse(loadedPost.content)
-                : loadedPost.content;
-            setInitialContent(content);
+            try {
+              const content =
+                typeof loadedPost.content === "string"
+                  ? JSON.parse(loadedPost.content)
+                  : loadedPost.content;
+              setInitialContent(content);
+            } catch (e) {
+              // If JSON parsing fails, use the content as-is (it might be HTML)
+              console.warn(
+                "Failed to parse content as JSON, using as-is:",
+                loadedPost.content,
+              );
+              setInitialContent(loadedPost.content);
+            }
           }
         } else if (postData._id) {
           setPost(postData);
@@ -62,11 +71,20 @@ export default function EditPostPage() {
           setCoverImage(postData.image || null);
 
           if (postData.content) {
-            const content =
-              typeof postData.content === "string"
-                ? JSON.parse(postData.content)
-                : postData.content;
-            setInitialContent(content);
+            try {
+              const content =
+                typeof postData.content === "string"
+                  ? JSON.parse(postData.content)
+                  : postData.content;
+              setInitialContent(content);
+            } catch (e) {
+              // If JSON parsing fails, use the content as-is (it might be HTML)
+              console.warn(
+                "Failed to parse content as JSON, using as-is:",
+                postData.content,
+              );
+              setInitialContent(postData.content);
+            }
           }
         } else {
           setShowPostNotFound(true);

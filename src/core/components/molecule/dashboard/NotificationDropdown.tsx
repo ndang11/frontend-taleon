@@ -63,7 +63,8 @@ export function NotificationDropdown() {
         return;
       }
 
-      const response = await fetch(`${API_BASE_URL}/notifications`, {
+      // Fetch all notifications (limit 100 instead of default 20)
+      const response = await fetch(`${API_BASE_URL}/notifications?limit=100`, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -244,22 +245,33 @@ export function NotificationDropdown() {
 
       {/* Dropdown */}
       {isOpen && (
-        <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl shadow-lg border border-gray-200 z-50">
+        <div className="absolute right-0 top-full mt-2 w-96 bg-white rounded-xl shadow-lg border border-gray-200 z-50">
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
             <h3 className="font-semibold text-gray-900">Notifications</h3>
-            {unreadCount > 0 && (
-              <button
-                onClick={handleMarkAllAsRead}
-                className="text-sm text-blue-600 hover:text-blue-700 font-medium"
-              >
-                Mark all read
-              </button>
-            )}
+            <div className="flex items-center gap-2">
+              {notifications.length > 0 && (
+                <Link
+                  href="/me/notifications"
+                  className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                  onClick={() => setIsOpen(false)}
+                >
+                  View All
+                </Link>
+              )}
+              {unreadCount > 0 && (
+                <button
+                  onClick={handleMarkAllAsRead}
+                  className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                >
+                  Mark all read
+                </button>
+              )}
+            </div>
           </div>
 
-          {/* Notifications List */}
-          <div className="max-h-96 overflow-y-auto">
+          {/* Notifications List - Increased height to show more */}
+          <div className="max-h-[70vh] overflow-y-auto">
             {isLoading ? (
               <div className="flex items-center justify-center py-8">
                 <div className="w-6 h-6 border-2 border-gray-200 border-t-blue-500 rounded-full animate-spin" />
