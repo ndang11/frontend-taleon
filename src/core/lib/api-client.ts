@@ -777,7 +777,14 @@ export async function getPost(
     throw new Error(error.error || "Failed to fetch post");
   }
 
-  return response.json();
+  const data = await response.json();
+
+  // Apply mapPostData to ensure content is parsed
+  if (data.post) {
+    return { post: mapPostData(data.post) };
+  }
+
+  return { post: mapPostData(data) };
 }
 
 export interface LikeResponse {
@@ -1383,9 +1390,24 @@ export async function fetchPublicPosts(
  * Transforms backend response to match Post interface perfectly
  */
 export const mapPostData = (data: any): Post => {
+  // Handle content parsing - if content is a JSON string, parse it
+  let parsedContent = data.content;
+  if (typeof data.content === "string") {
+    try {
+      const parsed = JSON.parse(data.content);
+      // Check if it looks like TipTap JSON (has type: 'doc')
+      if (parsed && (parsed.type === "doc" || parsed.content)) {
+        parsedContent = parsed;
+      }
+    } catch {
+      // Not valid JSON, keep as string
+    }
+  }
+
   return {
     ...data,
     id: data._id, // Map _id to id
+    content: parsedContent,
   };
 };
 
