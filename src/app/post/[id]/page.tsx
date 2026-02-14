@@ -668,10 +668,7 @@ export default function PostDetailsPage({
                 </div>
               </div>
             </div>
-            <FollowButton
-              authorId={authorId as string}
-              initialIsFollowing={false}
-            />
+            <FollowButton authorId={authorId as string} />
           </div>
 
           {/* Tags */}
