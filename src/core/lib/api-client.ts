@@ -655,6 +655,30 @@ export async function getPublishedPosts(
   );
 }
 
+/**
+ * Search published posts
+ * GET /posts/search?q=query&page=1&limit=10
+ */
+export async function searchPosts(
+  query: string,
+  page: number = 1,
+  limit: number = 10,
+): Promise<PostsResponse> {
+  const encodedQuery = encodeURIComponent(query);
+  const response = await fetch(
+    `${API_BASE_URL}/posts/search?q=${encodedQuery}&page=${page}&limit=${limit}`,
+    {
+      headers: getAuthHeaders(),
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(`Search failed: ${response.status} ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
 export async function uploadProfileImage(
   file: File,
 ): Promise<{ url: string; publicId: string }> {
