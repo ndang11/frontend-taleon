@@ -5,6 +5,7 @@ import { useFollow } from "@/hook/useFollow";
 
 interface FollowButtonProps {
   authorId: string;
+<<<<<<< HEAD
   onFollowChange?: (isFollowing: boolean, followersCount: number) => void;
 }
 
@@ -25,6 +26,16 @@ export function FollowButton({ authorId, onFollowChange }: FollowButtonProps) {
   return (
     <button
       onClick={handleToggle}
+=======
+}
+
+export function FollowButton({ authorId }: FollowButtonProps) {
+  const { isFollowing, isLoading, toggleFollow } = useFollow(authorId);
+
+  return (
+    <button
+      onClick={toggleFollow}
+>>>>>>> 6cb58e1 (added the follow and the unfollow functionality)
       disabled={isLoading}
       className={`flex items-center gap-2 px-4 py-2 rounded-full transition-colors ${
         isFollowing
