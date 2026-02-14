@@ -1,61 +1,26 @@
 "use client";
 
 import { Loader2, UserCheck, UserPlus } from "lucide-react";
-import { useState } from "react";
-import { followUser, unfollowUser } from "@/core/lib/api-client";
+import { useFollow } from "@/hook/useFollow";
 
 interface FollowButtonProps {
   authorId: string;
-  initialIsFollowing?: boolean;
 }
 
-export function FollowButton({
-  authorId,
-  initialIsFollowing = false,
-}: FollowButtonProps) {
-  const [isFollowing, setIsFollowing] = useState(initialIsFollowing);
-  const [loading, setLoading] = useState(false);
-
-  // Check if user is authenticated
-  const token =
-    typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
-  const isAuthenticated = !!token;
-
-  const handleToggleFollow = async () => {
-    if (!isAuthenticated) {
-      window.location.href = `/login?redirect=/profile/${authorId}`;
-      return;
-    }
-
-    if (loading) return;
-
-    setLoading(true);
-    try {
-      if (isFollowing) {
-        await unfollowUser(authorId);
-        setIsFollowing(false);
-      } else {
-        await followUser(authorId);
-        setIsFollowing(true);
-      }
-    } catch (error) {
-      console.error("Failed to toggle follow:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+export function FollowButton({ authorId }: FollowButtonProps) {
+  const { isFollowing, isLoading, toggleFollow } = useFollow(authorId);
 
   return (
     <button
-      onClick={handleToggleFollow}
-      disabled={loading}
+      onClick={toggleFollow}
+      disabled={isLoading}
       className={`flex items-center gap-2 px-4 py-2 rounded-full transition-colors ${
         isFollowing
           ? "border border-gray-300 hover:bg-gray-50"
           : "bg-blue-600 text-white hover:bg-blue-700"
       } disabled:opacity-50 disabled:cursor-not-allowed`}
     >
-      {loading ? (
+      {isLoading ? (
         <Loader2 size={18} className="animate-spin" />
       ) : isFollowing ? (
         <>
