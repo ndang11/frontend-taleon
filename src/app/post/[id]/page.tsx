@@ -412,6 +412,7 @@ export default function PostDetailsPage({
   const [sortBy, setSortBy] = useState<SortOption>("newest");
   const [newComment, setNewComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [commentError, setCommentError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [showAllComments, setShowAllComments] = useState(false);
   const COMMENTS_PER_PAGE = 5;
@@ -510,8 +511,15 @@ export default function PostDetailsPage({
 
     setIsSubmitting(true);
     try {
+      // Validate comment is not empty
+      const trimmedComment = newComment.trim();
+      if (!trimmedComment) {
+        setCommentError("Please write a comment before submitting.");
+        return;
+      }
+
       // Call actual API to create comment
-      const newCommentData = await createComment(post._id, newComment.trim());
+      const newCommentData = await createComment(post._id, trimmedComment);
 
       // Cast to local Comment type
       const newCommentTyped: Comment = {
@@ -523,8 +531,13 @@ export default function PostDetailsPage({
       setComments(updatedComments);
       sortComments(updatedComments, sortBy);
       setNewComment("");
-    } catch (err) {
+      setCommentError(null);
+    } catch (err: any) {
       console.error("Failed to post comment:", err);
+      // Show error message to user
+      const errorMessage =
+        err?.message || "Failed to post comment. Please try again.";
+      setCommentError(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -786,11 +799,19 @@ export default function PostDetailsPage({
               <div className="flex-1">
                 <textarea
                   value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
+                  onChange={(e) => {
+                    setNewComment(e.target.value);
+                    if (commentError) setCommentError(null);
+                  }}
                   placeholder="Share your thoughts..."
-                  className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 resize-none"
+                  className={`w-full px-4 py-3 bg-white border rounded-xl focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 resize-none ${
+                    commentError ? "border-red-500" : "border-gray-300"
+                  }`}
                   rows={3}
                 />
+                {commentError && (
+                  <p className="mt-1 text-sm text-red-600">{commentError}</p>
+                )}
                 <div className="flex justify-end mt-3">
                   <button
                     onClick={handleSubmitComment}
