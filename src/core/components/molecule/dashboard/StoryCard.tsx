@@ -63,7 +63,8 @@ export function StoryCard({
 
   const handleSubmitComment = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newComment.trim()) return;
+    const trimmedComment = newComment.trim();
+    if (!trimmedComment) return;
 
     // Check if user is authenticated
     if (!isAuthenticated) {
@@ -74,7 +75,7 @@ export function StoryCard({
     try {
       await createComment.mutateAsync({
         postId: post._id,
-        content: newComment,
+        content: trimmedComment,
       });
       setNewComment("");
       setSuccessTitle("Comment posted!");
@@ -100,40 +101,44 @@ export function StoryCard({
   const formatContent = (content: Post["content"]) => {
     if (!content) return "";
 
-    // Handle case where content is a JSON string
-    let parsedContent: any = content;
+    let textContent = "";
+
     if (typeof content === "string") {
       try {
-        parsedContent = JSON.parse(content);
+        const parsedJson = JSON.parse(content);
+        if (parsedJson && parsedJson.type === "doc") {
+          content = parsedJson; // It's a TipTap JSON object now
+        } else {
+          // It's a JSON but not TipTap, maybe just a string in JSON.
+          textContent = String(parsedJson);
+        }
       } catch {
-        // If parsing fails, return the raw string truncated
-        const textContent = content as string;
-        return (
-          textContent.slice(0, 160) + (textContent.length > 160 ? "..." : "")
-        );
+        // Not JSON, likely HTML or plain text.
+        // Use browser to strip HTML tags. This runs only on the client.
+        if (typeof window !== "undefined") {
+          const tempDiv = document.createElement("div");
+          tempDiv.innerHTML = content;
+          textContent = tempDiv.textContent || tempDiv.innerText || "";
+        } else {
+          // Basic stripping for SSR
+          textContent = content.replace(/<[^>]+>/g, "");
+        }
       }
     }
 
-    // Handle case where parsedContent might be a string
-    if (typeof parsedContent === "string") {
-      return (
-        parsedContent.slice(0, 160) + (parsedContent.length > 160 ? "..." : "")
-      );
+    if (typeof content === "object" && content?.type === "doc") {
+      // It's a TipTap object
+      const getTextFromNode = (node: any): string => {
+        if (node.type === "text" && node.text) {
+          return node.text;
+        }
+        return node.content?.map(getTextFromNode).join(" ") || "";
+      };
+      textContent = content.content?.map(getTextFromNode).join(" ") || "";
     }
 
-    // Handle case where parsedContent might not have blocks
-    if (!parsedContent || typeof parsedContent !== "object") {
-      return "";
-    }
-
-    const blocks = parsedContent.blocks;
-    if (!blocks || !Array.isArray(blocks)) return "";
-
-    return `${blocks
-      .filter((block: any) => block.type === "paragraph")
-      .map((block: any) => block.data?.text || "")
-      .join(" ")
-      .slice(0, 160)}${blocks.length > 160 ? "..." : ""}`;
+    const excerpt = textContent.slice(0, 160);
+    return textContent.length > 160 ? `${excerpt}...` : excerpt;
   };
 
   const formatDate = (dateString: string) => {
