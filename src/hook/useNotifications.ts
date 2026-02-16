@@ -30,6 +30,10 @@ const deleteNotification = async (notificationId: string) => {
   return notificationId;
 };
 
+const deleteAllNotifications = async () => {
+  await fetcher.delete("/notifications");
+};
+
 export const useNotifications = () => {
   const queryClient = useQueryClient();
 
@@ -77,6 +81,22 @@ export const useNotifications = () => {
     },
   });
 
+  const clearAllNotificationsMutation = useMutation({
+    mutationFn: deleteAllNotifications,
+    onSuccess: () => {
+      // Optimistically clear all notifications
+      queryClient.setQueryData(["notifications"], (oldData: any) => {
+        if (!oldData) return { notifications: [], unreadCount: 0 };
+        return {
+          ...oldData,
+          notifications: [],
+          unreadCount: 0,
+        };
+      });
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    },
+  });
+
   const removeNotificationMutation = useMutation({
     mutationFn: deleteNotification,
     onSuccess: (deletedId) => {
@@ -110,5 +130,6 @@ export const useNotifications = () => {
     markAsRead: markAsReadMutation.mutateAsync,
     markAllAsRead: markAllAsReadMutation.mutateAsync,
     removeNotification: removeNotificationMutation.mutateAsync,
+    clearAll: clearAllNotificationsMutation.mutateAsync,
   };
 };
