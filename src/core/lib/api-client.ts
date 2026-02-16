@@ -1488,11 +1488,19 @@ export const mapPostData = (data: any): Post => {
     try {
       const parsed = JSON.parse(data.content);
       // Check if it looks like TipTap JSON (has type: 'doc')
-      if (parsed && (parsed.type === "doc" || parsed.content)) {
+      if (parsed && parsed.type === "doc") {
+        parsedContent = parsed;
+      }
+      // Check if it's legacy blocks format { blocks: [] }
+      else if (parsed && Array.isArray(parsed.blocks)) {
+        parsedContent = parsed;
+      }
+      // Also handle content array format
+      else if (parsed && Array.isArray(parsed.content)) {
         parsedContent = parsed;
       }
     } catch {
-      // Not valid JSON, keep as string
+      // Not valid JSON, keep as string (HTML content)
     }
   }
 

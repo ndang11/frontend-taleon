@@ -38,9 +38,11 @@ export default function NewStoryPage() {
           }
         } else {
           // Create a new draft immediately (Medium logic)
+          // Use TipTap JSON format for initial content to ensure compatibility
+          const initialContent = { type: "doc", content: [] };
           const newPost = await fetcher.post<Post>("/posts", {
             title: "Untitled Story",
-            content: "",
+            content: JSON.stringify(initialContent),
             category: "General",
           });
           setPostId(newPost._id);
