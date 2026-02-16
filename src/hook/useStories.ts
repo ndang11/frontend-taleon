@@ -10,6 +10,7 @@ import {
   getTenantPublishedPosts,
   type Post,
   publishPost,
+  searchPosts,
 } from "@/core/lib/api-client";
 
 interface UseStoriesOptions {
@@ -93,6 +94,23 @@ export function usePublishPost() {
       queryClient.invalidateQueries({ queryKey: ["published-posts"] });
       queryClient.invalidateQueries({ queryKey: ["tenant-published-posts"] });
     },
+  });
+}
+
+// ============================================
+// Search Posts
+// ============================================
+
+export function useSearchPosts(
+  query: string,
+  page: number = 1,
+  limit: number = 10,
+) {
+  return useQuery({
+    queryKey: ["search-posts", query, page, limit],
+    queryFn: () => searchPosts(query, page, limit),
+    enabled: !!query && query.trim().length > 0,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 }
 
