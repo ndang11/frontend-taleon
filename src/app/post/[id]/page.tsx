@@ -470,7 +470,8 @@ export default function PostDetailsPage({
           setPost(fetchedPost);
           // Fetch comments separately to ensure we get them even if not included in post response
           try {
-            const commentsData = await getComments(fetchedPost._id);
+            // Cast to any to avoid 'never' type issues if getComments return type is not inferred correctly
+            const commentsData: any = await getComments(fetchedPost._id);
             const commentsList = Array.isArray(commentsData)
               ? commentsData
               : commentsData.comments || [];

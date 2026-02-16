@@ -101,13 +101,15 @@ export function StoryCard({
   const formatContent = (content: Post["content"]) => {
     if (!content) return "";
 
+    // Ensure content is treated as any to avoid type errors with replace/JSON.parse
+    let parsedContent: any = content;
     let textContent = "";
 
-    if (typeof content === "string") {
+    if (typeof parsedContent === "string") {
       try {
-        const parsedJson = JSON.parse(content);
+        const parsedJson = JSON.parse(parsedContent);
         if (parsedJson && parsedJson.type === "doc") {
-          content = parsedJson; // It's a TipTap JSON object now
+          parsedContent = parsedJson; // It's a TipTap JSON object now
         } else {
           // It's a JSON but not TipTap, maybe just a string in JSON.
           textContent = String(parsedJson);
@@ -117,16 +119,16 @@ export function StoryCard({
         // Use browser to strip HTML tags. This runs only on the client.
         if (typeof window !== "undefined") {
           const tempDiv = document.createElement("div");
-          tempDiv.innerHTML = content;
+          tempDiv.innerHTML = parsedContent;
           textContent = tempDiv.textContent || tempDiv.innerText || "";
         } else {
           // Basic stripping for SSR
-          textContent = content.replace(/<[^>]+>/g, "");
+          textContent = parsedContent.replace(/<[^>]+>/g, "");
         }
       }
     }
 
-    if (typeof content === "object" && content?.type === "doc") {
+    if (typeof parsedContent === "object" && parsedContent?.type === "doc") {
       // It's a TipTap object
       const getTextFromNode = (node: any): string => {
         if (node.type === "text" && node.text) {
@@ -134,7 +136,7 @@ export function StoryCard({
         }
         return node.content?.map(getTextFromNode).join(" ") || "";
       };
-      textContent = content.content?.map(getTextFromNode).join(" ") || "";
+      textContent = parsedContent.content?.map(getTextFromNode).join(" ") || "";
     }
 
     const excerpt = textContent.slice(0, 160);
