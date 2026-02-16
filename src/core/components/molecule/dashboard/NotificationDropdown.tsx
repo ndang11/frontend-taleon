@@ -47,6 +47,7 @@ export function NotificationDropdown() {
     markAsRead,
     markAllAsRead,
     removeNotification,
+    clearAll,
   } = useNotifications();
 
   useEffect(() => {
@@ -131,10 +132,19 @@ export function NotificationDropdown() {
               )}
               {unreadCount > 0 && (
                 <button
-                  onClick={markAllAsRead}
+                  onClick={() => markAllAsRead()}
                   className="text-sm text-blue-600 hover:text-blue-700 font-medium"
                 >
                   Mark all read
+                </button>
+              )}
+              {notifications.length > 0 && (
+                <button
+                  onClick={() => clearAll()}
+                  className="text-sm text-red-600 hover:text-red-700 font-medium"
+                  title="Clear all notifications"
+                >
+                  Clear All
                 </button>
               )}
             </div>
@@ -156,8 +166,10 @@ export function NotificationDropdown() {
                 {notifications.map((notification: any) => (
                   <div
                     key={notification._id}
-                    className={`flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition-colors ${
-                      !notification.isRead ? "bg-blue-50/50" : ""
+                    className={`flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition-colors border-l-[3px] ${
+                      !notification.isRead
+                        ? "bg-blue-50 border-blue-600"
+                        : "bg-white border-transparent"
                     }`}
                   >
                     {/* Avatar or Icon */}
