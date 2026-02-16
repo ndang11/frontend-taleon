@@ -83,6 +83,8 @@ function NewStoryContent() {
             category: "General",
           });
           setPostId(res._id);
+          // Update URL to include edit parameter for refresh safety
+          window.history.replaceState(null, "", `/new-story?edit=${res._id}`);
         }
       } catch (err) {
         console.error("Failed to initialize post:", err);

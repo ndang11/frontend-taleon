@@ -10,8 +10,9 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/context/auth.provider";
+import { useNotifications } from "@/hook/useNotifications";
 
 interface NotificationData {
   _id: string;
@@ -37,56 +38,16 @@ type AppNotification = NotificationData;
 export function NotificationDropdown() {
   const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
-  const [notifications, setNotifications] = useState<AppNotification[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [isLoading, setIsLoading] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const API_BASE_URL =
-    process.env.NEXT_PUBLIC_API_URL || "https://taleon-7rwt.onrender.com/api";
-
-  const getAuthHeaders = () => {
-    const token = localStorage.getItem("access_token");
-    return {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    };
-  };
-
-  const fetchNotifications = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const token = localStorage.getItem("access_token");
-      if (!token) {
-        console.log("No auth token found");
-        setIsLoading(false);
-        return;
-      }
-
-      // Fetch all notifications (limit 100 instead of default 20)
-      const response = await fetch(`${API_BASE_URL}/notifications?limit=100`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Notifications API error:", response.status, errorText);
-        setIsLoading(false);
-        return;
-      }
-
-      const data = await response.json();
-      setNotifications(data.notifications || []);
-      setUnreadCount(data.unreadCount || 0);
-    } catch (error) {
-      console.error("Failed to fetch notifications:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [API_BASE_URL]);
+  const {
+    notifications,
+    unreadCount,
+    loading: isLoading,
+    markAsRead,
+    markAllAsRead,
+    removeNotification,
+  } = useNotifications();
 
   useEffect(() => {
     // Close dropdown when clicking outside
@@ -103,103 +64,12 @@ export function NotificationDropdown() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  useEffect(() => {
-    if (user && isOpen) {
-      fetchNotifications();
+  const handleNotificationClick = async (notification: AppNotification) => {
+    if (!notification.isRead) {
+      await markAsRead(notification._id);
     }
-  }, [user, isOpen, fetchNotifications]);
-
-  // Poll for notifications every 30 seconds
-  useEffect(() => {
-    if (!user) return;
-
-    const fetchUnread = async () => {
-      try {
-        const token = localStorage.getItem("access_token");
-        if (!token) return;
-
-        const response = await fetch(`${API_BASE_URL}/notifications/count`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          setUnreadCount(data.count || 0);
-        }
-      } catch (error) {
-        console.error("Failed to fetch unread count:", error);
-      }
-    };
-
-    fetchUnread();
-    const interval = setInterval(fetchUnread, 30000);
-    return () => clearInterval(interval);
-  }, [user, API_BASE_URL]);
-
-  const handleMarkAsRead = async (notificationId: string) => {
-    try {
-      const response = await fetch(
-        `${API_BASE_URL}/notifications/${notificationId}/read`,
-        {
-          method: "POST",
-          headers: getAuthHeaders(),
-        },
-      );
-
-      if (response.ok) {
-        const data = await response.json();
-        setUnreadCount(data.unreadCount || 0);
-        setNotifications((prev) =>
-          prev.map((n) =>
-            n._id === notificationId ? { ...n, isRead: true } : n,
-          ),
-        );
-      }
-    } catch (error) {
-      console.error("Failed to mark as read:", error);
-    }
-  };
-
-  const handleMarkAllAsRead = async () => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/notifications/read-all`, {
-        method: "POST",
-        headers: getAuthHeaders(),
-      });
-
-      if (response.ok) {
-        setUnreadCount(0);
-        setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
-      }
-    } catch (error) {
-      console.error("Failed to mark all as read:", error);
-    }
-  };
-
-  const handleDelete = async (notificationId: string) => {
-    try {
-      const response = await fetch(
-        `${API_BASE_URL}/notifications/${notificationId}`,
-        {
-          method: "DELETE",
-          headers: getAuthHeaders(),
-        },
-      );
-
-      if (response.ok) {
-        setNotifications((prev) =>
-          prev.filter((n) => n._id !== notificationId),
-        );
-        if (unreadCount > 0) {
-          setUnreadCount((prev) => Math.max(0, prev - 1));
-        }
-      }
-    } catch (error) {
-      console.error("Failed to delete notification:", error);
-    }
+    // Close dropdown
+    setIsOpen(false);
   };
 
   const getNotificationIcon = (type: string) => {
@@ -261,7 +131,7 @@ export function NotificationDropdown() {
               )}
               {unreadCount > 0 && (
                 <button
-                  onClick={handleMarkAllAsRead}
+                  onClick={markAllAsRead}
                   className="text-sm text-blue-600 hover:text-blue-700 font-medium"
                 >
                   Mark all read
@@ -283,7 +153,7 @@ export function NotificationDropdown() {
               </div>
             ) : (
               <div className="divide-y divide-gray-100">
-                {notifications.map((notification) => (
+                {notifications.map((notification: any) => (
                   <div
                     key={notification._id}
                     className={`flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition-colors ${
@@ -311,10 +181,7 @@ export function NotificationDropdown() {
                     {/* Content */}
                     <Link
                       href={getNotificationLink(notification)}
-                      onClick={() =>
-                        !notification.isRead &&
-                        handleMarkAsRead(notification._id)
-                      }
+                      onClick={() => handleNotificationClick(notification)}
                       className="flex-1 min-w-0"
                     >
                       <p className="text-sm text-gray-900">
@@ -332,7 +199,7 @@ export function NotificationDropdown() {
                     <div className="flex items-center gap-1 flex-shrink-0">
                       {!notification.isRead && (
                         <button
-                          onClick={() => handleMarkAsRead(notification._id)}
+                          onClick={() => markAsRead(notification._id)}
                           className="p-1 rounded hover:bg-gray-200 text-gray-400"
                           title="Mark as read"
                         >
@@ -340,7 +207,7 @@ export function NotificationDropdown() {
                         </button>
                       )}
                       <button
-                        onClick={() => handleDelete(notification._id)}
+                        onClick={() => removeNotification(notification._id)}
                         className="p-1 rounded hover:bg-gray-200 text-gray-400"
                         title="Delete"
                       >
