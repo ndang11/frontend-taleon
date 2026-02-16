@@ -30,7 +30,6 @@ export default function HomePage() {
     staleTime: 5 * 60 * 1000,
   });
 
-  // Listen for post updates from other pages
   useEffect(() => {
     const handlePostPublished = () => {
       refetch();
