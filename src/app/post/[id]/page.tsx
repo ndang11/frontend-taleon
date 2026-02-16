@@ -24,6 +24,7 @@ import { ShareButton } from "@/core/components/atom/ShareButton";
 import { FollowButton } from "@/core/components/molecule/FollowButton";
 import {
   createComment,
+  getComments,
   incrementView,
   mapPostData,
 } from "@/core/lib/api-client";
@@ -84,23 +85,36 @@ type SortOption = "newest" | "oldest" | "popular";
 function renderTipTapContent(content: any) {
   if (!content) return null;
 
-  // Handle plain HTML string - render as HTML
+  let parsedContent = content;
   if (typeof content === "string") {
-    // Check if it looks like HTML (contains HTML tags)
-    const isHtml = /<[^>]+>/.test(content);
+    try {
+      const json = JSON.parse(content);
+      // Check if it's a valid TipTap JSON structure
+      if (json && typeof json === "object" && json.type === "doc") {
+        parsedContent = json;
+      }
+    } catch (e) {
+      // Not a JSON string, so we'll treat it as an HTML string.
+      parsedContent = content;
+    }
+  }
+
+  // Handle plain HTML string - render as HTML
+  if (typeof parsedContent === "string") {
+    const isHtml = /<[^>]+>/.test(parsedContent);
 
     if (isHtml) {
       // Render as HTML
       return (
         <div
           className="prose prose-lg max-w-none"
-          dangerouslySetInnerHTML={{ __html: content }}
+          dangerouslySetInnerHTML={{ __html: parsedContent }}
         />
       );
     }
 
     // For plain text, strip HTML entities and render
-    const stripped = content
+    const stripped = parsedContent
       .replace(/&nbsp;/g, " ")
       .replace(/&amp;/g, "&")
       .replace(/&lt;/g, "<")
@@ -126,8 +140,8 @@ function renderTipTapContent(content: any) {
     );
   }
 
-  if (content.type === "doc" || content.content) {
-    const renderNode = (node: any, key: string | number): React.ReactNode => {
+  if (parsedContent.type === "doc" && Array.isArray(parsedContent.content)) {
+    const renderNode = (node: any, key: React.Key): React.ReactNode => {
       if (!node) return null;
 
       switch (node.type) {
@@ -346,29 +360,11 @@ function renderTipTapContent(content: any) {
 
     return (
       <div className="prose prose-lg max-w-none">
-        {content.content?.map((node: any, index: number) =>
+        {parsedContent.content.map((node: any, index: number) =>
           renderNode(node, index),
         )}
       </div>
     );
-  }
-
-  if (typeof content === "string") {
-    // Check if it looks like HTML (contains HTML tags)
-    const isHtml = /<[^>]+>/.test(content);
-
-    if (isHtml) {
-      // Render as HTML
-      return (
-        <div
-          className="prose prose-lg max-w-none"
-          dangerouslySetInnerHTML={{ __html: content }}
-        />
-      );
-    }
-
-    // For plain text, render as paragraph
-    return <p className="text-gray-700 leading-relaxed text-lg">{content}</p>;
   }
 
   return null;
@@ -404,6 +400,7 @@ export default function PostDetailsPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  const { user } = useAuth();
   const [post, setPost] = useState<Post | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [filteredComments, setFilteredComments] = useState<Comment[]>([]);
@@ -462,13 +459,28 @@ export default function PostDetailsPage({
 
         const data = await response.json();
 
+        let fetchedPost = null;
         if (data.post) {
-          setPost(mapPostData(data.post) as Post);
-          const allComments = data.comments || [];
-          setComments(allComments);
-          sortComments(allComments, sortBy);
+          fetchedPost = mapPostData(data.post) as Post;
         } else if (data._id) {
-          setPost(mapPostData(data) as Post);
+          fetchedPost = mapPostData(data) as Post;
+        }
+
+        if (fetchedPost) {
+          setPost(fetchedPost);
+          // Fetch comments separately to ensure we get them even if not included in post response
+          try {
+            const commentsData = await getComments(fetchedPost._id);
+            const commentsList = Array.isArray(commentsData)
+              ? commentsData
+              : commentsData.comments || [];
+            setComments(commentsList);
+            sortComments(commentsList, sortBy);
+          } catch (e) {
+            const allComments = data.comments || [];
+            setComments(allComments);
+            sortComments(allComments, sortBy);
+          }
         }
 
         // Increment view count
@@ -524,7 +536,12 @@ export default function PostDetailsPage({
       // Cast to local Comment type
       const newCommentTyped: Comment = {
         ...newCommentData,
-        authorId: newCommentData.authorId as AuthorInfo,
+        authorId: {
+          _id: user?.id || "unknown",
+          name: user?.name || "Unknown",
+          email: user?.email || "",
+          avatar: user?.avatar,
+        } as AuthorInfo,
       };
 
       const updatedComments = [newCommentTyped, ...comments];
