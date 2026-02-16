@@ -31,7 +31,7 @@ import {
 import { useToggleLike } from "@/hook/usePostInteractions";
 
 const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "https://taleon-sijl.onrender.com/api";
+  process.env.NEXT_PUBLIC_API_URL || "https://taleon-7rwt.onrender.com/api";
 
 interface AuthorInfo {
   _id: string;
@@ -85,11 +85,23 @@ type SortOption = "newest" | "oldest" | "popular";
 function renderTipTapContent(content: any) {
   if (!content) return null;
 
-  // Handle plain HTML string - strip tags and show plain text
+  // Handle plain HTML string - render as HTML
   if (typeof content === "string") {
-    // Strip all HTML tags
+    // Check if it looks like HTML (contains HTML tags)
+    const isHtml = /<[^>]+>/.test(content);
+
+    if (isHtml) {
+      // Render as HTML
+      return (
+        <div
+          className="prose prose-lg max-w-none"
+          dangerouslySetInnerHTML={{ __html: content }}
+        />
+      );
+    }
+
+    // For plain text, strip HTML entities and render
     const stripped = content
-      .replace(/<[^>]*>?/gm, "")
       .replace(/&nbsp;/g, " ")
       .replace(/&amp;/g, "&")
       .replace(/&lt;/g, "<")
@@ -103,9 +115,9 @@ function renderTipTapContent(content: any) {
     const paragraphs = stripped.split(/\n\n+/);
     return (
       <div className="prose prose-lg max-w-none">
-        {paragraphs.map((para: string) => (
+        {paragraphs.map((para: string, index: number) => (
           <p
-            key={para.slice(0, 30)}
+            key={`${para.slice(0, 20)}-${index}`}
             className="mb-4 text-gray-700 leading-relaxed text-lg"
           >
             {para.replace(/\n/g, " ")}
@@ -343,6 +355,20 @@ function renderTipTapContent(content: any) {
   }
 
   if (typeof content === "string") {
+    // Check if it looks like HTML (contains HTML tags)
+    const isHtml = /<[^>]+>/.test(content);
+
+    if (isHtml) {
+      // Render as HTML
+      return (
+        <div
+          className="prose prose-lg max-w-none"
+          dangerouslySetInnerHTML={{ __html: content }}
+        />
+      );
+    }
+
+    // For plain text, render as paragraph
     return <p className="text-gray-700 leading-relaxed text-lg">{content}</p>;
   }
 

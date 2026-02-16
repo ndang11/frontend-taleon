@@ -19,16 +19,50 @@ export function useEditorAutosave(
 
         setSaveStatus("saving");
         try {
+          // Don't save if content is empty or undefined
+          if (
+            !content ||
+            (typeof content === "object" && Object.keys(content).length === 0)
+          ) {
+            console.log("[useAutoSave] Skipping autosave - content is empty");
+            setSaveStatus("idle");
+            return;
+          }
+
           // Convert content to string based on format
           let contentString: string;
           if (format === "json") {
-            contentString =
-              typeof content === "string" ? content : JSON.stringify(content);
+            // For JSON format, check if it's the TipTap empty document structure
+            if (typeof content === "object" && content !== null) {
+              // If it's an empty TipTap doc ({"type":"doc","content":[]}), don't save
+              if (
+                content.type === "doc" &&
+                Array.isArray(content.content) &&
+                content.content.length === 0
+              ) {
+                console.log(
+                  "[useAutoSave] Skipping autosave - empty TipTap doc",
+                );
+                setSaveStatus("idle");
+                return;
+              }
+              contentString = JSON.stringify(content);
+            } else {
+              contentString = typeof content === "string" ? content : "";
+            }
           } else {
             contentString =
               typeof content === "string"
                 ? content
-                : (content as any).html || JSON.stringify(content, null, 2);
+                : (content as any)?.html ||
+                  (typeof content === "object"
+                    ? JSON.stringify(content, null, 2)
+                    : "");
+          }
+
+          // Ensure contentString is not undefined
+          if (!contentString) {
+            contentString = "";
           }
 
           await autoSave(postId, contentString, title);
