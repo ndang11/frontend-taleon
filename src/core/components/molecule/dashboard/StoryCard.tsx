@@ -63,7 +63,8 @@ export function StoryCard({
 
   const handleSubmitComment = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newComment.trim()) return;
+    const trimmedComment = newComment.trim();
+    if (!trimmedComment) return;
 
     // Check if user is authenticated
     if (!isAuthenticated) {
@@ -74,7 +75,7 @@ export function StoryCard({
     try {
       await createComment.mutateAsync({
         postId: post._id,
-        content: newComment,
+        content: trimmedComment,
       });
       setNewComment("");
       setSuccessTitle("Comment posted!");
