@@ -24,7 +24,10 @@ import { ShareButton } from "@/core/components/atom/ShareButton";
 import { FollowButton } from "@/core/components/molecule/FollowButton";
 import {
   createComment,
+<<<<<<< HEAD
   getAuthHeaders,
+=======
+>>>>>>> 963ed32 (fixed comment function and notification)
   getComments,
   incrementView,
   mapPostData,
@@ -464,6 +467,7 @@ export default function PostDetailsPage({
         const data = await response.json();
 
         let fetchedPost = null;
+<<<<<<< HEAD
         // Handle both { post: ... } and direct post response
         const postData = data.post || data;
 
@@ -475,14 +479,24 @@ export default function PostDetailsPage({
 
         if (!fetchedPost) {
           throw new Error("Invalid post data received");
+=======
+        if (data.post) {
+          fetchedPost = mapPostData(data.post) as Post;
+        } else if (data._id) {
+          fetchedPost = mapPostData(data) as Post;
+>>>>>>> 963ed32 (fixed comment function and notification)
         }
 
         if (fetchedPost) {
           setPost(fetchedPost);
           // Fetch comments separately to ensure we get them even if not included in post response
           try {
+<<<<<<< HEAD
             // Cast to any to avoid 'never' type issues if getComments return type is not inferred correctly
             const commentsData: any = await getComments(fetchedPost._id);
+=======
+            const commentsData = await getComments(fetchedPost._id);
+>>>>>>> 963ed32 (fixed comment function and notification)
             const commentsList = Array.isArray(commentsData)
               ? commentsData
               : commentsData.comments || [];

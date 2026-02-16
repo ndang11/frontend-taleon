@@ -101,6 +101,7 @@ export function StoryCard({
   const formatContent = (content: Post["content"]) => {
     if (!content) return "";
 
+<<<<<<< HEAD
     // Ensure content is treated as any to avoid type errors with replace/JSON.parse
     let parsedContent: any = content;
     let textContent = "";
@@ -110,6 +111,15 @@ export function StoryCard({
         const parsedJson = JSON.parse(parsedContent);
         if (parsedJson && parsedJson.type === "doc") {
           parsedContent = parsedJson; // It's a TipTap JSON object now
+=======
+    let textContent = "";
+
+    if (typeof content === "string") {
+      try {
+        const parsedJson = JSON.parse(content);
+        if (parsedJson && parsedJson.type === "doc") {
+          content = parsedJson; // It's a TipTap JSON object now
+>>>>>>> 963ed32 (fixed comment function and notification)
         } else {
           // It's a JSON but not TipTap, maybe just a string in JSON.
           textContent = String(parsedJson);
@@ -119,16 +129,28 @@ export function StoryCard({
         // Use browser to strip HTML tags. This runs only on the client.
         if (typeof window !== "undefined") {
           const tempDiv = document.createElement("div");
+<<<<<<< HEAD
           tempDiv.innerHTML = parsedContent;
           textContent = tempDiv.textContent || tempDiv.innerText || "";
         } else {
           // Basic stripping for SSR
           textContent = parsedContent.replace(/<[^>]+>/g, "");
+=======
+          tempDiv.innerHTML = content;
+          textContent = tempDiv.textContent || tempDiv.innerText || "";
+        } else {
+          // Basic stripping for SSR
+          textContent = content.replace(/<[^>]+>/g, "");
+>>>>>>> 963ed32 (fixed comment function and notification)
         }
       }
     }
 
+<<<<<<< HEAD
     if (typeof parsedContent === "object" && parsedContent?.type === "doc") {
+=======
+    if (typeof content === "object" && content?.type === "doc") {
+>>>>>>> 963ed32 (fixed comment function and notification)
       // It's a TipTap object
       const getTextFromNode = (node: any): string => {
         if (node.type === "text" && node.text) {
@@ -136,7 +158,11 @@ export function StoryCard({
         }
         return node.content?.map(getTextFromNode).join(" ") || "";
       };
+<<<<<<< HEAD
       textContent = parsedContent.content?.map(getTextFromNode).join(" ") || "";
+=======
+      textContent = content.content?.map(getTextFromNode).join(" ") || "";
+>>>>>>> 963ed32 (fixed comment function and notification)
     }
 
     const excerpt = textContent.slice(0, 160);
