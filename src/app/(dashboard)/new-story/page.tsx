@@ -75,9 +75,11 @@ function NewStoryContent() {
           }
         } else {
           // Creating new post
+          // Use TipTap JSON format for initial content to ensure compatibility
+          const initialContent = { type: "doc", content: [] };
           const res: any = await fetcher.post("/posts", {
             title: "Untitled Story",
-            content: "<p></p>", // Default empty content
+            content: JSON.stringify(initialContent),
             category: "General",
           });
           setPostId(res._id);
