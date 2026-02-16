@@ -2,10 +2,13 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   type Comment,
   createComment,
+  getBookmarkCount,
   getComments,
   getLikeCount,
+  hasUserBookmarked,
   hasUserLiked,
   incrementView,
+  toggleBookmark,
   toggleLike,
 } from "@/core/lib/api-client";
 
@@ -105,6 +108,111 @@ export function useHasUserLiked(postId: string) {
   return useQuery({
     queryKey: ["hasLiked", postId],
     queryFn: () => hasUserLiked(postId),
+    enabled: !!postId && !!token,
+    staleTime: 1 * 60 * 1000, // 1 minute
+    initialData: false,
+  });
+}
+
+// ============================================
+// Bookmark/Unbookmark Post with Optimistic Update
+// ============================================
+
+export function useToggleBookmark() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (postId: string) => toggleBookmark(postId),
+    onMutate: async (postId) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["bookmarkCount", postId] });
+      await queryClient.cancelQueries({ queryKey: ["hasBookmarked", postId] });
+      await queryClient.cancelQueries({ queryKey: ["posts"] });
+
+      // Snapshot the previous value
+      const previousBookmarkCount = queryClient.getQueryData<number>([
+        "bookmarkCount",
+        postId,
+      ]);
+      const previousHasBookmarked = queryClient.getQueryData<boolean>([
+        "hasBookmarked",
+        postId,
+      ]);
+      const previousPosts = queryClient.getQueryData<any[]>(["posts"]);
+
+      // Optimistically update to new value
+      queryClient.setQueryData(
+        ["bookmarkCount", postId],
+        (old: number | undefined) =>
+          previousHasBookmarked ? (old || 0) - 1 : (old || 0) + 1,
+      );
+      queryClient.setQueryData(
+        ["hasBookmarked", postId],
+        !previousHasBookmarked,
+      );
+
+      // Also update posts list if it exists
+      if (previousPosts) {
+        queryClient.setQueryData(["posts"], (old: any[] | undefined) =>
+          old?.map((post) =>
+            post._id === postId
+              ? {
+                  ...post,
+                  bookmarkCount: previousHasBookmarked
+                    ? Math.max(0, (post.bookmarkCount || 0) - 1)
+                    : (post.bookmarkCount || 0) + 1,
+                  isBookmarked: !previousHasBookmarked,
+                }
+              : post,
+          ),
+        );
+      }
+
+      return { previousBookmarkCount, previousHasBookmarked, previousPosts };
+    },
+    onError: (_, postId, context) => {
+      // Rollback on error
+      if (context?.previousBookmarkCount !== undefined) {
+        queryClient.setQueryData(
+          ["bookmarkCount", postId],
+          context.previousBookmarkCount,
+        );
+      }
+      if (context?.previousHasBookmarked !== undefined) {
+        queryClient.setQueryData(
+          ["hasBookmarked", postId],
+          context.previousHasBookmarked,
+        );
+      }
+      if (context?.previousPosts) {
+        queryClient.setQueryData(["posts"], context.previousPosts);
+      }
+    },
+    onSettled: (_, __, postId) => {
+      // Refetch after mutation
+      queryClient.invalidateQueries({ queryKey: ["bookmarkCount", postId] });
+      queryClient.invalidateQueries({ queryKey: ["hasBookmarked", postId] });
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
+    },
+  });
+}
+
+export function useBookmarkCount(postId: string) {
+  return useQuery({
+    queryKey: ["bookmarkCount", postId],
+    queryFn: () => getBookmarkCount(postId),
+    enabled: !!postId,
+    staleTime: 1 * 60 * 1000, // 1 minute - refresh more frequently
+  });
+}
+
+export function useHasUserBookmarked(postId: string) {
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+
+  return useQuery({
+    queryKey: ["hasBookmarked", postId],
+    queryFn: () => hasUserBookmarked(postId),
     enabled: !!postId && !!token,
     staleTime: 1 * 60 * 1000, // 1 minute
     initialData: false,
@@ -235,4 +343,11 @@ export interface UseLikeReturn {
   isToggling: boolean;
   liked: boolean | null;
   likeCount: number | null;
+}
+
+export interface UseBookmarkReturn {
+  toggleBookmark: () => void;
+  isToggling: boolean;
+  bookmarked: boolean | null;
+  bookmarkCount: number | null;
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { Home, LogOut, Notebook, TrendingUp, User } from "lucide-react";
+import { Home, LogOut, Notebook, TrendingUp, User, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/auth.provider";
@@ -13,7 +13,11 @@ const navigation = [
   { name: "Profile", href: "/me/profile", icon: User },
 ];
 
-export function Sidebar() {
+interface SidebarProps {
+  onClose?: () => void;
+}
+
+export function Sidebar({ onClose }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { user } = useAuth();
@@ -23,10 +27,14 @@ export function Sidebar() {
     router.push("/login");
   };
 
+  const handleNavClick = () => {
+    onClose?.();
+  };
+
   return (
     <div className="flex h-full w-64 flex-col bg-white border-r border-gray-100">
       {/* Logo */}
-      <div className="p-8 border-b border-gray-100">
+      <div className="p-6 border-b border-gray-100">
         <Link href="/" className="flex items-center gap-2">
           <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
             <span className="text-white font-bold text-lg">T</span>
@@ -39,6 +47,7 @@ export function Sidebar() {
       <div className="p-4 border-b border-gray-100">
         <Link
           href="/me/profile"
+          onClick={handleNavClick}
           className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors"
         >
           <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-sm font-medium">
@@ -54,14 +63,15 @@ export function Sidebar() {
 
       {/* Navigation */}
       <div className="flex-1 overflow-y-auto py-4">
-        <nav className="space-y-6 px-3">
+        <nav className="space-y-1 px-3">
           {navigation.map((item) => {
             const isActive = pathname === item.href;
             return (
               <Link
                 key={item.name}
                 href={item.href}
-                className={`flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-all ${
+                onClick={handleNavClick}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
                   isActive
                     ? "bg-gray-200 text-gray-900"
                     : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"

@@ -10,24 +10,47 @@ import {
   TrendingUp,
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { AlertDialog } from "@/components/ui/AlertDialog";
 import { useAuth } from "@/context/auth.provider";
 import { StoryCard } from "@/core/components/molecule/dashboard/StoryCard";
+import { deletePost } from "@/core/lib/api-client";
 import { useMyPosts, useTenantPublishedPosts } from "@/hook/useStories";
 
 export default function HomeDashboard() {
+  const router = useRouter();
   const { user } = useAuth();
   const [mounted, setMounted] = useState(false);
   const [token, setToken] = useState<string | null>(null);
 
+  // Delete confirmation dialog state
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [postToDelete, setPostToDelete] = useState<any>(null);
+  const [deleteError, setDeleteError] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Local state for posts to allow optimistic updates
+  const [localPosts, setLocalPosts] = useState<any[]>([]);
+
   // All hooks must be called unconditionally at the top level
-  const { data: postsData, isLoading, error } = useMyPosts(1, 50);
-  const { data: publishedPostsData, isLoading: publishedLoading } =
-    useTenantPublishedPosts(1, 50);
+  const { data: postsData, isLoading, error, refetch } = useMyPosts(1, 50);
+  const {
+    data: publishedPostsData,
+    isLoading: publishedLoading,
+    refetch: refetchPublished,
+  } = useTenantPublishedPosts(1, 50);
   const isLoadingAny = isLoading || publishedLoading;
   const [activeTab, setActiveTab] = useState<
     "recent" | "drafts" | "published" | "archived"
   >("recent");
+
+  // Update local posts when data changes
+  useEffect(() => {
+    if (postsData?.posts) {
+      setLocalPosts(postsData.posts);
+    }
+  }, [postsData]);
 
   // Set mounted state after component mounts
   useEffect(() => {
@@ -44,7 +67,7 @@ export default function HomeDashboard() {
     );
   }
 
-  const posts = postsData?.posts || [];
+  const posts = localPosts.length > 0 ? localPosts : postsData?.posts || [];
   const drafts = posts.filter((p) => p.status === "draft");
   const published = posts.filter((p) => p.status === "published");
   const archived = posts.filter((p) => p.status === "archived");
@@ -56,12 +79,60 @@ export default function HomeDashboard() {
         : p.authorId === user?._id,
     ) || [];
 
+  // Check if current user owns a post
+  const isPostOwner = (post: any) => {
+    return posts.some((p) => p._id === post._id);
+  };
+
+  // Calculate total views from all user's posts (published + drafts)
+  const totalViews = posts.reduce((sum: number, post: any) => {
+    return sum + (post.viewCount || 0);
+  }, 0);
+
   const stats = {
     total: posts.length,
     drafts: drafts.length,
     published: published.length,
     archived: archived.length,
-    totalViews: 0,
+    totalViews: totalViews,
+  };
+
+  // Handle delete post
+  const handleDeletePost = async () => {
+    if (!postToDelete) return;
+
+    setIsDeleting(true);
+    setDeleteError("");
+
+    try {
+      await deletePost(postToDelete._id);
+
+      // Update local state to remove the deleted post
+      setLocalPosts((prev) => prev.filter((p) => p._id !== postToDelete._id));
+
+      setShowDeleteDialog(false);
+      setPostToDelete(null);
+
+      // Refetch data to ensure consistency
+      refetch();
+      refetchPublished();
+    } catch (error: any) {
+      setDeleteError(error.message || "Failed to delete post");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  // Open delete confirmation dialog
+  const openDeleteDialog = (post: any) => {
+    setPostToDelete(post);
+    setShowDeleteDialog(true);
+    setDeleteError("");
+  };
+
+  // Handle edit post - redirect to edit page
+  const handleEditPost = (post: any) => {
+    router.push(`/post/${post._id}/edit`);
   };
 
   const formatDate = (dateString: string) => {
@@ -242,12 +313,71 @@ export default function HomeDashboard() {
               <StoryCard
                 key={post._id}
                 post={post}
-                isOwner={posts.some((p) => p._id === post._id)}
+                isOwner={isPostOwner(post)}
+                onEdit={isPostOwner(post) ? handleEditPost : undefined}
+                onDelete={isPostOwner(post) ? openDeleteDialog : undefined}
               />
             ))}
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      {showDeleteDialog && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl max-w-sm w-full p-6 shadow-xl animate-in fade-in zoom-in duration-200">
+            <div className="flex flex-col items-center text-center">
+              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
+                <svg
+                  className="w-8 h-8 text-red-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  role="img"
+                  aria-label="Warning icon"
+                >
+                  <title>Warning</title>
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                  />
+                </svg>
+              </div>
+              <h2 className="text-xl font-bold text-gray-900 mb-2">
+                Delete Story
+              </h2>
+              <p className="text-gray-500 mb-6">
+                Are you sure you want to delete "{postToDelete?.title}"?
+                <br />
+                <span className="text-sm">This action cannot be undone.</span>
+              </p>
+              {deleteError && (
+                <p className="text-sm text-red-600 mb-4">
+                  Error: {deleteError}
+                </p>
+              )}
+              <div className="flex gap-3 w-full">
+                <button
+                  onClick={() => setShowDeleteDialog(false)}
+                  disabled={isDeleting}
+                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-full font-medium transition-colors disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDeletePost}
+                  disabled={isDeleting}
+                  className="flex-1 px-4 py-2 bg-red-600 text-white rounded-full font-medium hover:bg-red-700 transition-colors disabled:opacity-50"
+                >
+                  {isDeleting ? "Deleting..." : "Delete"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

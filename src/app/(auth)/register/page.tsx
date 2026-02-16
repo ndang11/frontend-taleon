@@ -7,18 +7,18 @@ export default function RegisterPage() {
     <>
       <LandingPageHeader />
 
-      <div className="min-h-screen flex items-center justify-center ">
-        <div className="max-w-md w-full bg-white/80 backdrop-blur-sm p-8 rounded-1xl shadow-1xl border border-white/20">
-          <div className="mb-8">
-            <h2 className="text-center text-4xl font-bold text-gray-900 mb-2">
+      <div className="min-h-screen flex items-start justify-center pt-20">
+        <div className="max-w-md w-full bg-white/80 backdrop-blur-sm p-6 rounded-xl shadow-lg border border-gray-200">
+          <div className="mb-6">
+            <h2 className="text-center text-3xl font-bold text-gray-900 mb-1">
               Join Taleon
             </h2>
-            <p className="text-center text-gray-600">
+            <p className="text-center text-gray-600 text-sm">
               Create your blog account
             </p>
           </div>
           <RegisterForm />
-          <div className="mt-8 text-center">
+          <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
               Already have an account?{" "}
               <a

@@ -48,12 +48,9 @@ export function LoginForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div>
-        <label
-          htmlFor="email"
-          className="block text-sm font-semibold text-gray-900 dark:text-gray-400 mb-2"
-        >
+        <label htmlFor="email" className="block text-sm font-semibold mb-1">
           Email Address
         </label>
         <div className="relative">
@@ -62,22 +59,17 @@ export function LoginForm() {
             type="email"
             placeholder="Enter your email"
             {...register("email")}
-            className="block w-full rounded-xl border-0 pl-12 pr-4 py-3 text-gray-900 dark:text-white dark:bg-gray-800 shadow-sm ring-1 ring-inset ring-gray-300 dark:ring-gray-600 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:ring-2 focus:ring-inset focus:ring-blue-500 dark:focus:ring-blue-400 transition-all duration-200"
+            className="w-full rounded-xl pl-12 pr-4 py-3 border focus:ring-2"
           />
-          <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+          <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
         </div>
         {errors.email && (
-          <p className="mt-2 text-sm text-red-600 font-medium">
-            {errors.email.message}
-          </p>
+          <p className="text-xs text-red-500 mt-1">{errors.email.message}</p>
         )}
       </div>
 
       <div>
-        <label
-          htmlFor="password"
-          className="block text-sm font-semibold text-gray-900 dark:text-gray-400 mb-2"
-        >
+        <label htmlFor="password" className="block text-sm font-semibold mb-1">
           Password
         </label>
         <div className="relative">
@@ -86,14 +78,12 @@ export function LoginForm() {
             type="password"
             placeholder="Enter your password"
             {...register("password")}
-            className="block w-full rounded-xl border-0 pl-12 pr-4 py-3 text-gray-900 dark:text-white dark:bg-gray-800 shadow-sm ring-1 ring-inset ring-gray-300 dark:ring-gray-600 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:ring-2 focus:ring-inset focus:ring-blue-500 dark:focus:ring-blue-400 transition-all duration-200"
+            className="w-full rounded-xl pl-12 pr-4 py-3 border focus:ring-2"
           />
-          <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+          <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
         </div>
         {errors.password && (
-          <p className="mt-2 text-sm text-red-600 font-medium">
-            {errors.password.message}
-          </p>
+          <p className="text-xs text-red-500 mt-1">{errors.password.message}</p>
         )}
       </div>
 
