@@ -111,13 +111,16 @@ function NewStoryContent() {
       return;
     }
 
-    // Get content as HTML from editor
+    // Get content as HTML from editor for consistency
     const content = editorRef.current?.getHTML();
+
+    // Validate content is not empty HTML
     const isEmptyContent =
       !content ||
       content === "" ||
       content === "<p></p>" ||
-      content === "<p><br></p>";
+      content === "<p><br></p>" ||
+      content === '<p class="p-"></p>';
 
     if (isEmptyContent) {
       setSaveStatus("Error");
@@ -127,23 +130,23 @@ function NewStoryContent() {
 
     setIsPublishing(true);
     try {
-      // CRITICAL: Save content with title FIRST before publishing
-      // This ensures the content is saved in HTML format
       console.log(
         "[handlePublish] Saving content to database:",
         content.substring(0, 100),
       );
+
+      // Save as HTML for both autosave and publish to ensure consistency
       await fetcher.patch(`/posts/${postId}/autosave`, {
-        content,
+        content: content, // Always send HTML string
         title,
         image: coverImage,
       });
       console.log("[handlePublish] Content saved successfully");
 
-      // Now publish the post
+      // Now publish the post with the same HTML content
       await fetcher.patch(`/posts/${postId}/publish`, {
         title,
-        content,
+        content: content, // Same HTML content
         image: coverImage,
       });
       console.log("[handlePublish] Post published successfully");
