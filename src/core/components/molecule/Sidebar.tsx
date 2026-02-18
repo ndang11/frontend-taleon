@@ -8,9 +8,9 @@ import { clearAuthData } from "@/core/lib/auth";
 
 const navigation = [
   { name: "Home", href: "/me", icon: Home },
+  { name: "Profile", href: "/me/profile", icon: User },
   { name: "Stories", href: "/me/stories", icon: Notebook },
   { name: "Stats", href: "/me/stats", icon: TrendingUp },
-  { name: "Profile", href: "/me/profile", icon: User },
 ];
 
 interface SidebarProps {
