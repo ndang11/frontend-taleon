@@ -122,6 +122,29 @@ export default function ProfilePage() {
     return () => clearTimeout(timer);
   }, [authUser]);
 
+  // Refresh profile when page becomes visible (e.g., after navigating back from following someone)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        // Re-trigger the profile load
+        const token = Cookies.get("auth_token");
+        const userId = authUser?._id || authUser?.id;
+        if (userId && token) {
+          getUserProfile(userId, token)
+            .then((data) => {
+              setProfile(data);
+            })
+            .catch(console.error);
+        }
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [authUser]);
+
   const handleCoverImageChange = async (url: string) => {
     const token = localStorage.getItem("access_token");
     const userId = authUser?._id || authUser?.id;

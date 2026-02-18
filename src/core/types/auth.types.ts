@@ -20,5 +20,7 @@ export interface AuthResponse {
     location?: string;
     website?: string;
     phone?: string;
+    followersCount?: number;
+    followingCount?: number;
   };
 }

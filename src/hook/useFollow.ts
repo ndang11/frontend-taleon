@@ -13,8 +13,13 @@ export function useFollow(userId: string) {
 
   const followMutation = useMutation({
     mutationFn: () => followUser(userId),
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["followStatus", userId] });
+      // Invalidate user profile queries to refresh followers/following counts
+      queryClient.invalidateQueries({ queryKey: ["userProfile", userId] });
+      queryClient.invalidateQueries({ queryKey: ["user"] });
+      // Return the followers count for the parent component to update
+      return data;
     },
     onError: (error: any) => {
       // If already following (409), refresh the status
@@ -26,8 +31,13 @@ export function useFollow(userId: string) {
 
   const unfollowMutation = useMutation({
     mutationFn: () => unfollowUser(userId),
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["followStatus", userId] });
+      // Invalidate user profile queries to refresh followers/following counts
+      queryClient.invalidateQueries({ queryKey: ["userProfile", userId] });
+      queryClient.invalidateQueries({ queryKey: ["user"] });
+      // Return the followers count for the parent component to update
+      return data;
     },
   });
 
@@ -45,5 +55,9 @@ export function useFollow(userId: string) {
     toggleFollow,
     follow: followMutation.mutate,
     unfollow: unfollowMutation.mutate,
+    followCount:
+      followMutation.data?.followersCount ??
+      unfollowMutation.data?.followersCount ??
+      0,
   };
 }
