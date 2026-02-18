@@ -39,6 +39,7 @@ export interface Post {
   category?: string;
   subtitle?: string;
   image?: string;
+  coverImage?: string;
   isPublic?: boolean;
   likeCount?: number;
   commentCount?: number;

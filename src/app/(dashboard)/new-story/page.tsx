@@ -61,16 +61,17 @@ function NewStoryContent() {
           // Editing existing post
           const response = await getPost(editPostId);
           if ("post" in response) {
-            setPostId(response.post._id);
-            setTitle(response.post.title || "");
-            setCoverImage(response.post.image);
+            const postData = response.post;
+            setPostId(postData._id);
+            setTitle(postData.title || "");
+            setCoverImage(postData.image || postData.coverImage);
             // Load content into editor if available
-            if (editorRef.current && response.post.content) {
-              editorRef.current.setContent(response.post.content);
+            if (editorRef.current && postData.content) {
+              editorRef.current.setContent(postData.content);
             }
             setSaveStatus(
-              (response.post.status.charAt(0).toUpperCase() +
-                response.post.status.slice(1)) as any,
+              (postData.status.charAt(0).toUpperCase() +
+                postData.status.slice(1)) as any,
             );
           }
         } else {
@@ -82,9 +83,16 @@ function NewStoryContent() {
             content: JSON.stringify(initialContent),
             category: "General",
           });
-          setPostId(res._id);
+
+          // Handle both wrapped { post: ... } and direct post response
+          const newPost = res.post || res;
+          setPostId(newPost._id);
           // Update URL to include edit parameter for refresh safety
-          window.history.replaceState(null, "", `/new-story?edit=${res._id}`);
+          window.history.replaceState(
+            null,
+            "",
+            `/new-story?edit=${newPost._id}`,
+          );
         }
       } catch (err) {
         console.error("Failed to initialize post:", err);
