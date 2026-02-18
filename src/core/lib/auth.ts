@@ -16,6 +16,8 @@ export interface User {
   location?: string;
   website?: string;
   phone?: string;
+  followersCount?: number;
+  followingCount?: number;
 }
 
 export function setAuthData(data: AuthResponse) {
