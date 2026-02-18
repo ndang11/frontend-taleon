@@ -1129,6 +1129,52 @@ export async function isFollowing(
   return response.json();
 }
 
+export interface Follower {
+  _id: string;
+  followerId: {
+    _id: string;
+    name: string;
+    email: string;
+    avatar?: string;
+  };
+  createdAt: string;
+}
+
+export interface Following {
+  _id: string;
+  followingId: {
+    _id: string;
+    name: string;
+    email: string;
+    avatar?: string;
+  };
+  createdAt: string;
+}
+
+export async function getFollowers(userId: string): Promise<Follower[]> {
+  const response = await fetch(`${API_BASE_URL}/follows/followers/${userId}`, {
+    headers: getAuthHeaders(),
+  });
+
+  if (!response.ok) {
+    return [];
+  }
+
+  return response.json();
+}
+
+export async function getFollowing(userId: string): Promise<Following[]> {
+  const response = await fetch(`${API_BASE_URL}/follows/following/${userId}`, {
+    headers: getAuthHeaders(),
+  });
+
+  if (!response.ok) {
+    return [];
+  }
+
+  return response.json();
+}
+
 export async function fetchPosts(
   params: FetchPostsParams = {},
   token: string,
