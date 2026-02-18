@@ -47,10 +47,7 @@ export function NotificationDropdown() {
     markAsRead,
     markAllAsRead,
     removeNotification,
-<<<<<<< HEAD
     clearAll,
-=======
->>>>>>> 963ed32 (fixed comment function and notification)
   } = useNotifications();
 
   useEffect(() => {
@@ -72,10 +69,6 @@ export function NotificationDropdown() {
     if (!notification.isRead) {
       await markAsRead(notification._id);
     }
-<<<<<<< HEAD
-=======
-    // Close dropdown
->>>>>>> 963ed32 (fixed comment function and notification)
     setIsOpen(false);
   };
 
@@ -138,11 +131,7 @@ export function NotificationDropdown() {
               )}
               {unreadCount > 0 && (
                 <button
-<<<<<<< HEAD
                   onClick={() => markAllAsRead()}
-=======
-                  onClick={markAllAsRead}
->>>>>>> 963ed32 (fixed comment function and notification)
                   className="text-sm text-blue-600 hover:text-blue-700 font-medium"
                 >
                   Mark all read
