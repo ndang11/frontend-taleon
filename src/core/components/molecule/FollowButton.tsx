@@ -29,8 +29,20 @@ export function FollowButton({ authorId, onFollowChange }: FollowButtonProps) {
 =======
 }
 
-export function FollowButton({ authorId }: FollowButtonProps) {
-  const { isFollowing, isLoading, toggleFollow } = useFollow(authorId);
+export function FollowButton({ authorId, onFollowChange }: FollowButtonProps) {
+  const { isFollowing, isLoading, toggleFollow, followCount } =
+    useFollow(authorId);
+
+  const handleToggle = () => {
+    toggleFollow();
+    // Call the callback with the new state (it will be inverted on next render)
+    if (onFollowChange) {
+      // We need to call this after the mutation completes, but since we don't have
+      // direct access to the new state here, we'll call with the current inverted state
+      // The parent should re-fetch or handle the state change
+      onFollowChange(!isFollowing, followCount);
+    }
+  };
 
   return (
     <button
