@@ -81,9 +81,12 @@ export default function TiptapEditor({
   onWordCountChange,
   onReady,
   initialContent: _initialContent,
-  contentFormat = "json",
+  contentFormat = "html",
 }: TiptapEditorProps) {
-  const { debouncedSave, saveStatus } = useEditorAutosave(postId);
+  const { debouncedSave, saveStatus } = useEditorAutosave(
+    postId,
+    contentFormat as "html" | "json",
+  );
   const [linkUrl, setLinkUrl] = useState("");
   const [showLinkInput, setShowLinkInput] = useState(false);
 
