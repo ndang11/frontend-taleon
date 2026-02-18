@@ -141,6 +141,7 @@ export interface Post {
   category?: string;
   subtitle?: string;
   image?: string;
+  coverImage?: string;
   isPublic?: boolean;
   likeCount?: number;
   commentCount?: number;
@@ -1504,10 +1505,15 @@ export const mapPostData = (data: any): Post => {
     }
   }
 
+  // Ensure image is properly mapped from coverImage
+  const image = data.image || data.coverImage || undefined;
+
   return {
     ...data,
     id: data._id, // Map _id to id
     content: parsedContent,
+    image: image,
+    title: data.title || "Untitled Story",
   };
 };
 
