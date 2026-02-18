@@ -24,6 +24,7 @@ import { ShareButton } from "@/core/components/atom/ShareButton";
 import { FollowButton } from "@/core/components/molecule/FollowButton";
 import {
   createComment,
+  getAuthHeaders,
   getComments,
   incrementView,
   mapPostData,
@@ -449,7 +450,10 @@ export default function PostDetailsPage({
         const endpoint = isSlug ? `/posts/slug/public/${id}` : `/posts/${id}`;
 
         const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            ...getAuthHeaders(),
+          },
           cache: "no-store",
         });
 
@@ -460,10 +464,17 @@ export default function PostDetailsPage({
         const data = await response.json();
 
         let fetchedPost = null;
-        if (data.post) {
-          fetchedPost = mapPostData(data.post) as Post;
-        } else if (data._id) {
-          fetchedPost = mapPostData(data) as Post;
+        // Handle both { post: ... } and direct post response
+        const postData = data.post || data;
+
+        if (postData && (postData._id || postData.id)) {
+          fetchedPost = mapPostData(postData);
+        } else if (data._id || data.id) {
+          fetchedPost = mapPostData(data);
+        }
+
+        if (!fetchedPost) {
+          throw new Error("Invalid post data received");
         }
 
         if (fetchedPost) {
