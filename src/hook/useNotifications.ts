@@ -5,24 +5,24 @@ import { fetcher } from "@/core/lib/api-client";
 
 // API functions (can be moved to api-client.ts if preferred)
 const getNotifications = async () => {
-  // Fix: Type res as any to avoid unknown type errors
+  // Fix: Backend returns { notifications, unreadCount } directly, not wrapped in .data
   const res: any = await fetcher.get("/notifications?limit=20");
-  return res.data;
+  return res;
 };
 
 const markNotificationAsRead = async (notificationId: string) => {
-  // Fix: Pass empty object as body for POST request and type res as any
+  // Fix: Pass empty object as body for POST request
   const res: any = await fetcher.post(
     `/notifications/${notificationId}/read`,
     {},
   );
-  return res.data;
+  return res;
 };
 
 const markAllNotificationsAsRead = async () => {
-  // Fix: Pass empty object as body for POST request and type res as any
+  // Fix: Pass empty object as body for POST request
   const res: any = await fetcher.post("/notifications/read-all", {});
-  return res.data;
+  return res;
 };
 
 const deleteNotification = async (notificationId: string) => {
