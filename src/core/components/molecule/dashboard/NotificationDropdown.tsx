@@ -172,7 +172,6 @@ export function NotificationDropdown() {
                         : "bg-white border-transparent"
                     }`}
                   >
-                    {/* Avatar or Icon */}
                     <div className="flex-shrink-0">
                       {notification.fromUserId?.avatar ? (
                         <div className="w-10 h-10 rounded-full overflow-hidden relative">
@@ -190,7 +189,6 @@ export function NotificationDropdown() {
                       )}
                     </div>
 
-                    {/* Content */}
                     <Link
                       href={getNotificationLink(notification)}
                       onClick={() => handleNotificationClick(notification)}
@@ -206,8 +204,6 @@ export function NotificationDropdown() {
                         {new Date(notification.createdAt).toLocaleDateString()}
                       </p>
                     </Link>
-
-                    {/* Actions */}
                     <div className="flex items-center gap-1 flex-shrink-0">
                       {!notification.isRead && (
                         <button
