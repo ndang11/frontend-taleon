@@ -4,19 +4,39 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetcher } from "@/core/lib/api-client";
 
 // API functions (can be moved to api-client.ts if preferred)
-const getNotifications = async () => {
-  const res = await fetcher.get("/notifications?limit=20");
-  return res.data;
+
+interface Notification {
+  _id: string;
+  isRead: boolean;
+  // Add other notification properties as needed
+}
+
+interface NotificationsResponse {
+  notifications: Notification[];
+  unreadCount: number;
+}
+
+const getNotifications = async (): Promise<NotificationsResponse> => {
+  const res = await fetcher.get<NotificationsResponse>(
+    "/notifications?limit=20",
+  );
+  return res;
 };
 
 const markNotificationAsRead = async (notificationId: string) => {
-  const res = await fetcher.post(`/notifications/${notificationId}/read`);
-  return res.data;
+  const res = await fetcher.post<{ unreadCount: number }>(
+    `/notifications/${notificationId}/read`,
+    {},
+  );
+  return res;
 };
 
 const markAllNotificationsAsRead = async () => {
-  const res = await fetcher.post("/notifications/read-all");
-  return res.data;
+  const res = await fetcher.post<{ unreadCount: number }>(
+    "/notifications/read-all",
+    {},
+  );
+  return res;
 };
 
 const deleteNotification = async (notificationId: string) => {
