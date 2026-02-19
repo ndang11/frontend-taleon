@@ -1,11 +1,12 @@
 "use client";
 
-import { Menu, Search, SquarePen, X } from "lucide-react";
+import { Menu, SquarePen, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { useAuth } from "@/context/auth.provider";
 import { NotificationDropdown } from "@/core/components/molecule/dashboard/NotificationDropdown";
+import { SearchDropdown } from "@/core/components/molecule/SearchDropdown";
 import { Sidebar } from "@/core/components/molecule/Sidebar";
 import type { Post } from "@/core/lib/api-client";
 import { useMyPosts, usePublishedPosts } from "@/hook/useStories";

@@ -7,9 +7,12 @@ import {
   MessageCircle,
   MinusCircle,
   MoreHorizontal,
+  Send,
+  X,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useState } from "react";
 
 interface Author {
   name: string;
@@ -118,6 +121,105 @@ export function PostCard({ post }: PostCardProps) {
     day: "numeric",
   });
 
+  // Like state with localStorage persistence
+  const [isLiked, setIsLiked] = useState(() => {
+    if (typeof window !== "undefined") {
+      const likedPosts = JSON.parse(localStorage.getItem("likedPosts") || "{}");
+      return likedPosts[post._id] || false;
+    }
+    return false;
+  });
+
+  const [currentLikeCount, setCurrentLikeCount] = useState(() => {
+    if (typeof window !== "undefined") {
+      const likeCounts = JSON.parse(
+        localStorage.getItem("postLikeCounts") || "{}",
+      );
+      return likeCounts[post._id] || post.likeCount || 0;
+    }
+    return post.likeCount || 0;
+  });
+
+  // Comment state
+  const [showCommentInput, setShowCommentInput] = useState(false);
+  const [commentText, setCommentText] = useState("");
+  const [currentCommentCount, setCurrentCommentCount] = useState(() => {
+    if (typeof window !== "undefined") {
+      const commentCounts = JSON.parse(
+        localStorage.getItem("postCommentCounts") || "{}",
+      );
+      return commentCounts[post._id] || post.commentCount || 0;
+    }
+    return post.commentCount || 0;
+  });
+
+  const handleLike = (e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent navigation to post
+    e.stopPropagation();
+
+    const newIsLiked = !isLiked;
+    const newLikeCount = newIsLiked
+      ? currentLikeCount + 1
+      : currentLikeCount - 1;
+
+    setIsLiked(newIsLiked);
+    setCurrentLikeCount(newLikeCount);
+
+    // Persist to localStorage
+    if (typeof window !== "undefined") {
+      const likedPosts = JSON.parse(localStorage.getItem("likedPosts") || "{}");
+      const likeCounts = JSON.parse(
+        localStorage.getItem("postLikeCounts") || "{}",
+      );
+
+      if (newIsLiked) {
+        likedPosts[post._id] = true;
+        likeCounts[post._id] = newLikeCount;
+      } else {
+        delete likedPosts[post._id];
+        likeCounts[post._id] = newLikeCount;
+      }
+
+      localStorage.setItem("likedPosts", JSON.stringify(likedPosts));
+      localStorage.setItem("postLikeCounts", JSON.stringify(likeCounts));
+    }
+  };
+
+  const handleCommentClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setShowCommentInput(!showCommentInput);
+  };
+
+  const handleCommentSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (commentText.trim()) {
+      const newCommentCount = currentCommentCount + 1;
+      setCurrentCommentCount(newCommentCount);
+      setCommentText("");
+      setShowCommentInput(false);
+
+      // Persist to localStorage
+      if (typeof window !== "undefined") {
+        const commentCounts = JSON.parse(
+          localStorage.getItem("postCommentCounts") || "{}",
+        );
+        commentCounts[post._id] = newCommentCount;
+        localStorage.setItem(
+          "postCommentCounts",
+          JSON.stringify(commentCounts),
+        );
+      }
+    }
+  };
+
+  const handleCommentCancel = () => {
+    setCommentText("");
+    setShowCommentInput(false);
+  };
+
   return (
     <Link
       href={`/post/${post._id}`}
@@ -180,23 +282,25 @@ export function PostCard({ post }: PostCardProps) {
               <span className="text-xs font-medium">{post.viewCount || 0}</span>
             </div>
             {/* Likes */}
-            <div
-              className="flex items-center gap-1 text-gray-400"
-              title="Likes"
+            <button
+              onClick={handleLike}
+              className="flex items-center gap-1 text-gray-400 hover:text-red-500 transition-colors"
+              title="Like"
             >
-              <Heart className="w-4 h-4" />
-              <span className="text-xs font-medium">{post.likeCount || 0}</span>
-            </div>
+              <Heart
+                className={`w-4 h-4 transition-colors ${isLiked ? "fill-red-500 text-red-500" : ""}`}
+              />
+              <span className="text-xs font-medium">{currentLikeCount}</span>
+            </button>
             {/* Comments */}
-            <div
-              className="flex items-center gap-1 text-gray-400"
+            <button
+              onClick={handleCommentClick}
+              className="flex items-center gap-1 text-gray-400 hover:text-blue-500 transition-colors"
               title="Comments"
             >
               <MessageCircle className="w-4 h-4" />
-              <span className="text-xs font-medium">
-                {post.commentCount || 0}
-              </span>
-            </div>
+              <span className="text-xs font-medium">{currentCommentCount}</span>
+            </button>
             <button
               className="text-gray-400 hover:text-gray-900 transition-colors"
               title="Bookmark"
@@ -223,6 +327,41 @@ export function PostCard({ post }: PostCardProps) {
             className="object-cover"
             unoptimized
           />
+        </div>
+      )}
+
+      {/* Comment Input */}
+      {showCommentInput && (
+        <div
+          className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <form onSubmit={handleCommentSubmit} className="space-y-3">
+            <textarea
+              value={commentText}
+              onChange={(e) => setCommentText(e.target.value)}
+              placeholder="Write a comment..."
+              className="w-full p-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+              rows={3}
+            />
+            <div className="flex items-center justify-between">
+              <button
+                type="button"
+                onClick={handleCommentCancel}
+                className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={!commentText.trim()}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+              >
+                <Send className="w-4 h-4" />
+                Comment
+              </button>
+            </div>
+          </form>
         </div>
       )}
     </Link>

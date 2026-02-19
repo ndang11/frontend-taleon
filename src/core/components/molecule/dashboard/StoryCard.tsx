@@ -186,8 +186,8 @@ export function StoryCard({
           <div className="flex items-start justify-between gap-4 mb-3">
             <Link
               href={
-                post.status === "published"
-                  ? `/post/${post.slug}`
+                post.status === "published" && post.slug
+                  ? `/story/${post.slug}`
                   : `/post/${post._id}`
               }
               className="flex-1 min-w-0"
@@ -277,101 +277,153 @@ export function StoryCard({
                 <Heart className="w-4 h-4" />
                 <span className="font-medium">{likeCount}</span>
               </span>
-              <span className="flex items-center gap-1.5 text-sm text-gray-500">
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  setShowComments(!showComments);
+                }}
+                className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-blue-600 transition-colors"
+              >
                 <MessageCircle className="w-4 h-4" />
                 <span className="font-medium">{commentCount}</span>
-              </span>
+              </button>
             </div>
           </div>
 
-          {/* Comment Section */}
-          <div className="mt-4 pt-4 border-t border-gray-100">
-            <button
-              onClick={(e) => {
-                e.preventDefault();
-                setShowComments(!showComments);
-              }}
-              className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-2"
+          {/* Comment Section - Medium Style */}
+          {showComments && (
+            <div
+              className="mt-4 pt-4 border-t border-gray-200"
+              onClick={(e) => e.stopPropagation()}
             >
-              <MessageCircle className="w-4 h-4" />
-              {commentCount > 0
-                ? `Show ${commentCount} comments`
-                : "Write a comment"}
-            </button>
-
-            {showComments && (
-              <div className="mt-4 space-y-4">
+              <div className="space-y-4">
                 {/* Comment Form */}
-                <form onSubmit={handleSubmitComment} className="flex gap-2">
-                  <input
-                    type="text"
+                <form
+                  onSubmit={handleSubmitComment}
+                  className="space-y-3"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <textarea
                     value={newComment}
                     onChange={(e) => setNewComment(e.target.value)}
+                    onClick={(e) => e.stopPropagation()}
                     placeholder={
                       isAuthenticated
-                        ? "Write a comment..."
-                        : "Log in to comment..."
+                        ? "What are your thoughts?"
+                        : "Log in to share your thoughts..."
                     }
                     disabled={!isAuthenticated}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-sm resize-none focus:outline-none focus:ring-1 focus:ring-gray-900 text-sm placeholder:text-gray-400"
+                    rows={3}
                   />
-                  <button
-                    type="submit"
-                    disabled={
-                      !newComment.trim() ||
-                      createComment.isPending ||
-                      !isAuthenticated
-                    }
-                    className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
-                  >
-                    <Send className="w-4 h-4" />
-                  </button>
+                  {isAuthenticated ? (
+                    <div className="flex justify-end gap-2">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setNewComment("");
+                          setShowComments(false);
+                        }}
+                        className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={!newComment.trim() || createComment.isPending}
+                        className="px-5 py-2 bg-green-600 text-white text-sm font-medium rounded-full hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                      >
+                        {createComment.isPending ? "Posting..." : "Respond"}
+                      </button>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-500">
+                      <a
+                        href={`/login?redirect=/post/${post._id}`}
+                        className="text-blue-600 hover:underline font-medium"
+                      >
+                        Log in
+                      </a>{" "}
+                      to share your thoughts
+                    </p>
+                  )}
                 </form>
-
-                {!isAuthenticated && (
-                  <p className="text-sm text-gray-500 mt-2">
-                    <a
-                      href={`/login?redirect=/post/${post._id}`}
-                      className="text-blue-600 hover:underline"
-                    >
-                      Log in
-                    </a>{" "}
-                    to comment
-                  </p>
-                )}
 
                 {/* Comments List */}
                 {loadingComments ? (
-                  <p className="text-sm text-gray-400">Loading comments...</p>
+                  <div className="text-center py-4">
+                    <div className="inline-block h-6 w-6 animate-spin rounded-full border-4 border-solid border-gray-900 border-r-transparent"></div>
+                  </div>
                 ) : Array.isArray(commentsData) && commentsData.length > 0 ? (
-                  <div className="space-y-3">
+                  <div className="space-y-4 mt-6">
                     {commentsData.map((comment: any) => (
-                      <div
-                        key={comment._id}
-                        className="bg-gray-50 rounded-lg p-3"
-                      >
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="font-medium text-sm text-gray-900">
-                            {comment.authorId?.name || "Unknown"}
-                          </span>
-                          <span className="text-xs text-gray-400">
-                            {formatDate(comment.createdAt)}
-                          </span>
+                      <div key={comment._id} className="flex gap-3">
+                        <div className="shrink-0">
+                          {comment.authorId?.avatar ? (
+                            <Image
+                              src={comment.authorId.avatar}
+                              alt={comment.authorId.name}
+                              width={32}
+                              height={32}
+                              className="w-8 h-8 rounded-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                              <span className="text-white font-medium text-xs">
+                                {(comment.authorId?.name || "U")
+                                  .charAt(0)
+                                  .toUpperCase()}
+                              </span>
+                            </div>
+                          )}
                         </div>
-                        <p className="text-sm text-gray-600">
-                          {comment.content}
-                        </p>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-medium text-sm text-gray-900">
+                              {comment.authorId?.name || "Unknown"}
+                            </span>
+                            <span className="text-gray-500 text-xs">·</span>
+                            <span className="text-xs text-gray-500">
+                              {(() => {
+                                const now = new Date();
+                                const commentDate = new Date(comment.createdAt);
+                                const diffMs =
+                                  now.getTime() - commentDate.getTime();
+                                const diffMins = Math.floor(diffMs / 60000);
+                                const diffHours = Math.floor(diffMs / 3600000);
+                                const diffDays = Math.floor(diffMs / 86400000);
+
+                                if (diffMins < 1) return "Just now";
+                                if (diffMins < 60) return `${diffMins}m ago`;
+                                if (diffHours < 24) return `${diffHours}h ago`;
+                                if (diffDays < 7) return `${diffDays}d ago`;
+                                return commentDate.toLocaleDateString(
+                                  undefined,
+                                  {
+                                    month: "short",
+                                    day: "numeric",
+                                  },
+                                );
+                              })()}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-700 leading-relaxed">
+                            {comment.content}
+                          </p>
+                        </div>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-gray-400">
-                    No comments yet. Be the first to comment!
-                  </p>
+                  <div className="text-center py-6">
+                    <MessageCircle className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                    <p className="text-sm text-gray-400">No responses yet</p>
+                  </div>
                 )}
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
 
         {/* Image - Below text on mobile, Above text on desktop */}
@@ -379,8 +431,8 @@ export function StoryCard({
           <div className="relative h-48 overflow-hidden order-2 lg:order-none">
             <Link
               href={
-                post.status === "published"
-                  ? `/post/${post.slug}`
+                post.status === "published" && post.slug
+                  ? `/story/${post.slug}`
                   : `/post/${post._id}`
               }
               onClick={() => onView?.(post)}
