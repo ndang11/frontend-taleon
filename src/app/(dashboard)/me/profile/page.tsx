@@ -489,9 +489,12 @@ export default function MyProfilePage() {
                         </p>
                       </div>
                     </div>
-                    <button className="text-sm px-4 py-2 border border-gray-300 rounded-full hover:bg-gray-50 transition-colors">
+                    <Link
+                      href={`/profile?userId=${follower._id}`}
+                      className="text-sm px-4 py-2 border border-gray-300 rounded-full hover:bg-gray-50 transition-colors"
+                    >
                       View Profile
-                    </button>
+                    </Link>
                   </div>
                 ))}
               </div>
@@ -537,9 +540,12 @@ export default function MyProfilePage() {
                         </p>
                       </div>
                     </div>
-                    <button className="text-sm px-4 py-2 border border-gray-300 rounded-full hover:bg-gray-50 transition-colors">
+                    <Link
+                      href={`/profile?userId=${followedUser._id}`}
+                      className="text-sm px-4 py-2 border border-gray-300 rounded-full hover:bg-gray-50 transition-colors"
+                    >
                       View Profile
-                    </button>
+                    </Link>
                   </div>
                 ))}
               </div>
