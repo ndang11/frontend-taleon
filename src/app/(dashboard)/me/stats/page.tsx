@@ -1,5 +1,14 @@
 "use client";
 
+import {
+  Eye,
+  FileText,
+  Heart,
+  Lightbulb,
+  MessageCircle,
+  UserPlus,
+  Users,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { getAuthHeaders } from "@/core/lib/api-client";
 
@@ -15,7 +24,7 @@ interface AnalyticsData {
 interface StatCardProps {
   title: string;
   value: number | string;
-  icon: string;
+  icon: React.ReactNode;
   color: string;
 }
 
@@ -25,7 +34,7 @@ function StatCard({ title, value, icon, color }: StatCardProps) {
       <div
         className={`w-12 h-12 rounded-full flex items-center justify-center ${color}`}
       >
-        <span className="text-2xl">{icon}</span>
+        <span className="text-gray-700">{icon}</span>
       </div>
       <div>
         <p className="text-sm text-gray-500 font-medium">{title}</p>
@@ -110,38 +119,38 @@ export default function StatsPage() {
           <StatCard
             title="Total Posts"
             value={analytics?.totalPosts ?? 0}
-            icon="📝"
+            icon={<FileText className="w-6 h-6" />}
             color="bg-blue-100"
           />
           <StatCard
             title="Total Views"
             value={analytics?.totalViews ?? 0}
-            icon="👁️"
+            icon={<Eye className="w-6 h-6" />}
             color="bg-purple-100"
           />
           <StatCard
             title="Total Likes"
             value={analytics?.totalLikes ?? 0}
-            icon="❤️"
+            icon={<Heart className="w-6 h-6" />}
             color="bg-red-100"
           />
           <StatCard
             title="Total Comments"
             value={analytics?.totalComments ?? 0}
-            icon="💬"
+            icon={<MessageCircle className="w-6 h-6" />}
             color="bg-green-100"
           />
           <StatCard
             title="Followers"
             value={analytics?.followersCount ?? 0}
-            icon="👥"
+            icon={<Users className="w-6 h-6" />}
             color="bg-indigo-100"
           />
           <StatCard
             title="Following"
             value={analytics?.followingCount ?? 0}
             color="bg-orange-100"
-            icon="➕"
+            icon={<UserPlus className="w-6 h-6" />}
           />
         </div>
       </div>
@@ -185,8 +194,9 @@ export default function StatsPage() {
 
       {/* Tips Section */}
       <div className="mt-8 bg-blue-50 rounded-lg p-6">
-        <h2 className="text-lg font-semibold text-gray-800 mb-3">
-          💡 Tips to Increase Your Analytics
+        <h2 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
+          <Lightbulb className="w-5 h-5" />
+          Tips to Increase Your Analytics
         </h2>
         <ul className="space-y-2 text-sm text-gray-700">
           <li>• Write compelling titles to attract more views</li>
