@@ -42,7 +42,9 @@ export default function ProfilePage() {
   const [coverImage, setCoverImage] = useState<string | null>(null);
   const [uploadingCover, setUploadingCover] = useState(false);
   const [avatar, setAvatar] = useState<string | null>(null);
-  const [showPostsModal, setShowPostsModal] = useState(false);
+  const [activeTab, setActiveTab] = useState<
+    "posts" | "followers" | "following"
+  >("posts");
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -300,22 +302,29 @@ export default function ProfilePage() {
             @{profile.email?.split("@")[0] || "user"}
           </p>
           <div className="flex items-center gap-4 mt-2">
-            <span className="text-sm">
-              <b>{profile.followersCount}</b> Followers
-            </span>
-            <span className="text-sm">
-              <b>{profile.followingCount}</b> Following
-            </span>
             <button
-              onClick={() => {
-                setShowPostsModal(true);
-                document
-                  .getElementById("published-posts")
-                  ?.scrollIntoView({ behavior: "smooth" });
-              }}
-              className="text-sm hover:text-blue-600 transition-colors cursor-pointer"
+              onClick={() => setActiveTab("posts")}
+              className={`text-sm hover:text-blue-600 transition-colors ${
+                activeTab === "posts" ? "font-semibold" : ""
+              }`}
             >
               <b>{stories.length}</b> Published
+            </button>
+            <button
+              onClick={() => setActiveTab("followers")}
+              className={`text-sm hover:text-blue-600 transition-colors ${
+                activeTab === "followers" ? "font-semibold" : ""
+              }`}
+            >
+              <b>{profile.followersCount}</b> Followers
+            </button>
+            <button
+              onClick={() => setActiveTab("following")}
+              className={`text-sm hover:text-blue-600 transition-colors ${
+                activeTab === "following" ? "font-semibold" : ""
+              }`}
+            >
+              <b>{profile.followingCount}</b> Following
             </button>
           </div>
         </div>
@@ -416,187 +425,229 @@ export default function ProfilePage() {
           className="md:col-span-2 border-t pt-6 md:border-t-0 md:pt-0"
           id="published-posts"
         >
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold">Published Posts</h2>
-            <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
-              {stories.length} {stories.length === 1 ? "post" : "posts"}
-            </span>
+          {/* Tab Content */}
+          <div className="border-t pt-8">
+            {/* Posts Tab */}
+            {activeTab === "posts" && (
+              <div>
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-bold">Published Posts</h2>
+                  <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+                    {stories.length} {stories.length === 1 ? "post" : "posts"}
+                  </span>
+                </div>
+
+                {storiesLoading ? (
+                  <div className="flex items-center justify-center py-10">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                  </div>
+                ) : stories.length === 0 ? (
+                  <div className="text-gray-400 italic py-10 border-2 border-dashed rounded-xl text-center">
+                    No stories published yet. Start writing to share your
+                    stories!
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {stories.map((story) => {
+                      const authorName =
+                        typeof story.authorId === "object" &&
+                        story.authorId !== null
+                          ? (story.authorId as any).name
+                          : "Unknown Author";
+                      const authorAvatar =
+                        typeof story.authorId === "object" &&
+                        story.authorId !== null
+                          ? (story.authorId as any).avatar
+                          : undefined;
+                      const isOwnPost =
+                        profile._id ===
+                        (typeof story.authorId === "object" &&
+                        story.authorId !== null
+                          ? (story.authorId as any)._id
+                          : story.authorId);
+
+                      return (
+                        <div
+                          key={story._id}
+                          className="border border-gray-200 rounded-lg p-4 hover:border-gray-300 transition-colors"
+                        >
+                          {/* Author info */}
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-2">
+                              {authorAvatar ? (
+                                <Image
+                                  src={authorAvatar}
+                                  alt={authorName}
+                                  width={32}
+                                  height={32}
+                                  className="rounded-full object-cover"
+                                />
+                              ) : (
+                                <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-sm font-medium text-gray-600">
+                                  {authorName.charAt(0).toUpperCase()}
+                                </div>
+                              )}
+                              <div>
+                                <span className="text-sm font-medium text-gray-900">
+                                  {authorName}
+                                </span>
+                                <span className="text-xs text-gray-500 ml-1">
+                                  •
+                                  {story.publishedAt
+                                    ? new Date(
+                                        story.publishedAt,
+                                      ).toLocaleDateString("en-US", {
+                                        month: "short",
+                                        day: "numeric",
+                                        year: "numeric",
+                                      })
+                                    : new Date(
+                                        story.createdAt,
+                                      ).toLocaleDateString("en-US", {
+                                        month: "short",
+                                        day: "numeric",
+                                        year: "numeric",
+                                      })}
+                                </span>
+                              </div>
+                            </div>
+                            {!isOwnPost && (
+                              <button className="text-sm px-3 py-1 border border-gray-300 rounded-full hover:bg-gray-50 transition-colors">
+                                Follow
+                              </button>
+                            )}
+                          </div>
+
+                          <Link href={`/post/${story._id}`} className="block">
+                            <h3 className="font-semibold text-gray-900 mb-2 hover:text-blue-600 transition-colors">
+                              {story.title || "Untitled Story"}
+                            </h3>
+                            <p className="text-gray-500 text-sm line-clamp-2 mb-3">
+                              No content preview available...
+                            </p>
+                          </Link>
+                          <div className="flex items-center gap-4 text-xs text-gray-400">
+                            <span className="flex items-center gap-1">
+                              <Eye size={14} />
+                              {story.viewCount || 0}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Heart size={14} />
+                              {story.likeCount || 0}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
-          {storiesLoading ? (
-            <div className="flex items-center justify-center py-10">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-            </div>
-          ) : stories.length === 0 ? (
-            <div className="text-gray-400 italic py-10 border-2 border-dashed rounded-xl text-center">
-              No stories published yet. Start writing to share your stories!
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {stories.map((story) => {
-                const authorName =
-                  typeof story.authorId === "object" && story.authorId !== null
-                    ? (story.authorId as any).name
-                    : "Unknown Author";
-                const authorAvatar =
-                  typeof story.authorId === "object" && story.authorId !== null
-                    ? (story.authorId as any).avatar
-                    : undefined;
-                const isOwnPost =
-                  profile._id ===
-                  (typeof story.authorId === "object" && story.authorId !== null
-                    ? (story.authorId as any)._id
-                    : story.authorId);
-
-                return (
-                  <div
-                    key={story._id}
-                    className="border border-gray-200 rounded-lg p-4 hover:border-gray-300 transition-colors"
-                  >
-                    {/* Author info */}
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        {authorAvatar ? (
+          {/* Followers Tab */}
+          {activeTab === "followers" && (
+            <div>
+              <h2 className="text-xl font-bold mb-6">Followers</h2>
+              {profile.followers && profile.followers.length > 0 ? (
+                <div className="space-y-4">
+                  {profile.followers.map((follower: any) => (
+                    <div
+                      key={follower._id}
+                      className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-gray-300 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        {follower.avatar ? (
                           <Image
-                            src={authorAvatar}
-                            alt={authorName}
-                            width={32}
-                            height={32}
+                            src={follower.avatar}
+                            alt={follower.name}
+                            width={40}
+                            height={40}
                             className="rounded-full object-cover"
                           />
                         ) : (
-                          <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-sm font-medium text-gray-600">
-                            {authorName.charAt(0).toUpperCase()}
+                          <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-sm font-medium text-gray-600">
+                            {follower.name?.charAt(0)?.toUpperCase() || "U"}
                           </div>
                         )}
                         <div>
-                          <span className="text-sm font-medium text-gray-900">
-                            {authorName}
-                          </span>
-                          <span className="text-xs text-gray-500 ml-1">
-                            •
-                            {story.publishedAt
-                              ? new Date(story.publishedAt).toLocaleDateString(
-                                  "en-US",
-                                  {
-                                    month: "short",
-                                    day: "numeric",
-                                    year: "numeric",
-                                  },
-                                )
-                              : new Date(story.createdAt).toLocaleDateString(
-                                  "en-US",
-                                  {
-                                    month: "short",
-                                    day: "numeric",
-                                    year: "numeric",
-                                  },
-                                )}
-                          </span>
+                          <p className="font-medium text-gray-900">
+                            {follower.name}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            @{follower.email?.split("@")[0] || "user"}
+                          </p>
                         </div>
                       </div>
-                      {!isOwnPost && (
-                        <button className="text-sm px-3 py-1 border border-gray-300 rounded-full hover:bg-gray-50 transition-colors">
-                          Follow
-                        </button>
-                      )}
+                      <Link
+                        href={`/profile?userId=${follower._id}`}
+                        className="text-sm px-4 py-2 border border-gray-300 rounded-full hover:bg-gray-50 transition-colors"
+                      >
+                        View Profile
+                      </Link>
                     </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-gray-400 italic py-10 border-2 border-dashed rounded-xl text-center">
+                  No followers yet.
+                </div>
+              )}
+            </div>
+          )}
 
-                    <Link href={`/post/${story._id}`} className="block">
-                      <h3 className="font-semibold text-gray-900 mb-2 hover:text-blue-600 transition-colors">
-                        {story.title || "Untitled Story"}
-                      </h3>
-                      <p className="text-gray-500 text-sm line-clamp-2 mb-3">
-                        No content preview available...
-                      </p>
-                    </Link>
-                    <div className="flex items-center gap-4 text-xs text-gray-400">
-                      <span className="flex items-center gap-1">
-                        <Eye size={14} />
-                        {story.viewCount || 0}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Heart size={14} />
-                        {story.likeCount || 0}
-                      </span>
+          {/* Following Tab */}
+          {activeTab === "following" && (
+            <div>
+              <h2 className="text-xl font-bold mb-6">Following</h2>
+              {profile.following && profile.following.length > 0 ? (
+                <div className="space-y-4">
+                  {profile.following.map((followedUser: any) => (
+                    <div
+                      key={followedUser._id}
+                      className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-gray-300 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        {followedUser.avatar ? (
+                          <Image
+                            src={followedUser.avatar}
+                            alt={followedUser.name}
+                            width={40}
+                            height={40}
+                            className="rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-sm font-medium text-gray-600">
+                            {followedUser.name?.charAt(0)?.toUpperCase() || "U"}
+                          </div>
+                        )}
+                        <div>
+                          <p className="font-medium text-gray-900">
+                            {followedUser.name}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            @{followedUser.email?.split("@")[0] || "user"}
+                          </p>
+                        </div>
+                      </div>
+                      <Link
+                        href={`/profile?userId=${followedUser._id}`}
+                        className="text-sm px-4 py-2 border border-gray-300 rounded-full hover:bg-gray-50 transition-colors"
+                      >
+                        View Profile
+                      </Link>
                     </div>
-                  </div>
-                );
-              })}
+                  ))}
+                </div>
+              ) : (
+                <div className="text-gray-400 italic py-10 border-2 border-dashed rounded-xl text-center">
+                  Not following anyone yet.
+                </div>
+              )}
             </div>
           )}
         </div>
       </div>
-      {/* Published Posts Modal */}
-      {showPostsModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl max-w-2xl w-full max-h-[80vh] overflow-hidden shadow-xl">
-            <div className="flex items-center justify-between p-4 border-b">
-              <h2 className="text-lg font-bold">
-                Published Posts ({stories.length})
-              </h2>
-              <button
-                onClick={() => setShowPostsModal(false)}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
-              >
-                <X size={20} />
-              </button>
-            </div>
-            <div className="overflow-y-auto max-h-[60vh] p-4">
-              {stories.length === 0 ? (
-                <div className="text-gray-400 italic py-10 text-center">
-                  No published posts yet.
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {stories.map((story) => (
-                    <Link
-                      key={story._id}
-                      href={`/post/${story._id}`}
-                      onClick={() => setShowPostsModal(false)}
-                      className="block border border-gray-200 rounded-lg p-4 hover:border-gray-300 hover:shadow-md transition-all cursor-pointer"
-                    >
-                      <h3 className="font-semibold text-gray-900 mb-2 hover:text-blue-600 transition-colors">
-                        {story.title || "Untitled Story"}
-                      </h3>
-                      <div className="flex items-center gap-4 text-xs text-gray-400">
-                        <span className="flex items-center gap-1">
-                          <Calendar size={14} />
-                          {story.publishedAt
-                            ? new Date(story.publishedAt).toLocaleDateString(
-                                "en-US",
-                                {
-                                  month: "short",
-                                  day: "numeric",
-                                  year: "numeric",
-                                },
-                              )
-                            : new Date(story.createdAt).toLocaleDateString(
-                                "en-US",
-                                {
-                                  month: "short",
-                                  day: "numeric",
-                                  year: "numeric",
-                                },
-                              )}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Eye size={14} />
-                          {story.viewCount || 0}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Heart size={14} />
-                          {story.likeCount || 0}
-                        </span>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
