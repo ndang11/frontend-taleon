@@ -8,6 +8,8 @@ import { useAuth } from "@/context/auth.provider";
 import { NotificationDropdown } from "@/core/components/molecule/dashboard/NotificationDropdown";
 import { SearchDropdown } from "@/core/components/molecule/SearchDropdown";
 import { Sidebar } from "@/core/components/molecule/Sidebar";
+import type { Post } from "@/core/lib/api-client";
+import { useMyPosts, usePublishedPosts } from "@/hook/useStories";
 
 function DashboardContent({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
@@ -57,7 +59,41 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
 
           {/* Search Bar */}
           <div className="flex-1 max-w-md mx-4">
-            <SearchDropdown />
+            <div className="relative">
+              <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search stories..."
+                className="w-full pl-4 pr-10 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all"
+              />
+
+              {/* Search Results Dropdown */}
+              {showResults && searchQuery.length > 0 && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg max-h-80 overflow-y-auto z-50">
+                  {filteredStories.length > 0 ? (
+                    filteredStories.slice(0, 10).map((story: any) => (
+                      <button
+                        key={story._id}
+                        type="button"
+                        onClick={() => handleStoryClick(story)}
+                        className="w-full px-4 py-3 text-left hover:bg-gray-50 border-b border-gray-100 last:border-b-0 transition-colors"
+                      >
+                        <p className="text-sm font-medium text-gray-900 truncate">
+                          {story.title || "Untitled"}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-0.5">
+                          by {getAuthorName(story)}
+                        </p>
+                      </button>
+                    ))
+                  ) : (
+                    <div className="px-4 py-3 text-sm text-gray-500">
+                      No stories found matching "{searchQuery}"
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="flex items-center space-x-3 sm:space-x-4">
