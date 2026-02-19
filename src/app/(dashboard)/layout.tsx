@@ -1,11 +1,12 @@
 "use client";
 
-import { Menu, Search, SquarePen, X } from "lucide-react";
+import { Menu, SquarePen, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { useAuth } from "@/context/auth.provider";
 import { NotificationDropdown } from "@/core/components/molecule/dashboard/NotificationDropdown";
+import { SearchDropdown } from "@/core/components/molecule/SearchDropdown";
 import { Sidebar } from "@/core/components/molecule/Sidebar";
 
 function DashboardContent({ children }: { children: React.ReactNode }) {
@@ -56,14 +57,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
 
           {/* Search Bar */}
           <div className="flex-1 max-w-md mx-4">
-            <div className="relative">
-              <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search stories..."
-                className="w-full pl-4 pr-10 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all"
-              />
-            </div>
+            <SearchDropdown />
           </div>
 
           <div className="flex items-center space-x-3 sm:space-x-4">

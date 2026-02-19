@@ -441,10 +441,10 @@ export async function deletePost(postId: string): Promise<{ message: string }> {
 
 /**
  * Get published post by slug
- * GET /posts/slug/:slug
+ * GET /posts/slug/public/:slug
  */
 export async function getPublishedPostBySlug(slug: string): Promise<Post> {
-  const response = await fetch(`${API_BASE_URL}/posts/slug/${slug}`);
+  const response = await fetch(`${API_BASE_URL}/posts/slug/public/${slug}`);
 
   if (!response.ok) {
     const error = await response
