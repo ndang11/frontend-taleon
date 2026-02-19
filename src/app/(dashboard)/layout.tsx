@@ -1,19 +1,53 @@
 "use client";
 
-import { Menu, SquarePen, X } from "lucide-react";
+import { Menu, Search, SquarePen, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useMemo, useState } from "react";
 import { useAuth } from "@/context/auth.provider";
 import { NotificationDropdown } from "@/core/components/molecule/dashboard/NotificationDropdown";
 import { SearchDropdown } from "@/core/components/molecule/SearchDropdown";
 import { Sidebar } from "@/core/components/molecule/Sidebar";
-import type { Post } from "@/core/lib/api-client";
-import { useMyPosts, usePublishedPosts } from "@/hook/useStories";
+import type { AuthorInfo, Post } from "@/core/lib/api-client";
+import { useAllTenantPosts } from "@/hook/useStories";
 
 function DashboardContent({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
   const { user } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showResults, setShowResults] = useState(false);
+
+  // Fetch all tenant posts for search
+  const { data: postsData } = useAllTenantPosts(1, 50);
+  const posts: Post[] = postsData?.posts || [];
+
+  // Filter stories based on search query
+  const filteredStories = useMemo(() => {
+    if (!searchQuery.trim()) return [];
+    const query = searchQuery.toLowerCase();
+    return posts.filter(
+      (story) =>
+        story.title?.toLowerCase().includes(query) ||
+        story.subtitle?.toLowerCase().includes(query) ||
+        story.tags?.some((tag) => tag.toLowerCase().includes(query)),
+    );
+  }, [posts, searchQuery]);
+
+  // Get author name from story
+  const getAuthorName = (story: Post): string => {
+    if (!story.authorId) return "Unknown";
+    if (typeof story.authorId === "string") return "Unknown";
+    return (story.authorId as AuthorInfo).name || "Unknown";
+  };
+
+  // Handle story click - navigate to story
+  const handleStoryClick = (story: Post) => {
+    setShowResults(false);
+    setSearchQuery("");
+    router.push(`/post/${story._id}`);
+  };
 
   const closeMobileMenu = () => {
     setMobileMenuOpen(false);
@@ -64,6 +98,13 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
               <input
                 type="text"
                 placeholder="Search stories..."
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setShowResults(e.target.value.length > 0);
+                }}
+                onFocus={() => setShowResults(searchQuery.length > 0)}
+                onBlur={() => setTimeout(() => setShowResults(false), 200)}
                 className="w-full pl-4 pr-10 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all"
               />
 
