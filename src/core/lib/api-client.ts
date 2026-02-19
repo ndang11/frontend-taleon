@@ -442,10 +442,10 @@ export async function deletePost(postId: string): Promise<{ message: string }> {
 
 /**
  * Get published post by slug
- * GET /posts/slug/:slug
+ * GET /posts/slug/public/:slug
  */
 export async function getPublishedPostBySlug(slug: string): Promise<Post> {
-  const response = await fetch(`${API_BASE_URL}/posts/slug/${slug}`);
+  const response = await fetch(`${API_BASE_URL}/posts/slug/public/${slug}`);
 
   if (!response.ok) {
     const error = await response
@@ -682,20 +682,26 @@ export async function searchPosts(
 
 export async function uploadProfileImage(
   file: File,
-): Promise<{ url: string; fileId: string }> {
+): Promise<{ url: string; publicId: string }> {
   const formData = new FormData();
   formData.append("file", file);
+
+  const token = localStorage.getItem("access_token");
+  if (!token) {
+    throw new Error("You must be logged in to upload images");
+  }
 
   const response = await fetch(`${API_BASE_URL}/upload/profile-image`, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+      Authorization: `Bearer ${token}`,
     },
     body: formData,
   });
 
   if (!response.ok) {
-    throw new Error("Failed to upload profile image");
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || `Upload failed: ${response.status}`);
   }
 
   return response.json();
@@ -817,6 +823,11 @@ export interface LikeResponse {
   likeCount: number;
 }
 
+export interface BookmarkResponse {
+  bookmarked: boolean;
+  bookmarkCount: number;
+}
+
 /**
  * Toggle like on a post
  * POST /likes/post/:postId/toggle
@@ -861,6 +872,63 @@ export async function hasUserLiked(postId: string): Promise<boolean> {
 
   const data = await response.json();
   return data?.liked ?? false;
+}
+
+/**
+ * Toggle bookmark on a post
+ * POST /bookmarks/post/:postId/toggle
+ */
+export async function toggleBookmark(
+  postId: string,
+): Promise<BookmarkResponse> {
+  const response = await fetch(
+    `${API_BASE_URL}/bookmarks/post/${postId}/toggle`,
+    {
+      method: "POST",
+      headers: getAuthHeaders(),
+    },
+  );
+
+  if (!response.ok) {
+    const error = await response
+      .json()
+      .catch(() => ({ message: "Failed to toggle bookmark" }));
+    throw new Error(error.message || "Failed to toggle bookmark");
+  }
+
+  return response.json();
+}
+
+export async function getBookmarkCount(postId: string): Promise<number> {
+  const response = await fetch(
+    `${API_BASE_URL}/bookmarks/post/${postId}/count`,
+    {
+      headers: getAuthHeaders(),
+    },
+  );
+
+  if (!response.ok) {
+    return 0;
+  }
+
+  const data = await response.json();
+  return data?.bookmarkCount ?? 0;
+}
+
+export async function hasUserBookmarked(postId: string): Promise<boolean> {
+  const response = await fetch(
+    `${API_BASE_URL}/bookmarks/post/${postId}/status`,
+    {
+      headers: getAuthHeaders(),
+    },
+  );
+
+  if (!response.ok) {
+    return false;
+  }
+
+  const data = await response.json();
+  return data?.bookmarked ?? false;
 }
 
 export async function incrementView(
