@@ -69,7 +69,6 @@ export function NotificationDropdown() {
     if (!notification.isRead) {
       await markAsRead(notification._id);
     }
-    // Close dropdown
     setIsOpen(false);
   };
 
@@ -149,8 +148,6 @@ export function NotificationDropdown() {
               )}
             </div>
           </div>
-
-          {/* Notifications List - Increased height to show more */}
           <div className="max-h-[70vh] overflow-y-auto">
             {isLoading ? (
               <div className="flex items-center justify-center py-8">
