@@ -83,8 +83,6 @@ function NewStoryContent() {
             content: JSON.stringify(initialContent),
             category: "General",
           });
-<<<<<<< HEAD
-
           // Handle both wrapped { post: ... } and direct post response
           const newPost = res.post || res;
           setPostId(newPost._id);
@@ -94,11 +92,6 @@ function NewStoryContent() {
             "",
             `/new-story?edit=${newPost._id}`,
           );
-=======
-          setPostId(res._id);
-          // Update URL to include edit parameter for refresh safety
-          window.history.replaceState(null, "", `/new-story?edit=${res._id}`);
->>>>>>> 963ed32 (fixed comment function and notification)
         }
       } catch (err) {
         console.error("Failed to initialize post:", err);
