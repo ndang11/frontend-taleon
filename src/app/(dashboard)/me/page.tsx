@@ -21,6 +21,9 @@ const mapPostToCardData = (post: any): PostCardData => ({
   readTime: post.readTime,
   tags: post.tags,
   slug: post.slug,
+  viewCount: post.viewCount ?? 0,
+  likeCount: post.likeCount ?? 0,
+  commentCount: post.commentCount ?? 0,
 });
 
 export default function HomePage() {
