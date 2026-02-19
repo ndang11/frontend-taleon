@@ -5,7 +5,6 @@ import { useFollow } from "@/hook/useFollow";
 
 interface FollowButtonProps {
   authorId: string;
-<<<<<<< HEAD
   onFollowChange?: (isFollowing: boolean, followersCount: number) => void;
 }
 
@@ -26,27 +25,6 @@ export function FollowButton({ authorId, onFollowChange }: FollowButtonProps) {
   return (
     <button
       onClick={handleToggle}
-=======
-}
-
-export function FollowButton({ authorId, onFollowChange }: FollowButtonProps) {
-  const { isFollowing, isLoading, toggleFollow, followCount } =
-    useFollow(authorId);
-
-  const handleToggle = () => {
-    toggleFollow();
-    if (onFollowChange) {
-      // We need to call this after the mutation completes, but since we don't have
-      // direct access to the new state here, we'll call with the current inverted state
-      // The parent should re-fetch or handle the state change
-      onFollowChange(!isFollowing, followCount);
-    }
-  };
-
-  return (
-    <button
-      onClick={toggleFollow}
->>>>>>> 6cb58e1 (added the follow and the unfollow functionality)
       disabled={isLoading}
       className={`flex items-center gap-2 px-4 py-2 rounded-full transition-colors ${
         isFollowing
