@@ -27,12 +27,6 @@ export function useFollow(userId: string) {
         queryClient.invalidateQueries({ queryKey: ["followStatus", userId] });
       }
     },
-    onError: (error: any) => {
-      // If already following (409), refresh the status
-      if (error?.message?.includes("already following")) {
-        queryClient.invalidateQueries({ queryKey: ["followStatus", userId] });
-      }
-    },
   });
 
   const unfollowMutation = useMutation({
