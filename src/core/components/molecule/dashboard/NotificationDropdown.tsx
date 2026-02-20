@@ -90,7 +90,7 @@ export function NotificationDropdown() {
       return `/me/profile`;
     }
     if (notification.postId) {
-      return `/story/${notification.postId._id}`;
+      return `/post/${notification.postId._id}`;
     }
     return "/me";
   };
