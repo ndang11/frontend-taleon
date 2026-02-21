@@ -78,7 +78,7 @@ export default function SearchPage() {
           <div className="flex items-center gap-4">
             <button
               type="button"
-              onClick={() => router.back()}
+              onClick={() => router.push("/")}
               className="p-2 hover:bg-gray-100 rounded-full transition-colors"
             >
               <ArrowLeft className="w-5 h-5" />
