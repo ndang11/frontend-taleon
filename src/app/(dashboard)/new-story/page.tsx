@@ -83,7 +83,6 @@ function NewStoryContent() {
             content: JSON.stringify(initialContent),
             category: "General",
           });
-
           // Handle both wrapped { post: ... } and direct post response
           const newPost = res.post || res;
           setPostId(newPost._id);
