@@ -212,9 +212,6 @@ export default function EditPostPage() {
           >
             ← Back
           </button>
-          <span className="text-sm text-gray-500">
-            Editing: {title || "Untitled"}
-          </span>
         </div>
 
         <div className="flex items-center space-x-4">

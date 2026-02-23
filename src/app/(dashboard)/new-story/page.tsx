@@ -1,25 +1,9 @@
 // src/app/new-story/page.tsx
 "use client";
 
-import {
-  Archive,
-  Bold,
-  FileText,
-  Heading1,
-  Heading2,
-  Heading3,
-  Image as ImageIcon,
-  Italic,
-  List,
-  ListOrdered,
-  Quote,
-  Redo,
-  Undo,
-} from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { AlertDialog } from "@/components/ui/AlertDialog";
-import { ImageUpload } from "@/components/ui/ImageUpload";
 import { SuccessDialog } from "@/components/ui/SuccessDialog";
 import { useAuth } from "@/context/auth.provider";
 import TiptapEditor from "@/core/components/molecule/dashboard/editor/tipTapEditor";
@@ -42,7 +26,7 @@ function NewStoryContent() {
 
   const [postId, setPostId] = useState<string | null>(null);
   const [title, setTitle] = useState("");
-  const [coverImage, setCoverImage] = useState<string | undefined>(undefined);
+  const [subtitle, setSubtitle] = useState("");
   const [saveStatus, setSaveStatus] = useState<
     "Saved" | "Saving..." | "Draft" | "Published" | "Archived" | "Error"
   >("Draft");
@@ -64,7 +48,6 @@ function NewStoryContent() {
             const postData = response.post;
             setPostId(postData._id);
             setTitle(postData.title || "");
-            setCoverImage(postData.image || postData.coverImage);
             // Load content into editor if available
             if (editorRef.current && postData.content) {
               editorRef.current.setContent(postData.content);
@@ -79,7 +62,7 @@ function NewStoryContent() {
           // Use TipTap JSON format for initial content to ensure compatibility
           const initialContent = { type: "doc", content: [] };
           const res: any = await fetcher.post("/posts", {
-            title: "Untitled Story",
+            title: "",
             content: JSON.stringify(initialContent),
             category: "General",
           });
@@ -138,7 +121,6 @@ function NewStoryContent() {
       await fetcher.patch(`/posts/${postId}/autosave`, {
         content: content, // Always send HTML string
         title,
-        image: coverImage,
       });
       console.log("[handlePublish] Content saved successfully");
 
@@ -146,7 +128,6 @@ function NewStoryContent() {
       await fetcher.patch(`/posts/${postId}/publish`, {
         title,
         content: content, // Same HTML content
-        image: coverImage,
       });
       console.log("[handlePublish] Post published successfully");
 
@@ -181,7 +162,6 @@ function NewStoryContent() {
         content,
         title,
         status: "draft",
-        image: coverImage,
       });
       setSaveStatus("Draft");
     } catch (err) {
@@ -224,10 +204,10 @@ function NewStoryContent() {
   return (
     <>
       {/* Minimal Header */}
-      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
-        <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
+      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100">
+        <div className="max-w-[740px] mx-auto px-6 h-14 flex items-center justify-between">
           {/* Status & Word Count */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <span
               className={`text-xs font-medium ${
                 saveStatus === "Published"
@@ -236,35 +216,28 @@ function NewStoryContent() {
                     ? "text-amber-600"
                     : saveStatus === "Error"
                       ? "text-red-600"
-                      : "text-gray-500"
+                      : "text-gray-400"
               }`}
             >
               {saveStatus === "Saving..." ? "● Saving..." : saveStatus}
             </span>
-            <span className="text-xs text-gray-400">|</span>
-            <span className="text-xs text-gray-500">{totalWords} words</span>
+            <span className="text-xs text-gray-300">·</span>
+            <span className="text-xs text-gray-400">{totalWords} words</span>
           </div>
 
           {/* Actions */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <button
               onClick={handleSaveDraft}
               disabled={isPublishing}
-              className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
+              className="px-3 py-1.5 text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors disabled:opacity-50"
             >
-              Save Draft
-            </button>
-            <button
-              onClick={handleArchive}
-              disabled={isPublishing}
-              className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
-            >
-              Archive
+              Save
             </button>
             <button
               onClick={handlePublish}
               disabled={isPublishing || !title.trim()}
-              className="px-5 py-2 bg-gray-900 hover:bg-gray-800 disabled:bg-gray-300 text-white text-sm font-medium rounded-lg transition-colors shadow-sm"
+              className="px-4 py-1.5 bg-green-600 hover:bg-green-700 disabled:bg-gray-300 text-white text-sm font-medium rounded-full transition-colors"
             >
               {isPublishing ? "Publishing..." : "Publish"}
             </button>
@@ -272,31 +245,39 @@ function NewStoryContent() {
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-6 py-12">
+      <main className="max-w-[740px] mx-auto px-6 py-16">
         {/* Title */}
         <input
           type="text"
-          placeholder="Tell your story..."
+          placeholder="Title"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              // Move focus to subtitle
+              const subtitleInput = document.getElementById("subtitle-input");
+              subtitleInput?.focus();
+            }
+          }}
+          className="w-full text-4xl md:text-5xl font-serif font-bold outline-none mb-4 placeholder:text-gray-300 text-gray-900 leading-tight"
+        />
+
+        {/* Subtitle */}
+        <input
+          id="subtitle-input"
+          type="text"
+          placeholder="Add a subtitle..."
+          value={subtitle}
+          onChange={(e) => setSubtitle(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === "Enter") {
               e.preventDefault();
               editorRef.current?.focus();
             }
           }}
-          className="w-full text-4xl md:text-5xl font-serif font-bold outline-none mb-8 placeholder:text-gray-200 text-gray-900"
+          className="w-full text-xl md:text-2xl font-serif font-normal outline-none mb-12 placeholder:text-gray-300 text-gray-500 leading-relaxed"
         />
-
-        {/* Cover Image */}
-        <div className="mb-8">
-          <ImageUpload
-            value={coverImage}
-            onChange={(value) => setCoverImage(value)}
-            onRemove={() => setCoverImage(undefined)}
-            disabled={isPublishing}
-          />
-        </div>
 
         {/* Editor */}
         {postId ? (

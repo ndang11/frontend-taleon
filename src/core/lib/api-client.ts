@@ -1559,7 +1559,7 @@ export const mapPostData = (data: any): Post => {
     id: data._id, // Map _id to id
     content: parsedContent,
     image: image,
-    title: data.title || "Untitled Story",
+    title: data.title || "",
   };
 };
 
