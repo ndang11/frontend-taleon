@@ -483,9 +483,14 @@ export default function PostDetailsPage({
           try {
             // Cast to any to avoid 'never' type issues if getComments return type is not inferred correctly
             const commentsData: any = await getComments(fetchedPost._id);
-            const commentsList = Array.isArray(commentsData)
+            const rawComments = Array.isArray(commentsData)
               ? commentsData
               : commentsData.comments || [];
+            // Map userId to authorId for frontend compatibility
+            const commentsList = rawComments.map((comment: any) => ({
+              ...comment,
+              authorId: comment.userId || comment.authorId,
+            }));
             setComments(commentsList);
             sortComments(commentsList, sortBy);
           } catch (e) {

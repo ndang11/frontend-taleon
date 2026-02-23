@@ -41,7 +41,7 @@ export default function NewStoryPage() {
           // Use TipTap JSON format for initial content to ensure compatibility
           const initialContent = { type: "doc", content: [] };
           const newPost = await fetcher.post<Post>("/posts", {
-            title: "Untitled Story",
+            title: "",
             content: JSON.stringify(initialContent),
             category: "General",
           });
