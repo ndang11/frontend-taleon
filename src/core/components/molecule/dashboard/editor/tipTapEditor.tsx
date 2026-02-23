@@ -150,13 +150,13 @@ export default function TiptapEditor({
           class: "border border-gray-200 p-3 bg-gray-50 font-semibold",
         },
       }),
-      Placeholder.configure({ placeholder: "Start writing your story..." }),
+      Placeholder.configure({ placeholder: "Write your story..." }),
     ],
     immediatelyRender: false,
     editorProps: {
       attributes: {
         class:
-          "prose prose-lg max-w-none focus:outline-none min-h-[500px] px-4 py-3",
+          "prose prose-lg max-w-none focus:outline-none min-h-[60vh] text-gray-800 leading-relaxed",
       },
     },
     onUpdate: ({ editor }) => {
@@ -352,17 +352,17 @@ export default function TiptapEditor({
 
   return (
     <div className="editor-wrapper">
-      {/* Floating Toolbar */}
-      <div className="sticky top-4 z-40 mx-auto max-w-fit">
-        <div className="flex items-center gap-1 bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-gray-200 p-2">
+      {/* Floating Toolbar - Centered */}
+      <div className="flex justify-center mb-8">
+        <div className="flex items-center gap-0.5 bg-white rounded-lg shadow-sm px-1 py-1 inline-flex">
           {/* Text Formatting */}
-          <div className="flex items-center gap-1 px-2 border-r border-gray-200">
+          <div className="flex items-center gap-0.5 pr-2 border-r border-gray-100">
             <button
               onClick={() => editor.chain().focus().toggleBold().run()}
-              className={`p-2 rounded-lg hover:bg-gray-100 transition-colors ${
+              className={`p-2 rounded-md hover:bg-gray-50 transition-colors ${
                 editor.isActive("bold")
                   ? "bg-gray-100 text-gray-900"
-                  : "text-gray-600"
+                  : "text-gray-500"
               }`}
               title="Bold"
             >
@@ -370,10 +370,10 @@ export default function TiptapEditor({
             </button>
             <button
               onClick={() => editor.chain().focus().toggleItalic().run()}
-              className={`p-2 rounded-lg hover:bg-gray-100 transition-colors ${
+              className={`p-2 rounded-md hover:bg-gray-50 transition-colors ${
                 editor.isActive("italic")
                   ? "bg-gray-100 text-gray-900"
-                  : "text-gray-600"
+                  : "text-gray-500"
               }`}
               title="Italic"
             >
@@ -381,49 +381,27 @@ export default function TiptapEditor({
             </button>
             <button
               onClick={() => editor.chain().focus().toggleUnderline().run()}
-              className={`p-2 rounded-lg hover:bg-gray-100 transition-colors ${
+              className={`p-2 rounded-md hover:bg-gray-50 transition-colors ${
                 editor.isActive("underline")
                   ? "bg-gray-100 text-gray-900"
-                  : "text-gray-600"
+                  : "text-gray-500"
               }`}
               title="Underline"
             >
               <UnderlineIcon className="w-4 h-4" />
             </button>
-            <button
-              onClick={() => editor.chain().focus().toggleStrike().run()}
-              className={`p-2 rounded-lg hover:bg-gray-100 transition-colors ${
-                editor.isActive("strike")
-                  ? "bg-gray-100 text-gray-900"
-                  : "text-gray-600"
-              }`}
-              title="Strikethrough"
-            >
-              <Strikethrough className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => editor.chain().focus().toggleCode().run()}
-              className={`p-2 rounded-lg hover:bg-gray-100 transition-colors ${
-                editor.isActive("code")
-                  ? "bg-gray-100 text-gray-900"
-                  : "text-gray-600"
-              }`}
-              title="Inline Code"
-            >
-              <Code className="w-4 h-4" />
-            </button>
           </div>
 
           {/* Headings */}
-          <div className="flex items-center gap-1 px-2 border-r border-gray-200">
+          <div className="flex items-center gap-0.5 px-2 border-r border-gray-100">
             <button
               onClick={() =>
                 editor.chain().focus().toggleHeading({ level: 1 }).run()
               }
-              className={`p-2 rounded-lg hover:bg-gray-100 transition-colors ${
+              className={`p-2 rounded-md hover:bg-gray-50 transition-colors ${
                 editor.isActive("heading", { level: 1 })
                   ? "bg-gray-100 text-gray-900"
-                  : "text-gray-600"
+                  : "text-gray-500"
               }`}
               title="Heading 1"
             >
@@ -433,38 +411,25 @@ export default function TiptapEditor({
               onClick={() =>
                 editor.chain().focus().toggleHeading({ level: 2 }).run()
               }
-              className={`p-2 rounded-lg hover:bg-gray-100 transition-colors ${
+              className={`p-2 rounded-md hover:bg-gray-50 transition-colors ${
                 editor.isActive("heading", { level: 2 })
                   ? "bg-gray-100 text-gray-900"
-                  : "text-gray-600"
+                  : "text-gray-500"
               }`}
               title="Heading 2"
             >
               <Heading2 className="w-4 h-4" />
             </button>
-            <button
-              onClick={() =>
-                editor.chain().focus().toggleHeading({ level: 3 }).run()
-              }
-              className={`p-2 rounded-lg hover:bg-gray-100 transition-colors ${
-                editor.isActive("heading", { level: 3 })
-                  ? "bg-gray-100 text-gray-900"
-                  : "text-gray-600"
-              }`}
-              title="Heading 3"
-            >
-              <Heading3 className="w-4 h-4" />
-            </button>
           </div>
 
           {/* Lists & Blocks */}
-          <div className="flex items-center gap-1 px-2 border-r border-gray-200">
+          <div className="flex items-center gap-0.5 px-2 border-r border-gray-100">
             <button
               onClick={() => editor.chain().focus().toggleBulletList().run()}
-              className={`p-2 rounded-lg hover:bg-gray-100 transition-colors ${
+              className={`p-2 rounded-md hover:bg-gray-50 transition-colors ${
                 editor.isActive("bulletList")
                   ? "bg-gray-100 text-gray-900"
-                  : "text-gray-600"
+                  : "text-gray-500"
               }`}
               title="Bullet List"
             >
@@ -472,10 +437,10 @@ export default function TiptapEditor({
             </button>
             <button
               onClick={() => editor.chain().focus().toggleOrderedList().run()}
-              className={`p-2 rounded-lg hover:bg-gray-100 transition-colors ${
+              className={`p-2 rounded-md hover:bg-gray-50 transition-colors ${
                 editor.isActive("orderedList")
                   ? "bg-gray-100 text-gray-900"
-                  : "text-gray-600"
+                  : "text-gray-500"
               }`}
               title="Numbered List"
             >
@@ -483,49 +448,38 @@ export default function TiptapEditor({
             </button>
             <button
               onClick={() => editor.chain().focus().toggleBlockquote().run()}
-              className={`p-2 rounded-lg hover:bg-gray-100 transition-colors ${
+              className={`p-2 rounded-md hover:bg-gray-50 transition-colors ${
                 editor.isActive("blockquote")
                   ? "bg-gray-100 text-gray-900"
-                  : "text-gray-600"
+                  : "text-gray-500"
               }`}
               title="Quote"
             >
               <Quote className="w-4 h-4" />
             </button>
-            <button
-              onClick={() => editor.chain().focus().toggleCodeBlock().run()}
-              className={`p-2 rounded-lg hover:bg-gray-100 transition-colors ${
-                editor.isActive("codeBlock")
-                  ? "bg-gray-100 text-gray-900"
-                  : "text-gray-600"
-              }`}
-              title="Code Block"
-            >
-              <Code className="w-4 h-4" />
-            </button>
           </div>
 
           {/* Link */}
-          <div className="relative flex items-center gap-1 px-2">
+          <div className="relative flex items-center px-2 border-r border-gray-100">
             <button
               onClick={() => setShowLinkInput(!showLinkInput)}
-              className={`p-2 rounded-lg hover:bg-gray-100 transition-colors ${
+              className={`p-2 rounded-md hover:bg-gray-50 transition-colors ${
                 editor.isActive("link")
                   ? "bg-gray-100 text-gray-900"
-                  : "text-gray-600"
+                  : "text-gray-500"
               }`}
               title="Add Link"
             >
               <LinkIcon className="w-4 h-4" />
             </button>
             {showLinkInput && (
-              <div className="absolute top-full left-0 mt-2 p-2 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
+              <div className="absolute top-full left-0 mt-2 p-2 bg-white rounded-lg shadow-xl border border-gray-100 z-50">
                 <input
                   type="url"
                   placeholder="https://..."
                   value={linkUrl}
                   onChange={(e) => setLinkUrl(e.target.value)}
-                  className="w-48 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 mb-2"
+                  className="w-48 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-gray-400 mb-2"
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       handleSetLink();
@@ -535,7 +489,7 @@ export default function TiptapEditor({
                 <div className="flex gap-2">
                   <button
                     onClick={handleSetLink}
-                    className="flex-1 px-3 py-1.5 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700"
+                    className="flex-1 px-3 py-1.5 bg-gray-900 text-white text-xs rounded-lg hover:bg-gray-800"
                   >
                     Add
                   </button>
@@ -545,7 +499,7 @@ export default function TiptapEditor({
                         editor.chain().focus().unsetLink().run();
                         setShowLinkInput(false);
                       }}
-                      className="px-3 py-1.5 bg-red-600 text-white text-xs rounded-lg hover:bg-red-700"
+                      className="px-3 py-1.5 bg-red-500 text-white text-xs rounded-lg hover:bg-red-600"
                     >
                       Remove
                     </button>
@@ -555,12 +509,23 @@ export default function TiptapEditor({
             )}
           </div>
 
+          {/* Image */}
+          <div className="relative flex items-center px-2 border-r border-gray-100">
+            <button
+              onClick={() => setShowImageModal(!showImageModal)}
+              className="p-2 rounded-md hover:bg-gray-50 transition-colors text-gray-500"
+              title="Add Image"
+            >
+              <ImageIcon className="w-4 h-4" />
+            </button>
+          </div>
+
           {/* Undo/Redo */}
-          <div className="flex items-center gap-1 px-2 border-l border-gray-200">
+          <div className="flex items-center gap-0.5 pl-2">
             <button
               onClick={() => editor.chain().focus().undo().run()}
               disabled={!editor.can().undo()}
-              className="p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-600 disabled:opacity-50"
+              className="p-2 rounded-md hover:bg-gray-50 transition-colors text-gray-500 disabled:opacity-30"
               title="Undo"
             >
               <Undo className="w-4 h-4" />
@@ -568,32 +533,10 @@ export default function TiptapEditor({
             <button
               onClick={() => editor.chain().focus().redo().run()}
               disabled={!editor.can().redo()}
-              className="p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-600 disabled:opacity-50"
+              className="p-2 rounded-md hover:bg-gray-50 transition-colors text-gray-500 disabled:opacity-30"
               title="Redo"
             >
               <Redo className="w-4 h-4" />
-            </button>
-          </div>
-
-          {/* Image */}
-          <div className="relative flex items-center gap-1 px-2 border-l border-gray-200">
-            <button
-              onClick={() => setShowImageModal(!showImageModal)}
-              className="p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-600"
-              title="Add Image"
-            >
-              <ImageIcon className="w-4 h-4" />
-            </button>
-          </div>
-
-          {/* Copy */}
-          <div className="relative flex items-center gap-1 px-2 border-l border-gray-200">
-            <button
-              onClick={handleCopyContent}
-              className="p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-600"
-              title="Copy Content"
-            >
-              <Copy className="w-4 h-4" />
             </button>
           </div>
         </div>
@@ -625,7 +568,7 @@ export default function TiptapEditor({
                 onClick={() => setActiveImageTab("upload")}
                 className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors ${
                   activeImageTab === "upload"
-                    ? "bg-blue-600 text-white"
+                    ? "bg-gray-900 text-white"
                     : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                 }`}
               >
@@ -635,7 +578,7 @@ export default function TiptapEditor({
                 onClick={() => setActiveImageTab("link")}
                 className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors ${
                   activeImageTab === "link"
-                    ? "bg-blue-600 text-white"
+                    ? "bg-gray-900 text-white"
                     : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                 }`}
               >
@@ -648,7 +591,7 @@ export default function TiptapEditor({
               <div className="space-y-4">
                 <div
                   onClick={() => fileInputRef.current?.click()}
-                  className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-colors"
+                  className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center cursor-pointer hover:border-gray-400 transition-colors"
                 >
                   <input
                     ref={fileInputRef}
@@ -660,21 +603,21 @@ export default function TiptapEditor({
                   />
                   {isUploadingImage ? (
                     <div className="flex flex-col items-center gap-2">
-                      <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                      <div className="w-8 h-8 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
                       <p className="text-sm text-gray-600">Uploading...</p>
                     </div>
                   ) : (
                     <div className="flex flex-col items-center gap-2">
-                      <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
-                        <Upload className="w-6 h-6 text-gray-500" />
+                      <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                        <Upload className="w-6 h-6 text-gray-400" />
                       </div>
                       <p className="text-sm text-gray-600">
-                        <span className="font-medium text-blue-600">
+                        <span className="font-medium text-gray-900">
                           Click to upload
                         </span>{" "}
                         or drag and drop
                       </p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-gray-400">
                         JPEG, PNG, GIF, or WebP up to 10MB
                       </p>
                     </div>
@@ -701,7 +644,7 @@ export default function TiptapEditor({
                     placeholder="https://example.com/image.jpg"
                     value={imageUrl}
                     onChange={(e) => setImageUrl(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:border-gray-400"
                   />
                 </div>
                 <div>
@@ -713,13 +656,13 @@ export default function TiptapEditor({
                     placeholder="Image description"
                     value={imageAlt}
                     onChange={(e) => setImageAlt(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:border-gray-400"
                   />
                 </div>
                 <button
                   onClick={handleImageUrlSubmit}
                   disabled={!validateUrl(imageUrl) || isUploadingImage}
-                  className="w-full py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full py-3 bg-gray-900 text-white font-medium rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Add Image
                 </button>
@@ -730,7 +673,7 @@ export default function TiptapEditor({
       )}
 
       {/* Editor Content */}
-      <div className="mt-6 min-h-[500px]">
+      <div className="min-h-[60vh]">
         <EditorContent editor={editor} />
       </div>
     </div>
