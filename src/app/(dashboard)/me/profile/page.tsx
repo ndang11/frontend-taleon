@@ -432,7 +432,7 @@ export default function MyProfilePage() {
                       </span>
                     </div>
                     <h3 className="font-semibold text-gray-900 mb-2 hover:text-blue-600 transition-colors">
-                      {story.title || "Untitled Story"}
+                      {story.title}
                     </h3>
                     <div className="flex items-center gap-4 text-xs text-gray-400">
                       <span className="flex items-center gap-1">

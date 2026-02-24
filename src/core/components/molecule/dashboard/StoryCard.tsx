@@ -134,7 +134,7 @@ export function StoryCard({
               onClick={() => onView?.(post)}
             >
               <h3 className="text-lg font-semibold text-gray-900 mb-1 line-clamp-2 group-hover:text-blue-600 transition-colors">
-                {post.title || "Untitled Story"}
+                {post.title}
               </h3>
             </Link>
 

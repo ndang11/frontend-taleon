@@ -297,7 +297,7 @@ export default function BlogPage() {
                       )}
 
                       <h2 className="text-xl font-bold text-gray-900 mb-3 line-clamp-2 group-hover:text-blue-600 transition-colors">
-                        {post.title || "Untitled Story"}
+                        {post.title}
                       </h2>
 
                       <p className="text-gray-600 text-sm mb-5 line-clamp-3 leading-relaxed">

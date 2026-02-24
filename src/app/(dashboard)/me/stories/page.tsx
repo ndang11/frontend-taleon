@@ -193,7 +193,7 @@ export default function StoriesPage() {
                       className="block group"
                     >
                       <h3 className="text-xl font-bold text-gray-900 mb-1 group-hover:underline decoration-gray-900 decoration-2 underline-offset-4">
-                        {post.title || "Untitled Story"}
+                        {post.title}
                       </h3>
                       <p className="text-gray-500 text-sm mb-2 line-clamp-1">
                         {getPostExcerpt(post.content)}

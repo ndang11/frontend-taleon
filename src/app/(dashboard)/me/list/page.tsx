@@ -275,7 +275,7 @@ export default function LibraryPage() {
                   </div>
                   <Link href={`/new-story?edit=${post._id}`} className="block">
                     <h3 className="text-lg font-semibold text-gray-900 mb-1 line-clamp-1 hover:text-blue-600 transition-colors">
-                      {post.title || "Untitled Story"}
+                      {post.title}
                     </h3>
                   </Link>
                   <p className="text-gray-500 text-sm line-clamp-2 mb-3">
