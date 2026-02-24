@@ -1,4 +1,3 @@
-// src/app/(dashboard)/new-story/page.tsx
 "use client";
 
 import { Bell, MoreHorizontal } from "lucide-react";
@@ -36,26 +35,21 @@ function NewStoryContent() {
   const [showMenu, setShowMenu] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
-  // Create a ref to the editor controller
   const editorRef = useRef<any>(null);
 
-  // Load existing post if editing
   useEffect(() => {
     const initPost = async () => {
       try {
         if (editPostId) {
-          // Editing existing post
           const response = await getPost(editPostId);
           if ("post" in response) {
             const postData = response.post;
             setPostId(postData._id);
-            // If title is "Untitled Story" or empty, show empty string (placeholder will show "Title")
             const postTitle =
               postData.title && postData.title !== "Untitled Story"
                 ? postData.title
                 : "";
             setTitle(postTitle);
-            // Load content into editor if available
             if (editorRef.current && postData.content) {
               editorRef.current.setContent(postData.content);
             }
@@ -65,8 +59,6 @@ function NewStoryContent() {
             );
           }
         } else {
-          // Creating new post
-          // Use TipTap JSON format for initial content to ensure compatibility
           const initialContent = { type: "doc", content: [] };
           const res: any = await fetcher.post("/posts", {
             title: "",
@@ -74,10 +66,8 @@ function NewStoryContent() {
             category: "General",
           });
 
-          // Handle both wrapped { post: ... } and direct post response
           const newPost = res.post || res;
           setPostId(newPost._id);
-          // Update URL to include edit parameter for refresh safety
           window.history.replaceState(
             null,
             "",
@@ -101,10 +91,8 @@ function NewStoryContent() {
       return;
     }
 
-    // Get content as HTML from editor for consistency
     const content = editorRef.current?.getHTML();
 
-    // Validate content is not empty HTML
     const isEmptyContent =
       !content ||
       content === "" ||
@@ -144,7 +132,6 @@ function NewStoryContent() {
     } catch (err: any) {
       console.error("Publish failed", err);
       setSaveStatus("Error");
-      // Show user-friendly error
       const errorMessage =
         err.message || "Failed to publish. Please try again.";
       alert(errorMessage);
@@ -162,7 +149,6 @@ function NewStoryContent() {
     if (!postId) return;
     setSaveStatus("Saving...");
     try {
-      // Get content as HTML
       const content = editorRef.current?.getHTML();
       await fetcher.patch(`/posts/${postId}/autosave`, {
         content,
@@ -213,7 +199,6 @@ function NewStoryContent() {
         editorRef.current.toggleCodeBlock?.();
         break;
       case "divider":
-        // Add horizontal rule if available
         editorRef.current.focus();
         break;
     }
@@ -225,10 +210,8 @@ function NewStoryContent() {
       .split(/\s+/)
       .filter((w) => w.length > 0).length + wordCount;
 
-  // Medium-style reading time calculation (approx 200 words per minute)
   const readingTime = Math.max(1, Math.ceil(totalWords / 200));
 
-  // Get user initials for avatar
   const getUserInitial = () => {
     if (user?.name) {
       return user.name.charAt(0).toUpperCase();
@@ -249,10 +232,8 @@ function NewStoryContent() {
 
   return (
     <>
-      {/* Editor Header Bar - Fixed within the content area */}
       <div className="sticky top-0 z-30 bg-white border-b border-gray-100 mb-8 -mx-4 sm:-mx-6 px-4 sm:px-6 py-3">
         <div className="flex items-center justify-between max-w-[680px] mx-auto">
-          {/* Left side - Status */}
           <div className="flex items-center gap-3">
             <span className="text-sm text-gray-400 font-normal">
               {saveStatus === "Draft"
@@ -269,14 +250,11 @@ function NewStoryContent() {
             </span>
           </div>
 
-          {/* Right side - Actions */}
           <div className="flex items-center gap-2 sm:gap-3">
-            {/* Reading Time - Hidden on mobile */}
             <span className="text-xs text-gray-400 hidden md:inline">
               {readingTime} min read
             </span>
 
-            {/* Publish Button */}
             <button
               onClick={handlePublish}
               disabled={isPublishing || !title.trim()}
@@ -285,7 +263,6 @@ function NewStoryContent() {
               {isPublishing ? "Publishing..." : "Publish"}
             </button>
 
-            {/* Three-dot menu */}
             <div className="relative">
               <button
                 onClick={() => setShowMenu(!showMenu)}
@@ -336,10 +313,8 @@ function NewStoryContent() {
         </div>
       </div>
 
-      {/* Main Editor Content - Medium-style centered column */}
       <div className="flex justify-center">
         <div className="w-full max-w-[680px] px-4 sm:px-6 xl:pl-16">
-          {/* Title - Medium-style large serif title */}
           <div className="mb-10">
             <input
               type="text"
@@ -349,7 +324,6 @@ function NewStoryContent() {
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   e.preventDefault();
-                  // Move focus to the editor body
                   const editorElement = document.querySelector(
                     ".ProseMirror",
                   ) as HTMLElement;
@@ -363,10 +337,8 @@ function NewStoryContent() {
             />
           </div>
 
-          {/* Editor with Plus Button */}
           {postId ? (
             <div className="relative flex">
-              {/* Plus Button - Left of body */}
               <div className="absolute -left-12 top-0 hidden xl:block">
                 <div className="relative">
                   <button
@@ -392,7 +364,6 @@ function NewStoryContent() {
                 </div>
               </div>
 
-              {/* Editor Body */}
               <div className="flex-1 min-w-0">
                 <TiptapEditor
                   postId={postId}
