@@ -12,9 +12,7 @@ export function Hero() {
           <div>
             <div className="inline-flex items-center gap-2 bg-gray-100 px-4 py-2 rounded-full mb-6">
               <TrendingUp className="w-4 h-4 text-gray-700" />
-              <span className="text-sm font-medium text-gray-700">
-                Trusted by 25,000+ creators
-              </span>
+              <span className="text-sm font-medium text-gray-700"></span>
             </div>
 
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-black mb-6 leading-tight">
