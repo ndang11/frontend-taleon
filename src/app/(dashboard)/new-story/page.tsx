@@ -360,6 +360,15 @@ function NewStoryContent() {
                   <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-100 py-1 z-20">
                     <button
                       onClick={() => {
+                        handleSaveDraft();
+                        setShowMenu(false);
+                      }}
+                      className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      Save as draft
+                    </button>
+                    <button
+                      onClick={() => {
                         handleArchive();
                         setShowMenu(false);
                       }}
