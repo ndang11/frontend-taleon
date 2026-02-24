@@ -653,10 +653,10 @@ export default function StoryPage({
                   <div className="flex gap-4">
                     {/* Avatar */}
                     <div className="flex-shrink-0">
-                      {comment.authorId.avatar ? (
+                      {comment.userId.avatar ? (
                         <Image
-                          src={comment.authorId.avatar}
-                          alt={comment.authorId.name}
+                          src={comment.userId.avatar}
+                          alt={comment.userId.name}
                           width={40}
                           height={40}
                           className="w-10 h-10 rounded-full object-cover"
@@ -664,7 +664,7 @@ export default function StoryPage({
                       ) : (
                         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
                           <span className="text-white font-medium text-sm">
-                            {comment.authorId.name.charAt(0).toUpperCase()}
+                            {comment.userId.name.charAt(0).toUpperCase()}
                           </span>
                         </div>
                       )}
@@ -675,7 +675,7 @@ export default function StoryPage({
                       {/* Author Info */}
                       <div className="flex items-center gap-2 mb-2">
                         <span className="font-medium text-gray-900 hover:underline cursor-pointer">
-                          {comment.authorId.name}
+                          {comment.userId.name}
                         </span>
                         <span className="text-gray-500 text-sm">·</span>
                         <span className="text-gray-500 text-sm">
@@ -713,7 +713,7 @@ export default function StoryPage({
                         </button>
                         <button
                           onClick={() =>
-                            handleReply(comment._id, comment.authorId.name)
+                            handleReply(comment._id, comment.userId.name)
                           }
                           className="text-sm text-gray-500 hover:text-gray-900 transition-colors"
                         >

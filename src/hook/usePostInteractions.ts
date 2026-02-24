@@ -257,7 +257,7 @@ export function useCreateComment() {
       const optimisticComment: Comment = {
         _id: `temp-${Date.now()}`,
         content,
-        authorId: {
+        userId: {
           _id: "current-user",
           name: "You",
           avatar: undefined,
