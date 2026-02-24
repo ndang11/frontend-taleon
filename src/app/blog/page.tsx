@@ -360,7 +360,7 @@ export default function BlogPage() {
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              router.push(`/post/${post._id}#comments`);
+                              router.push(`/post/${post._id}#comment-input`);
                             }}
                             className="flex items-center gap-1.5 text-blue-600 hover:text-blue-700 cursor-pointer"
                           >

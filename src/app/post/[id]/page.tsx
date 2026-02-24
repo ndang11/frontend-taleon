@@ -824,8 +824,8 @@ export default function PostDetailsPage({
             </div>
           </div>
 
-          {/* Add Comment */}
-          <div className="mb-8">
+          {/* Add Comment - with id for direct navigation */}
+          <div id="comment-input" className="mb-8">
             <div className="flex gap-4">
               <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-medium flex-shrink-0">
                 Y

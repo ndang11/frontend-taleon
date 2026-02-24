@@ -564,7 +564,7 @@ export default function StoryPage({
 
       {/* Comments Section - Medium-style Responses */}
       {showComments && (
-        <div className="mt-16">
+        <div id="comment-input" className="mt-16">
           {/* Responses Header */}
           <div className="border-t border-gray-200 pt-12">
             <h2 className="text-2xl font-semibold text-gray-900 mb-2">
