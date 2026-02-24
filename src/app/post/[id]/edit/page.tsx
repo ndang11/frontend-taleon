@@ -1,5 +1,6 @@
 "use client";
 
+import { ArrowLeft, MoreHorizontal } from "lucide-react";
 import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -24,6 +25,7 @@ export default function EditPostPage() {
   const [showSessionExpired, setShowSessionExpired] = useState(false);
   const [showPostNotFound, setShowPostNotFound] = useState(false);
   const [showLoadFailed, setShowLoadFailed] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
 
   const editorRef = useRef<any>(null);
 
@@ -157,10 +159,19 @@ export default function EditPostPage() {
     return () => clearInterval(interval);
   }, [post, handleSave, saveStatus]);
 
+  const totalWords =
+    title
+      .trim()
+      .split(/\s+/)
+      .filter((w) => w.length > 0).length + wordCount;
+
+  // Medium-style reading time calculation (approx 200 words per minute)
+  const readingTime = Math.max(1, Math.ceil(totalWords / 200));
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center pt-20 text-gray-400 animate-pulse">
-        Loading post...
+      <div className="flex items-center justify-center h-screen bg-white">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
       </div>
     );
   }
@@ -204,71 +215,142 @@ export default function EditPostPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      <header className="h-16 flex items-center justify-between border-b px-6">
-        <div className="flex items-center space-x-6">
-          <button
-            onClick={() => router.back()}
-            className="text-gray-500 hover:text-gray-700"
-          >
-            ← Back
-          </button>
-        </div>
+      {/* Medium-style Minimal Header */}
+      <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-100">
+        <div className="max-w-screen-xl mx-auto px-4 h-16 flex items-center justify-between">
+          {/* Left side - Back button */}
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => router.back()}
+              className="p-2 -ml-2 text-gray-500 hover:text-gray-900 transition-colors"
+              aria-label="Go back"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+          </div>
 
-        <div className="flex items-center space-x-4">
-          <span className="text-xs text-gray-400 italic">{saveStatus}</span>
-          <span className="text-xs text-gray-500 font-medium">
-            {title
-              .trim()
-              .split(/\s+/)
-              .filter((w: string) => w.length > 0).length + wordCount}{" "}
-            words
-          </span>
-          <button
-            onClick={handleSave}
-            className="px-4 py-2 bg-gray-100 text-gray-700 text-sm rounded-lg hover:bg-gray-200"
-          >
-            Save Draft
-          </button>
-          <button
-            onClick={handlePublish}
-            className="px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700"
-          >
-            Publish
-          </button>
+          {/* Right side - Status & Actions */}
+          <div className="flex items-center gap-3">
+            {/* Save Status Indicator */}
+            {saveStatus !== "Draft" && (
+              <span
+                className={`text-xs font-medium px-2 py-1 rounded ${
+                  saveStatus === "Published"
+                    ? "text-green-700 bg-green-50"
+                    : saveStatus === "Saving..."
+                      ? "text-amber-700 bg-amber-50"
+                      : saveStatus === "Saved"
+                        ? "text-gray-600 bg-gray-50"
+                        : saveStatus === "Error"
+                          ? "text-red-700 bg-red-50"
+                          : "text-gray-500"
+                }`}
+              >
+                {saveStatus === "Saving..." ? "Saving..." : saveStatus}
+              </span>
+            )}
+
+            {/* Reading Time */}
+            <span className="text-xs text-gray-400 hidden sm:inline">
+              {readingTime} min read
+            </span>
+
+            {/* Save Draft Button */}
+            <button
+              onClick={handleSave}
+              className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+            >
+              Save
+            </button>
+
+            {/* Publish Button */}
+            <button
+              onClick={handlePublish}
+              className="px-5 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-full transition-all duration-200"
+            >
+              Publish
+            </button>
+
+            {/* More Options Menu */}
+            <div className="relative">
+              <button
+                onClick={() => setShowMenu(!showMenu)}
+                className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <MoreHorizontal className="w-5 h-5" />
+              </button>
+              {showMenu && (
+                <>
+                  <div
+                    className="fixed inset-0 z-10"
+                    onClick={() => setShowMenu(false)}
+                  />
+                  <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-100 py-1 z-20">
+                    <button
+                      onClick={() => {
+                        router.push("/me/stories");
+                        setShowMenu(false);
+                      }}
+                      className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      View all stories
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
         </div>
       </header>
 
-      <main className="mx-auto max-w-4xl px-6 py-8">
-        <input
-          type="text"
-          placeholder="Title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          className="w-full text-5xl font-serif font-bold outline-none mb-6 placeholder:text-gray-200"
-        />
-
-        {coverImage && (
-          <div className="relative w-full h-64 mb-6 rounded-xl overflow-hidden">
-            <Image src={coverImage} alt="Cover" fill className="object-cover" />
-            <button
-              onClick={() => setCoverImage(null)}
-              className="absolute top-2 right-2 bg-black/50 text-white p-2 rounded-full hover:bg-black/70"
-            >
-              ×
-            </button>
+      {/* Main Content - Medium-style centered layout */}
+      <main className="pt-24 pb-20 min-h-screen bg-white">
+        <div className="max-w-[680px] mx-auto px-6">
+          {/* Title - Medium-style large serif title */}
+          <div className="mb-8">
+            <textarea
+              placeholder="Title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              rows={1}
+              onInput={(e) => {
+                const target = e.target as HTMLTextAreaElement;
+                target.style.height = "auto";
+                target.style.height = `${target.scrollHeight}px`;
+              }}
+              className="w-full text-[42px] md:text-[48px] font-serif font-bold outline-none placeholder:text-gray-200 text-gray-900 leading-tight resize-none border-none bg-transparent"
+              style={{ minHeight: "56px" }}
+            />
           </div>
-        )}
 
-        <TiptapEditor
-          postId={postId}
-          initialContent={initialContent}
-          contentFormat="json"
-          onStatusChange={setSaveStatus}
-          onWordCountChange={setWordCount}
-          onReady={(controls: any) => {
-            editorRef.current = controls;
-          }}
-        />
+          {coverImage && (
+            <div className="relative w-full h-64 mb-6 rounded-xl overflow-hidden">
+              <Image
+                src={coverImage}
+                alt="Cover"
+                fill
+                className="object-cover"
+              />
+              <button
+                onClick={() => setCoverImage(null)}
+                className="absolute top-2 right-2 bg-black/50 text-white p-2 rounded-full hover:bg-black/70"
+              >
+                ×
+              </button>
+            </div>
+          )}
+
+          <TiptapEditor
+            postId={postId}
+            initialContent={initialContent}
+            contentFormat="json"
+            onStatusChange={setSaveStatus}
+            onWordCountChange={setWordCount}
+            onReady={(controls: any) => {
+              editorRef.current = controls;
+            }}
+          />
+        </div>
       </main>
 
       <AlertDialog

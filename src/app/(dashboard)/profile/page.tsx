@@ -520,7 +520,7 @@ export default function ProfilePage() {
 
                           <Link href={`/post/${story._id}`} className="block">
                             <h3 className="font-semibold text-gray-900 mb-2 hover:text-blue-600 transition-colors">
-                              {story.title || "Untitled Story"}
+                              {story.title}
                             </h3>
                             <p className="text-gray-500 text-sm line-clamp-2 mb-3">
                               No content preview available...

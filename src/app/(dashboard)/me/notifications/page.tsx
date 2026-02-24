@@ -90,7 +90,7 @@ export default function NotificationsPage() {
       return `/me/profile`;
     }
     if (notification.postId) {
-      return `/post/${notification.postId._id}`;
+      return `/story/${notification.postId._id}`;
     }
     return "/me";
   };

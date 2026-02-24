@@ -1,6 +1,7 @@
 // src/app/new-story/page.tsx
 "use client";
 
+import { ArrowLeft, MoreHorizontal } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { AlertDialog } from "@/components/ui/AlertDialog";
@@ -26,13 +27,13 @@ function NewStoryContent() {
 
   const [postId, setPostId] = useState<string | null>(null);
   const [title, setTitle] = useState("");
-  const [subtitle, setSubtitle] = useState("");
   const [saveStatus, setSaveStatus] = useState<
     "Saved" | "Saving..." | "Draft" | "Published" | "Archived" | "Error"
   >("Draft");
   const [wordCount, setWordCount] = useState(0);
   const [isPublishing, setIsPublishing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [showMenu, setShowMenu] = useState(false);
 
   // Create a ref to the editor controller
   const editorRef = useRef<any>(null);
@@ -66,6 +67,7 @@ function NewStoryContent() {
             content: JSON.stringify(initialContent),
             category: "General",
           });
+
           // Handle both wrapped { post: ... } and direct post response
           const newPost = res.post || res;
           setPostId(newPost._id);
@@ -193,9 +195,12 @@ function NewStoryContent() {
       .split(/\s+/)
       .filter((w) => w.length > 0).length + wordCount;
 
+  // Medium-style reading time calculation (approx 200 words per minute)
+  const readingTime = Math.max(1, Math.ceil(totalWords / 200));
+
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-screen">
+      <div className="flex items-center justify-center h-screen bg-white">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
       </div>
     );
@@ -203,99 +208,143 @@ function NewStoryContent() {
 
   return (
     <>
-      {/* Minimal Header */}
-      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100">
-        <div className="max-w-[740px] mx-auto px-6 h-14 flex items-center justify-between">
-          {/* Status & Word Count */}
-          <div className="flex items-center gap-3">
-            <span
-              className={`text-xs font-medium ${
-                saveStatus === "Published"
-                  ? "text-green-600"
-                  : saveStatus === "Saving..."
-                    ? "text-amber-600"
-                    : saveStatus === "Error"
-                      ? "text-red-600"
-                      : "text-gray-400"
-              }`}
+      {/* Medium-style Minimal Header */}
+      <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-100">
+        <div className="max-w-screen-xl mx-auto px-4 h-16 flex items-center justify-between">
+          {/* Left side - Back button */}
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => router.back()}
+              className="p-2 -ml-2 text-gray-500 hover:text-gray-900 transition-colors"
+              aria-label="Go back"
             >
-              {saveStatus === "Saving..." ? "● Saving..." : saveStatus}
-            </span>
-            <span className="text-xs text-gray-300">·</span>
-            <span className="text-xs text-gray-400">{totalWords} words</span>
+              <ArrowLeft className="w-5 h-5" />
+            </button>
           </div>
 
-          {/* Actions */}
-          <div className="flex items-center gap-2">
+          {/* Right side - Status & Actions */}
+          <div className="flex items-center gap-3">
+            {/* Save Status Indicator */}
+            {saveStatus !== "Draft" && (
+              <span
+                className={`text-xs font-medium px-2 py-1 rounded ${
+                  saveStatus === "Published"
+                    ? "text-green-700 bg-green-50"
+                    : saveStatus === "Saving..."
+                      ? "text-amber-700 bg-amber-50"
+                      : saveStatus === "Saved"
+                        ? "text-gray-600 bg-gray-50"
+                        : saveStatus === "Error"
+                          ? "text-red-700 bg-red-50"
+                          : "text-gray-500"
+                }`}
+              >
+                {saveStatus === "Saving..." ? "Saving..." : saveStatus}
+              </span>
+            )}
+
+            {/* Reading Time */}
+            <span className="text-xs text-gray-400 hidden sm:inline">
+              {readingTime} min read
+            </span>
+
+            {/* Save Draft Button */}
             <button
               onClick={handleSaveDraft}
               disabled={isPublishing}
-              className="px-3 py-1.5 text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors disabled:opacity-50"
+              className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors disabled:opacity-50"
             >
               Save
             </button>
+
+            {/* Publish Button */}
             <button
               onClick={handlePublish}
               disabled={isPublishing || !title.trim()}
-              className="px-4 py-1.5 bg-green-600 hover:bg-green-700 disabled:bg-gray-300 text-white text-sm font-medium rounded-full transition-colors"
+              className="px-5 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-200 disabled:text-gray-400 text-white text-sm font-medium rounded-full transition-all duration-200"
             >
               {isPublishing ? "Publishing..." : "Publish"}
             </button>
+
+            {/* More Options Menu */}
+            <div className="relative">
+              <button
+                onClick={() => setShowMenu(!showMenu)}
+                className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <MoreHorizontal className="w-5 h-5" />
+              </button>
+              {showMenu && (
+                <>
+                  <div
+                    className="fixed inset-0 z-10"
+                    onClick={() => setShowMenu(false)}
+                  />
+                  <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-100 py-1 z-20">
+                    <button
+                      onClick={() => {
+                        handleArchive();
+                        setShowMenu(false);
+                      }}
+                      className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      Archive story
+                    </button>
+                    <button
+                      onClick={() => {
+                        router.push("/me/stories");
+                        setShowMenu(false);
+                      }}
+                      className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      View all stories
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </div>
       </header>
 
-      <main className="max-w-[740px] mx-auto px-6 py-16">
-        {/* Title */}
-        <input
-          type="text"
-          placeholder="Title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              // Move focus to subtitle
-              const subtitleInput = document.getElementById("subtitle-input");
-              subtitleInput?.focus();
-            }
-          }}
-          className="w-full text-4xl md:text-5xl font-serif font-bold outline-none mb-4 placeholder:text-gray-300 text-gray-900 leading-tight"
-        />
-
-        {/* Subtitle */}
-        <input
-          id="subtitle-input"
-          type="text"
-          placeholder="Add a subtitle..."
-          value={subtitle}
-          onChange={(e) => setSubtitle(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              editorRef.current?.focus();
-            }
-          }}
-          className="w-full text-xl md:text-2xl font-serif font-normal outline-none mb-12 placeholder:text-gray-300 text-gray-500 leading-relaxed"
-        />
-
-        {/* Editor */}
-        {postId ? (
-          <div className="relative">
-            <TiptapEditor
-              postId={postId}
-              onStatusChange={setSaveStatus as (status: string) => void}
-              onWordCountChange={setWordCount}
-              onReady={(controls) => {
-                editorRef.current = controls;
+      {/* Main Content - Medium-style centered layout */}
+      <main className="pt-24 pb-20 min-h-screen bg-white">
+        <div className="max-w-[680px] mx-auto px-6">
+          {/* Title - Medium-style large serif title */}
+          <div className="mb-8">
+            <textarea
+              placeholder="Title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              rows={1}
+              onInput={(e) => {
+                const target = e.target as HTMLTextAreaElement;
+                target.style.height = "auto";
+                target.style.height = `${target.scrollHeight}px`;
               }}
+              className="w-full text-[42px] md:text-[48px] font-serif font-bold outline-none placeholder:text-gray-200 text-gray-900 leading-tight resize-none border-none bg-transparent"
+              style={{ minHeight: "56px" }}
             />
           </div>
-        ) : (
-          <div className="flex items-center justify-center pt-20 text-gray-400 animate-pulse">
-            Preparing your draft...
-          </div>
-        )}
+
+          {/* Editor */}
+          {postId ? (
+            <div className="relative">
+              <TiptapEditor
+                postId={postId}
+                onStatusChange={setSaveStatus as (status: string) => void}
+                onWordCountChange={setWordCount}
+                onReady={(controls) => {
+                  editorRef.current = controls;
+                }}
+              />
+            </div>
+          ) : (
+            <div className="flex items-center justify-center pt-20 text-gray-400 animate-pulse">
+              Preparing your draft...
+            </div>
+          )}
+        </div>
       </main>
 
       <AlertDialog
@@ -329,7 +378,7 @@ export default function NewStoryPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex items-center justify-center h-screen">
+        <div className="flex items-center justify-center h-screen bg-white">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
         </div>
       }
