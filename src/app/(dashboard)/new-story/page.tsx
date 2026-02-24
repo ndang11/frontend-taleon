@@ -1,7 +1,7 @@
-// src/app/new-story/page.tsx
+// src/app/(dashboard)/new-story/page.tsx
 "use client";
 
-import { ArrowLeft, MoreHorizontal } from "lucide-react";
+import { Bell, MoreHorizontal } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { AlertDialog } from "@/components/ui/AlertDialog";
@@ -34,6 +34,7 @@ function NewStoryContent() {
   const [isPublishing, setIsPublishing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [showMenu, setShowMenu] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   // Create a ref to the editor controller
   const editorRef = useRef<any>(null);
@@ -48,7 +49,12 @@ function NewStoryContent() {
           if ("post" in response) {
             const postData = response.post;
             setPostId(postData._id);
-            setTitle(postData.title || "");
+            // If title is "Untitled Story" or empty, show empty string (placeholder will show "Title")
+            const postTitle =
+              postData.title && postData.title !== "Untitled Story"
+                ? postData.title
+                : "";
+            setTitle(postTitle);
             // Load content into editor if available
             if (editorRef.current && postData.content) {
               editorRef.current.setContent(postData.content);
@@ -147,8 +153,6 @@ function NewStoryContent() {
     }
   };
 
-  const [showSuccess, setShowSuccess] = useState(false);
-
   const handleSuccessClose = () => {
     setShowSuccess(false);
     router.push("/dashboard");
@@ -189,6 +193,32 @@ function NewStoryContent() {
     }
   };
 
+  const handleAddBlock = (type: string) => {
+    if (!editorRef.current) return;
+
+    switch (type) {
+      case "paragraph":
+        editorRef.current.focus();
+        break;
+      case "heading":
+        editorRef.current.toggleHeading?.(1);
+        break;
+      case "image":
+        editorRef.current.insertImage?.("", "");
+        break;
+      case "quote":
+        editorRef.current.toggleBlockquote?.();
+        break;
+      case "code":
+        editorRef.current.toggleCodeBlock?.();
+        break;
+      case "divider":
+        // Add horizontal rule if available
+        editorRef.current.focus();
+        break;
+    }
+  };
+
   const totalWords =
     title
       .trim()
@@ -198,9 +228,20 @@ function NewStoryContent() {
   // Medium-style reading time calculation (approx 200 words per minute)
   const readingTime = Math.max(1, Math.ceil(totalWords / 200));
 
+  // Get user initials for avatar
+  const getUserInitial = () => {
+    if (user?.name) {
+      return user.name.charAt(0).toUpperCase();
+    }
+    if (user?.email) {
+      return user.email.charAt(0).toUpperCase();
+    }
+    return "U";
+  };
+
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-white">
+      <div className="flex items-center justify-center h-full bg-white">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
       </div>
     );
@@ -208,69 +249,48 @@ function NewStoryContent() {
 
   return (
     <>
-      {/* Medium-style Minimal Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-100">
-        <div className="max-w-screen-xl mx-auto px-4 h-16 flex items-center justify-between">
-          {/* Left side - Back button */}
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => router.back()}
-              className="p-2 -ml-2 text-gray-500 hover:text-gray-900 transition-colors"
-              aria-label="Go back"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </button>
+      {/* Editor Header Bar - Fixed within the content area */}
+      <div className="sticky top-0 z-30 bg-white border-b border-gray-100 mb-8 -mx-4 sm:-mx-6 px-4 sm:px-6 py-3">
+        <div className="flex items-center justify-between max-w-[680px] mx-auto">
+          {/* Left side - Status */}
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-gray-400 font-normal">
+              {saveStatus === "Draft"
+                ? "Draft"
+                : saveStatus === "Saving..."
+                  ? "Saving..."
+                  : saveStatus === "Saved"
+                    ? "Saved"
+                    : saveStatus === "Published"
+                      ? "Published"
+                      : saveStatus === "Error"
+                        ? "Error"
+                        : "Draft"}
+            </span>
           </div>
 
-          {/* Right side - Status & Actions */}
-          <div className="flex items-center gap-3">
-            {/* Save Status Indicator */}
-            {saveStatus !== "Draft" && (
-              <span
-                className={`text-xs font-medium px-2 py-1 rounded ${
-                  saveStatus === "Published"
-                    ? "text-green-700 bg-green-50"
-                    : saveStatus === "Saving..."
-                      ? "text-amber-700 bg-amber-50"
-                      : saveStatus === "Saved"
-                        ? "text-gray-600 bg-gray-50"
-                        : saveStatus === "Error"
-                          ? "text-red-700 bg-red-50"
-                          : "text-gray-500"
-                }`}
-              >
-                {saveStatus === "Saving..." ? "Saving..." : saveStatus}
-              </span>
-            )}
-
-            {/* Reading Time */}
-            <span className="text-xs text-gray-400 hidden sm:inline">
+          {/* Right side - Actions */}
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* Reading Time - Hidden on mobile */}
+            <span className="text-xs text-gray-400 hidden md:inline">
               {readingTime} min read
             </span>
-
-            {/* Save Draft Button */}
-            <button
-              onClick={handleSaveDraft}
-              disabled={isPublishing}
-              className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors disabled:opacity-50"
-            >
-              Save
-            </button>
 
             {/* Publish Button */}
             <button
               onClick={handlePublish}
               disabled={isPublishing || !title.trim()}
-              className="px-5 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-200 disabled:text-gray-400 text-white text-sm font-medium rounded-full transition-all duration-200"
+              className="px-4 py-1.5 bg-green-500 hover:bg-green-600 disabled:bg-gray-200 disabled:text-gray-400 text-white text-sm font-medium rounded-full transition-all duration-200"
             >
               {isPublishing ? "Publishing..." : "Publish"}
             </button>
 
-            {/* More Options Menu */}
+            {/* Three-dot menu */}
             <div className="relative">
               <button
                 onClick={() => setShowMenu(!showMenu)}
                 className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                aria-label="More options"
               >
                 <MoreHorizontal className="w-5 h-5" />
               </button>
@@ -281,6 +301,15 @@ function NewStoryContent() {
                     onClick={() => setShowMenu(false)}
                   />
                   <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-100 py-1 z-20">
+                    <button
+                      onClick={() => {
+                        handleSaveDraft();
+                        setShowMenu(false);
+                      }}
+                      className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      Save as draft
+                    </button>
                     <button
                       onClick={() => {
                         handleArchive();
@@ -305,39 +334,75 @@ function NewStoryContent() {
             </div>
           </div>
         </div>
-      </header>
+      </div>
 
-      {/* Main Content - Medium-style centered layout */}
-      <main className="pt-24 pb-20 min-h-screen bg-white">
-        <div className="max-w-[680px] mx-auto px-6">
+      {/* Main Editor Content - Medium-style centered column */}
+      <div className="flex justify-center">
+        <div className="w-full max-w-[680px] px-4 sm:px-6 xl:pl-16">
           {/* Title - Medium-style large serif title */}
-          <div className="mb-8">
-            <textarea
+          <div className="mb-10">
+            <input
+              type="text"
               placeholder="Title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              rows={1}
-              onInput={(e) => {
-                const target = e.target as HTMLTextAreaElement;
-                target.style.height = "auto";
-                target.style.height = `${target.scrollHeight}px`;
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  // Move focus to the editor body
+                  const editorElement = document.querySelector(
+                    ".ProseMirror",
+                  ) as HTMLElement;
+                  if (editorElement) {
+                    editorElement.focus();
+                  }
+                }
               }}
-              className="w-full text-[42px] md:text-[48px] font-serif font-bold outline-none placeholder:text-gray-200 text-gray-900 leading-tight resize-none border-none bg-transparent"
-              style={{ minHeight: "56px" }}
+              className="w-full text-[48px] sm:text-[52px] font-serif font-bold outline-none placeholder:text-gray-300 placeholder:font-bold text-gray-900 leading-[1.1] resize-none border-none bg-transparent tracking-tight"
+              style={{ minHeight: "64px" }}
             />
           </div>
 
-          {/* Editor */}
+          {/* Editor with Plus Button */}
           {postId ? (
-            <div className="relative">
-              <TiptapEditor
-                postId={postId}
-                onStatusChange={setSaveStatus as (status: string) => void}
-                onWordCountChange={setWordCount}
-                onReady={(controls) => {
-                  editorRef.current = controls;
-                }}
-              />
+            <div className="relative flex">
+              {/* Plus Button - Left of body */}
+              <div className="absolute -left-12 top-0 hidden xl:block">
+                <div className="relative">
+                  <button
+                    onClick={() => handleAddBlock("paragraph")}
+                    className="w-9 h-9 rounded-full border border-gray-300 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:border-gray-400 transition-colors"
+                    aria-label="Add block"
+                  >
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden="true"
+                    >
+                      <line x1="12" y1="5" x2="12" y2="19"></line>
+                      <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              {/* Editor Body */}
+              <div className="flex-1 min-w-0">
+                <TiptapEditor
+                  postId={postId}
+                  onStatusChange={setSaveStatus as (status: string) => void}
+                  onWordCountChange={setWordCount}
+                  onReady={(controls) => {
+                    editorRef.current = controls;
+                  }}
+                />
+              </div>
             </div>
           ) : (
             <div className="flex items-center justify-center pt-20 text-gray-400 animate-pulse">
@@ -345,7 +410,7 @@ function NewStoryContent() {
             </div>
           )}
         </div>
-      </main>
+      </div>
 
       <AlertDialog
         isOpen={showSessionExpired}
@@ -378,7 +443,7 @@ export default function NewStoryPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex items-center justify-center h-screen bg-white">
+        <div className="flex items-center justify-center h-full bg-white">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
         </div>
       }

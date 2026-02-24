@@ -16,20 +16,15 @@ import {
   AlertCircle,
   Bold,
   Code,
-  Copy,
   Heading1,
   Heading2,
-  Heading3,
   Image as ImageIcon,
   Italic,
   Link as LinkIcon,
   List as ListIcon,
   ListOrdered,
   Quote,
-  Redo,
   Strikethrough,
-  Underline as UnderlineIcon,
-  Undo,
   Upload,
   X,
 } from "lucide-react";
@@ -101,6 +96,9 @@ export default function TiptapEditor({
   const [imageUploadError, setImageUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Floating toolbar state
+  const [showToolbar, setShowToolbar] = useState(false);
+
   const validateUrl = useCallback((url: string): boolean => {
     if (!url) return true;
     return URL_REGEX.test(url);
@@ -112,8 +110,6 @@ export default function TiptapEditor({
         heading: {
           levels: [1, 2, 3],
         },
-        // Exclude link and underline from StarterKit since we add them separately
-        // to avoid duplicate extension warnings
         link: false,
         underline: false,
       }),
@@ -150,13 +146,17 @@ export default function TiptapEditor({
           class: "border border-gray-200 p-3 bg-gray-50 font-semibold",
         },
       }),
-      Placeholder.configure({ placeholder: "Tell your story..." }),
+      Placeholder.configure({
+        placeholder: "Tell your story…",
+        emptyEditorClass: "is-editor-empty",
+        emptyNodeClass: "is-empty",
+      }),
     ],
     immediatelyRender: false,
     editorProps: {
       attributes: {
         class:
-          "prose prose-lg max-w-none focus:outline-none min-h-[60vh] text-gray-800 leading-relaxed font-serif text-lg",
+          "prose prose-lg max-w-none focus:outline-none min-h-[60vh] text-gray-800 leading-[1.8] font-serif text-xl",
       },
     },
     onUpdate: ({ editor }) => {
@@ -171,8 +171,8 @@ export default function TiptapEditor({
       const currentTitle =
         (
           document.querySelector(
-            'input[placeholder="Title"]',
-          ) as HTMLInputElement
+            'textarea[placeholder="Title"]',
+          ) as HTMLTextAreaElement
         )?.value || "";
 
       if (contentFormat === "json") {
@@ -180,6 +180,16 @@ export default function TiptapEditor({
       } else {
         debouncedSave(editor.getHTML(), currentTitle);
       }
+    },
+    onFocus: () => {
+      setShowToolbar(true);
+    },
+    onBlur: () => {
+      // Delay hiding toolbar to allow clicking on toolbar buttons
+      setTimeout(() => {
+        setShowToolbar(false);
+        setShowLinkInput(false);
+      }, 200);
     },
   });
 
@@ -276,26 +286,6 @@ export default function TiptapEditor({
     }
   };
 
-  const handleCopyContent = async () => {
-    if (!editor) return;
-
-    const text = editor.getText();
-    const html = editor.getHTML();
-
-    try {
-      // Try to copy as rich text first (HTML)
-      await navigator.clipboard.write([
-        new ClipboardItem({
-          "text/html": new Blob([html], { type: "text/html" }),
-          "text/plain": new Blob([text], { type: "text/plain" }),
-        }),
-      ]);
-    } catch {
-      // Fallback to plain text
-      await navigator.clipboard.writeText(text);
-    }
-  };
-
   const handleImageUrlSubmit = () => {
     if (validateUrl(imageUrl) && editor) {
       editor
@@ -351,165 +341,187 @@ export default function TiptapEditor({
   }
 
   return (
-    <div className="editor-wrapper">
-      {/* Medium-style Floating Toolbar */}
-      <div className="flex justify-center mb-6">
-        <div className="flex items-center gap-1 bg-white rounded-full shadow-sm border border-gray-100 px-2 py-1.5 inline-flex">
-          {/* Text Formatting */}
-          <button
-            onClick={() => editor.chain().focus().toggleBold().run()}
-            className={`p-2 rounded-full hover:bg-gray-100 transition-colors ${
-              editor.isActive("bold")
-                ? "bg-gray-100 text-gray-900"
-                : "text-gray-500"
-            }`}
-            title="Bold"
-          >
-            <Bold className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => editor.chain().focus().toggleItalic().run()}
-            className={`p-2 rounded-full hover:bg-gray-100 transition-colors ${
-              editor.isActive("italic")
-                ? "bg-gray-100 text-gray-900"
-                : "text-gray-500"
-            }`}
-            title="Italic"
-          >
-            <Italic className="w-4 h-4" />
-          </button>
-
-          <div className="w-px h-5 bg-gray-200 mx-1" />
-
-          {/* Headings */}
-          <button
-            onClick={() =>
-              editor.chain().focus().toggleHeading({ level: 1 }).run()
-            }
-            className={`p-2 rounded-full hover:bg-gray-100 transition-colors ${
-              editor.isActive("heading", { level: 1 })
-                ? "bg-gray-100 text-gray-900"
-                : "text-gray-500"
-            }`}
-            title="Heading 1"
-          >
-            <Heading1 className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() =>
-              editor.chain().focus().toggleHeading({ level: 2 }).run()
-            }
-            className={`p-2 rounded-full hover:bg-gray-100 transition-colors ${
-              editor.isActive("heading", { level: 2 })
-                ? "bg-gray-100 text-gray-900"
-                : "text-gray-500"
-            }`}
-            title="Heading 2"
-          >
-            <Heading2 className="w-4 h-4" />
-          </button>
-
-          <div className="w-px h-5 bg-gray-200 mx-1" />
-
-          {/* Lists & Blocks */}
-          <button
-            onClick={() => editor.chain().focus().toggleBulletList().run()}
-            className={`p-2 rounded-full hover:bg-gray-100 transition-colors ${
-              editor.isActive("bulletList")
-                ? "bg-gray-100 text-gray-900"
-                : "text-gray-500"
-            }`}
-            title="Bullet List"
-          >
-            <ListIcon className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => editor.chain().focus().toggleOrderedList().run()}
-            className={`p-2 rounded-full hover:bg-gray-100 transition-colors ${
-              editor.isActive("orderedList")
-                ? "bg-gray-100 text-gray-900"
-                : "text-gray-500"
-            }`}
-            title="Numbered List"
-          >
-            <ListOrdered className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => editor.chain().focus().toggleBlockquote().run()}
-            className={`p-2 rounded-full hover:bg-gray-100 transition-colors ${
-              editor.isActive("blockquote")
-                ? "bg-gray-100 text-gray-900"
-                : "text-gray-500"
-            }`}
-            title="Quote"
-          >
-            <Quote className="w-4 h-4" />
-          </button>
-
-          <div className="w-px h-5 bg-gray-200 mx-1" />
-
-          {/* Link */}
-          <div className="relative">
+    <div className="editor-wrapper relative">
+      {/* Minimal Inline Toolbar - Only shows on focus */}
+      {showToolbar && (
+        <div className="mb-4 opacity-0 animate-in fade-in duration-200">
+          <div className="flex items-center gap-0.5 flex-wrap">
+            {/* Text Formatting */}
             <button
-              onClick={() => setShowLinkInput(!showLinkInput)}
-              className={`p-2 rounded-full hover:bg-gray-100 transition-colors ${
-                editor.isActive("link")
+              onClick={() => editor.chain().focus().toggleBold().run()}
+              className={`p-2 rounded hover:bg-gray-100 transition-colors ${
+                editor.isActive("bold")
                   ? "bg-gray-100 text-gray-900"
-                  : "text-gray-500"
+                  : "text-gray-400"
               }`}
-              title="Add Link"
+              title="Bold"
             >
-              <LinkIcon className="w-4 h-4" />
+              <Bold className="w-4 h-4" />
             </button>
-            {showLinkInput && (
-              <div className="absolute top-full left-0 mt-2 p-2 bg-white rounded-lg shadow-xl border border-gray-100 z-50">
-                <input
-                  type="url"
-                  placeholder="https://..."
-                  value={linkUrl}
-                  onChange={(e) => setLinkUrl(e.target.value)}
-                  className="w-48 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-gray-400 mb-2"
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      handleSetLink();
-                    }
-                  }}
-                />
-                <div className="flex gap-2">
-                  <button
-                    onClick={handleSetLink}
-                    className="flex-1 px-3 py-1.5 bg-gray-900 text-white text-xs rounded-lg hover:bg-gray-800"
-                  >
-                    Add
-                  </button>
-                  {editor.isActive("link") && (
+            <button
+              onClick={() => editor.chain().focus().toggleItalic().run()}
+              className={`p-2 rounded hover:bg-gray-100 transition-colors ${
+                editor.isActive("italic")
+                  ? "bg-gray-100 text-gray-900"
+                  : "text-gray-400"
+              }`}
+              title="Italic"
+            >
+              <Italic className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => editor.chain().focus().toggleStrike().run()}
+              className={`p-2 rounded hover:bg-gray-100 transition-colors ${
+                editor.isActive("strike")
+                  ? "bg-gray-100 text-gray-900"
+                  : "text-gray-400"
+              }`}
+              title="Strikethrough"
+            >
+              <Strikethrough className="w-4 h-4" />
+            </button>
+
+            <div className="w-px h-5 bg-gray-200 mx-1" />
+
+            {/* Headings */}
+            <button
+              onClick={() =>
+                editor.chain().focus().toggleHeading({ level: 1 }).run()
+              }
+              className={`p-2 rounded hover:bg-gray-100 transition-colors ${
+                editor.isActive("heading", { level: 1 })
+                  ? "bg-gray-100 text-gray-900"
+                  : "text-gray-400"
+              }`}
+              title="Heading 1"
+            >
+              <Heading1 className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() =>
+                editor.chain().focus().toggleHeading({ level: 2 }).run()
+              }
+              className={`p-2 rounded hover:bg-gray-100 transition-colors ${
+                editor.isActive("heading", { level: 2 })
+                  ? "bg-gray-100 text-gray-900"
+                  : "text-gray-400"
+              }`}
+              title="Heading 2"
+            >
+              <Heading2 className="w-4 h-4" />
+            </button>
+
+            <div className="w-px h-5 bg-gray-200 mx-1" />
+
+            {/* Lists & Blocks */}
+            <button
+              onClick={() => editor.chain().focus().toggleBulletList().run()}
+              className={`p-2 rounded hover:bg-gray-100 transition-colors ${
+                editor.isActive("bulletList")
+                  ? "bg-gray-100 text-gray-900"
+                  : "text-gray-400"
+              }`}
+              title="Bullet List"
+            >
+              <ListIcon className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => editor.chain().focus().toggleOrderedList().run()}
+              className={`p-2 rounded hover:bg-gray-100 transition-colors ${
+                editor.isActive("orderedList")
+                  ? "bg-gray-100 text-gray-900"
+                  : "text-gray-400"
+              }`}
+              title="Numbered List"
+            >
+              <ListOrdered className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => editor.chain().focus().toggleBlockquote().run()}
+              className={`p-2 rounded hover:bg-gray-100 transition-colors ${
+                editor.isActive("blockquote")
+                  ? "bg-gray-100 text-gray-900"
+                  : "text-gray-400"
+              }`}
+              title="Quote"
+            >
+              <Quote className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => editor.chain().focus().toggleCodeBlock().run()}
+              className={`p-2 rounded hover:bg-gray-100 transition-colors ${
+                editor.isActive("codeBlock")
+                  ? "bg-gray-100 text-gray-900"
+                  : "text-gray-400"
+              }`}
+              title="Code Block"
+            >
+              <Code className="w-4 h-4" />
+            </button>
+
+            <div className="w-px h-5 bg-gray-200 mx-1" />
+
+            {/* Link */}
+            <div className="relative">
+              <button
+                onClick={() => setShowLinkInput(!showLinkInput)}
+                className={`p-2 rounded hover:bg-gray-100 transition-colors ${
+                  editor.isActive("link")
+                    ? "bg-gray-100 text-gray-900"
+                    : "text-gray-400"
+                }`}
+                title="Add Link"
+              >
+                <LinkIcon className="w-4 h-4" />
+              </button>
+              {showLinkInput && (
+                <div className="absolute top-full left-0 mt-2 p-2 bg-white rounded-lg shadow-xl border border-gray-100 z-50">
+                  <input
+                    type="url"
+                    placeholder="https://..."
+                    value={linkUrl}
+                    onChange={(e) => setLinkUrl(e.target.value)}
+                    className="w-48 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-gray-400 mb-2"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        handleSetLink();
+                      }
+                    }}
+                  />
+                  <div className="flex gap-2">
                     <button
-                      onClick={() => {
-                        editor.chain().focus().unsetLink().run();
-                        setShowLinkInput(false);
-                      }}
-                      className="px-3 py-1.5 bg-red-500 text-white text-xs rounded-lg hover:bg-red-600"
+                      onClick={handleSetLink}
+                      className="flex-1 px-3 py-1.5 bg-gray-900 text-white text-xs rounded-lg hover:bg-gray-800"
                     >
-                      Remove
+                      Add
                     </button>
-                  )}
+                    {editor.isActive("link") && (
+                      <button
+                        onClick={() => {
+                          editor.chain().focus().unsetLink().run();
+                          setShowLinkInput(false);
+                        }}
+                        className="px-3 py-1.5 bg-red-500 text-white text-xs rounded-lg hover:bg-red-600"
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
+
+            {/* Image */}
+            <button
+              onClick={() => setShowImageModal(true)}
+              className="p-2 rounded hover:bg-gray-100 transition-colors text-gray-400"
+              title="Add Image"
+            >
+              <ImageIcon className="w-4 h-4" />
+            </button>
           </div>
-
-          <div className="w-px h-5 bg-gray-200 mx-1" />
-
-          {/* Image */}
-          <button
-            onClick={() => setShowImageModal(!showImageModal)}
-            className="p-2 rounded-full hover:bg-gray-100 transition-colors text-gray-500"
-            title="Add Image"
-          >
-            <ImageIcon className="w-4 h-4" />
-          </button>
         </div>
-      </div>
+      )}
 
       {/* Image Modal */}
       {showImageModal && (
