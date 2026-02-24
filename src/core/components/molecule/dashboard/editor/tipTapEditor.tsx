@@ -150,13 +150,13 @@ export default function TiptapEditor({
           class: "border border-gray-200 p-3 bg-gray-50 font-semibold",
         },
       }),
-      Placeholder.configure({ placeholder: "Write your story..." }),
+      Placeholder.configure({ placeholder: "Tell your story..." }),
     ],
     immediatelyRender: false,
     editorProps: {
       attributes: {
         class:
-          "prose prose-lg max-w-none focus:outline-none min-h-[60vh] text-gray-800 leading-relaxed",
+          "prose prose-lg max-w-none focus:outline-none min-h-[60vh] text-gray-800 leading-relaxed font-serif text-lg",
       },
     },
     onUpdate: ({ editor }) => {
@@ -352,118 +352,107 @@ export default function TiptapEditor({
 
   return (
     <div className="editor-wrapper">
-      {/* Floating Toolbar - Centered */}
-      <div className="flex justify-center mb-8">
-        <div className="flex items-center gap-0.5 bg-white rounded-lg shadow-sm px-1 py-1 inline-flex">
+      {/* Medium-style Floating Toolbar */}
+      <div className="flex justify-center mb-6">
+        <div className="flex items-center gap-1 bg-white rounded-full shadow-sm border border-gray-100 px-2 py-1.5 inline-flex">
           {/* Text Formatting */}
-          <div className="flex items-center gap-0.5 pr-2 border-r border-gray-100">
-            <button
-              onClick={() => editor.chain().focus().toggleBold().run()}
-              className={`p-2 rounded-md hover:bg-gray-50 transition-colors ${
-                editor.isActive("bold")
-                  ? "bg-gray-100 text-gray-900"
-                  : "text-gray-500"
-              }`}
-              title="Bold"
-            >
-              <Bold className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => editor.chain().focus().toggleItalic().run()}
-              className={`p-2 rounded-md hover:bg-gray-50 transition-colors ${
-                editor.isActive("italic")
-                  ? "bg-gray-100 text-gray-900"
-                  : "text-gray-500"
-              }`}
-              title="Italic"
-            >
-              <Italic className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => editor.chain().focus().toggleUnderline().run()}
-              className={`p-2 rounded-md hover:bg-gray-50 transition-colors ${
-                editor.isActive("underline")
-                  ? "bg-gray-100 text-gray-900"
-                  : "text-gray-500"
-              }`}
-              title="Underline"
-            >
-              <UnderlineIcon className="w-4 h-4" />
-            </button>
-          </div>
+          <button
+            onClick={() => editor.chain().focus().toggleBold().run()}
+            className={`p-2 rounded-full hover:bg-gray-100 transition-colors ${
+              editor.isActive("bold")
+                ? "bg-gray-100 text-gray-900"
+                : "text-gray-500"
+            }`}
+            title="Bold"
+          >
+            <Bold className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => editor.chain().focus().toggleItalic().run()}
+            className={`p-2 rounded-full hover:bg-gray-100 transition-colors ${
+              editor.isActive("italic")
+                ? "bg-gray-100 text-gray-900"
+                : "text-gray-500"
+            }`}
+            title="Italic"
+          >
+            <Italic className="w-4 h-4" />
+          </button>
+
+          <div className="w-px h-5 bg-gray-200 mx-1" />
 
           {/* Headings */}
-          <div className="flex items-center gap-0.5 px-2 border-r border-gray-100">
-            <button
-              onClick={() =>
-                editor.chain().focus().toggleHeading({ level: 1 }).run()
-              }
-              className={`p-2 rounded-md hover:bg-gray-50 transition-colors ${
-                editor.isActive("heading", { level: 1 })
-                  ? "bg-gray-100 text-gray-900"
-                  : "text-gray-500"
-              }`}
-              title="Heading 1"
-            >
-              <Heading1 className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() =>
-                editor.chain().focus().toggleHeading({ level: 2 }).run()
-              }
-              className={`p-2 rounded-md hover:bg-gray-50 transition-colors ${
-                editor.isActive("heading", { level: 2 })
-                  ? "bg-gray-100 text-gray-900"
-                  : "text-gray-500"
-              }`}
-              title="Heading 2"
-            >
-              <Heading2 className="w-4 h-4" />
-            </button>
-          </div>
+          <button
+            onClick={() =>
+              editor.chain().focus().toggleHeading({ level: 1 }).run()
+            }
+            className={`p-2 rounded-full hover:bg-gray-100 transition-colors ${
+              editor.isActive("heading", { level: 1 })
+                ? "bg-gray-100 text-gray-900"
+                : "text-gray-500"
+            }`}
+            title="Heading 1"
+          >
+            <Heading1 className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() =>
+              editor.chain().focus().toggleHeading({ level: 2 }).run()
+            }
+            className={`p-2 rounded-full hover:bg-gray-100 transition-colors ${
+              editor.isActive("heading", { level: 2 })
+                ? "bg-gray-100 text-gray-900"
+                : "text-gray-500"
+            }`}
+            title="Heading 2"
+          >
+            <Heading2 className="w-4 h-4" />
+          </button>
+
+          <div className="w-px h-5 bg-gray-200 mx-1" />
 
           {/* Lists & Blocks */}
-          <div className="flex items-center gap-0.5 px-2 border-r border-gray-100">
-            <button
-              onClick={() => editor.chain().focus().toggleBulletList().run()}
-              className={`p-2 rounded-md hover:bg-gray-50 transition-colors ${
-                editor.isActive("bulletList")
-                  ? "bg-gray-100 text-gray-900"
-                  : "text-gray-500"
-              }`}
-              title="Bullet List"
-            >
-              <ListIcon className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => editor.chain().focus().toggleOrderedList().run()}
-              className={`p-2 rounded-md hover:bg-gray-50 transition-colors ${
-                editor.isActive("orderedList")
-                  ? "bg-gray-100 text-gray-900"
-                  : "text-gray-500"
-              }`}
-              title="Numbered List"
-            >
-              <ListOrdered className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => editor.chain().focus().toggleBlockquote().run()}
-              className={`p-2 rounded-md hover:bg-gray-50 transition-colors ${
-                editor.isActive("blockquote")
-                  ? "bg-gray-100 text-gray-900"
-                  : "text-gray-500"
-              }`}
-              title="Quote"
-            >
-              <Quote className="w-4 h-4" />
-            </button>
-          </div>
+          <button
+            onClick={() => editor.chain().focus().toggleBulletList().run()}
+            className={`p-2 rounded-full hover:bg-gray-100 transition-colors ${
+              editor.isActive("bulletList")
+                ? "bg-gray-100 text-gray-900"
+                : "text-gray-500"
+            }`}
+            title="Bullet List"
+          >
+            <ListIcon className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => editor.chain().focus().toggleOrderedList().run()}
+            className={`p-2 rounded-full hover:bg-gray-100 transition-colors ${
+              editor.isActive("orderedList")
+                ? "bg-gray-100 text-gray-900"
+                : "text-gray-500"
+            }`}
+            title="Numbered List"
+          >
+            <ListOrdered className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => editor.chain().focus().toggleBlockquote().run()}
+            className={`p-2 rounded-full hover:bg-gray-100 transition-colors ${
+              editor.isActive("blockquote")
+                ? "bg-gray-100 text-gray-900"
+                : "text-gray-500"
+            }`}
+            title="Quote"
+          >
+            <Quote className="w-4 h-4" />
+          </button>
+
+          <div className="w-px h-5 bg-gray-200 mx-1" />
 
           {/* Link */}
-          <div className="relative flex items-center px-2 border-r border-gray-100">
+          <div className="relative">
             <button
               onClick={() => setShowLinkInput(!showLinkInput)}
-              className={`p-2 rounded-md hover:bg-gray-50 transition-colors ${
+              className={`p-2 rounded-full hover:bg-gray-100 transition-colors ${
                 editor.isActive("link")
                   ? "bg-gray-100 text-gray-900"
                   : "text-gray-500"
@@ -509,36 +498,16 @@ export default function TiptapEditor({
             )}
           </div>
 
-          {/* Image */}
-          <div className="relative flex items-center px-2 border-r border-gray-100">
-            <button
-              onClick={() => setShowImageModal(!showImageModal)}
-              className="p-2 rounded-md hover:bg-gray-50 transition-colors text-gray-500"
-              title="Add Image"
-            >
-              <ImageIcon className="w-4 h-4" />
-            </button>
-          </div>
+          <div className="w-px h-5 bg-gray-200 mx-1" />
 
-          {/* Undo/Redo */}
-          <div className="flex items-center gap-0.5 pl-2">
-            <button
-              onClick={() => editor.chain().focus().undo().run()}
-              disabled={!editor.can().undo()}
-              className="p-2 rounded-md hover:bg-gray-50 transition-colors text-gray-500 disabled:opacity-30"
-              title="Undo"
-            >
-              <Undo className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => editor.chain().focus().redo().run()}
-              disabled={!editor.can().redo()}
-              className="p-2 rounded-md hover:bg-gray-50 transition-colors text-gray-500 disabled:opacity-30"
-              title="Redo"
-            >
-              <Redo className="w-4 h-4" />
-            </button>
-          </div>
+          {/* Image */}
+          <button
+            onClick={() => setShowImageModal(!showImageModal)}
+            className="p-2 rounded-full hover:bg-gray-100 transition-colors text-gray-500"
+            title="Add Image"
+          >
+            <ImageIcon className="w-4 h-4" />
+          </button>
         </div>
       </div>
 
