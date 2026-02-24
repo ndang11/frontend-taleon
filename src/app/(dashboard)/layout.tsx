@@ -55,7 +55,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
             )}
           </button>
 
-          {/* Search Bar */}
+          {/* Search Bar - Using SearchDropdown component */}
           <div className="flex-1 max-w-md mx-4">
             <SearchDropdown />
           </div>

@@ -1,15 +1,6 @@
 "use client";
 
-import {
-  Bookmark,
-  Eye,
-  Heart,
-  MessageCircle,
-  MinusCircle,
-  MoreHorizontal,
-  Send,
-  X,
-} from "lucide-react";
+import { Bookmark, Eye, Heart, MessageCircle, MinusCircle } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
@@ -140,10 +131,7 @@ export function PostCard({ post }: PostCardProps) {
     return post.likeCount || 0;
   });
 
-  // Comment state
-  const [showCommentInput, setShowCommentInput] = useState(false);
-  const [commentText, setCommentText] = useState("");
-  const [currentCommentCount, setCurrentCommentCount] = useState(() => {
+  const [currentCommentCount] = useState(() => {
     if (typeof window !== "undefined") {
       const commentCounts = JSON.parse(
         localStorage.getItem("postCommentCounts") || "{}",
@@ -185,39 +173,12 @@ export function PostCard({ post }: PostCardProps) {
     }
   };
 
+  // Navigate to post page with comments section
   const handleCommentClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setShowCommentInput(!showCommentInput);
-  };
-
-  const handleCommentSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    if (commentText.trim()) {
-      const newCommentCount = currentCommentCount + 1;
-      setCurrentCommentCount(newCommentCount);
-      setCommentText("");
-      setShowCommentInput(false);
-
-      // Persist to localStorage
-      if (typeof window !== "undefined") {
-        const commentCounts = JSON.parse(
-          localStorage.getItem("postCommentCounts") || "{}",
-        );
-        commentCounts[post._id] = newCommentCount;
-        localStorage.setItem(
-          "postCommentCounts",
-          JSON.stringify(commentCounts),
-        );
-      }
-    }
-  };
-
-  const handleCommentCancel = () => {
-    setCommentText("");
-    setShowCommentInput(false);
+    // Navigate to the post page - directly to comment input
+    window.location.href = `/post/${post._id}#comment-input`;
   };
 
   return (
@@ -292,11 +253,11 @@ export function PostCard({ post }: PostCardProps) {
               />
               <span className="text-xs font-medium">{currentLikeCount}</span>
             </button>
-            {/* Comments */}
+            {/* Comments - Click to view comments on post page */}
             <button
               onClick={handleCommentClick}
               className="flex items-center gap-1 text-gray-400 hover:text-blue-500 transition-colors"
-              title="Comments"
+              title="View comments"
             >
               <MessageCircle className="w-4 h-4" />
               <span className="text-xs font-medium">{currentCommentCount}</span>
@@ -327,41 +288,6 @@ export function PostCard({ post }: PostCardProps) {
             className="object-cover"
             unoptimized
           />
-        </div>
-      )}
-
-      {/* Comment Input */}
-      {showCommentInput && (
-        <div
-          className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <form onSubmit={handleCommentSubmit} className="space-y-3">
-            <textarea
-              value={commentText}
-              onChange={(e) => setCommentText(e.target.value)}
-              placeholder="Write a comment..."
-              className="w-full p-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-              rows={3}
-            />
-            <div className="flex items-center justify-between">
-              <button
-                type="button"
-                onClick={handleCommentCancel}
-                className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={!commentText.trim()}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-              >
-                <Send className="w-4 h-4" />
-                Comment
-              </button>
-            </div>
-          </form>
         </div>
       )}
     </Link>
