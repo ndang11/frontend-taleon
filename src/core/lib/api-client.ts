@@ -949,7 +949,7 @@ export async function incrementView(
 export interface Comment {
   _id: string;
   content: string;
-  authorId: {
+  userId: {
     _id: string;
     name: string;
     avatar?: string;
