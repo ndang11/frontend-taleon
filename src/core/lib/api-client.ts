@@ -951,7 +951,7 @@ export async function incrementView(
 export interface Comment {
   _id: string;
   content: string;
-  authorId: {
+  userId: {
     _id: string;
     name: string;
     avatar?: string;
@@ -1037,6 +1037,33 @@ export interface UserProfile {
   location?: string;
   website?: string;
   phone?: string;
+  username?: string;
+  subdomain?: string;
+  customDomain?: string;
+  digestFrequency?: "daily" | "weekly" | "off";
+  feedbackOptIn?: boolean;
+  allowPrivateNotes?: boolean;
+  allowEmailReplies?: boolean;
+  replyToEmail?: string;
+  notifNewMediumDigest?: boolean;
+  notifRecommendedReading?: boolean;
+  notifSavedListStories?: boolean;
+  notifFollowsHighlights?: boolean;
+  notifRepliesToResponses?: boolean;
+  notifStoryMentions?: "in_network" | "off";
+  notifActivityOnPublished?: boolean;
+  notifActivityOnLists?: boolean;
+  notifEditorsFeatureStories?: boolean;
+  notifNewSubmissions?: boolean;
+  notifSubmissionStatusChanges?: boolean;
+  notifNewProductFeatures?: boolean;
+  notifMembershipInfo?: boolean;
+  googleConnected?: boolean;
+  mastodonAccountCreated?: boolean;
+  mastodonConnected?: boolean;
+  facebookConnected?: boolean;
+  xConnected?: boolean;
+  lastSignOutOthersAt?: string | null;
   followers: {
     _id: string;
     name: string;
@@ -1099,6 +1126,33 @@ export async function getUserProfile(
     location: userData.location || undefined,
     website: userData.website || undefined,
     phone: userData.phone || undefined,
+    username: userData.username || undefined,
+    subdomain: userData.subdomain || undefined,
+    customDomain: userData.customDomain || undefined,
+    digestFrequency: userData.digestFrequency || "daily",
+    feedbackOptIn: !!userData.feedbackOptIn,
+    allowPrivateNotes: !!userData.allowPrivateNotes,
+    allowEmailReplies: !!userData.allowEmailReplies,
+    replyToEmail: userData.replyToEmail || userData.email || undefined,
+    notifNewMediumDigest: !!userData.notifNewMediumDigest,
+    notifRecommendedReading: !!userData.notifRecommendedReading,
+    notifSavedListStories: !!userData.notifSavedListStories,
+    notifFollowsHighlights: !!userData.notifFollowsHighlights,
+    notifRepliesToResponses: !!userData.notifRepliesToResponses,
+    notifStoryMentions: userData.notifStoryMentions || "in_network",
+    notifActivityOnPublished: !!userData.notifActivityOnPublished,
+    notifActivityOnLists: !!userData.notifActivityOnLists,
+    notifEditorsFeatureStories: !!userData.notifEditorsFeatureStories,
+    notifNewSubmissions: !!userData.notifNewSubmissions,
+    notifSubmissionStatusChanges: !!userData.notifSubmissionStatusChanges,
+    notifNewProductFeatures: !!userData.notifNewProductFeatures,
+    notifMembershipInfo: !!userData.notifMembershipInfo,
+    googleConnected: userData.googleConnected !== false,
+    mastodonAccountCreated: !!userData.mastodonAccountCreated,
+    mastodonConnected: !!userData.mastodonConnected,
+    facebookConnected: !!userData.facebookConnected,
+    xConnected: !!userData.xConnected,
+    lastSignOutOthersAt: userData.lastSignOutOthersAt || null,
     followers: Array.isArray(userData.followers) ? userData.followers : [],
     following: Array.isArray(userData.following) ? userData.following : [],
     followersCount: userData.followersCount || userData.followers?.length || 0,
@@ -1119,6 +1173,33 @@ export async function updateUserProfile(
     location?: string;
     website?: string;
     phone?: string;
+    username?: string;
+    subdomain?: string;
+    customDomain?: string;
+    digestFrequency?: "daily" | "weekly" | "off";
+    feedbackOptIn?: boolean;
+    allowPrivateNotes?: boolean;
+    allowEmailReplies?: boolean;
+    replyToEmail?: string;
+    notifNewMediumDigest?: boolean;
+    notifRecommendedReading?: boolean;
+    notifSavedListStories?: boolean;
+    notifFollowsHighlights?: boolean;
+    notifRepliesToResponses?: boolean;
+    notifStoryMentions?: "in_network" | "off";
+    notifActivityOnPublished?: boolean;
+    notifActivityOnLists?: boolean;
+    notifEditorsFeatureStories?: boolean;
+    notifNewSubmissions?: boolean;
+    notifSubmissionStatusChanges?: boolean;
+    notifNewProductFeatures?: boolean;
+    notifMembershipInfo?: boolean;
+    googleConnected?: boolean;
+    mastodonAccountCreated?: boolean;
+    mastodonConnected?: boolean;
+    facebookConnected?: boolean;
+    xConnected?: boolean;
+    lastSignOutOthersAt?: string | null;
   },
   token?: string,
 ): Promise<UserProfile> {

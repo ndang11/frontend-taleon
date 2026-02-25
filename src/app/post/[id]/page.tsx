@@ -47,7 +47,7 @@ interface AuthorInfo {
 interface Comment {
   _id: string;
   content: string;
-  authorId: AuthorInfo;
+  userId: AuthorInfo;
   createdAt: string;
   likeCount?: number;
   replyCount?: number;
@@ -553,7 +553,7 @@ export default function PostDetailsPage({
       // Cast to local Comment type
       const newCommentTyped: Comment = {
         ...newCommentData,
-        authorId: {
+        userId: {
           _id: user?.id || "unknown",
           name: user?.name || "Unknown",
           email: user?.email || "",
@@ -824,8 +824,8 @@ export default function PostDetailsPage({
             </div>
           </div>
 
-          {/* Add Comment */}
-          <div className="mb-8">
+          {/* Add Comment - with id for direct navigation */}
+          <div id="comment-input" className="mb-8">
             <div className="flex gap-4">
               <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-medium flex-shrink-0">
                 Y
@@ -898,28 +898,28 @@ export default function PostDetailsPage({
                   className="bg-white rounded-xl p-6 shadow-sm"
                 >
                   <div className="flex gap-4">
-                    {comment.authorId &&
-                    typeof comment.authorId === "object" &&
-                    comment.authorId.avatar ? (
+                    {comment.userId &&
+                    typeof comment.userId === "object" &&
+                    comment.userId.avatar ? (
                       <Image
-                        src={comment.authorId.avatar}
-                        alt={comment.authorId.name}
+                        src={comment.userId.avatar}
+                        alt={comment.userId.name}
                         width={44}
                         height={44}
                         className="rounded-full object-cover ring-2 ring-gray-100 flex-shrink-0"
                       />
                     ) : (
                       <div className="w-11 h-11 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-medium flex-shrink-0">
-                        {typeof comment.authorId === "object"
-                          ? comment.authorId.name.charAt(0).toUpperCase()
+                        {typeof comment.userId === "object"
+                          ? comment.userId.name.charAt(0).toUpperCase()
                           : "U"}
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-2">
                         <span className="font-semibold text-gray-900">
-                          {typeof comment.authorId === "object"
-                            ? comment.authorId.name
+                          {typeof comment.userId === "object"
+                            ? comment.userId.name
                             : "Unknown"}
                         </span>
                         <span className="text-gray-400 text-sm">

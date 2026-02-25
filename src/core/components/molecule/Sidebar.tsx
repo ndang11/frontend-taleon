@@ -1,6 +1,14 @@
 "use client";
 
-import { Home, LogOut, Notebook, TrendingUp, User, X } from "lucide-react";
+import {
+  Home,
+  LogOut,
+  Notebook,
+  Settings,
+  TrendingUp,
+  User,
+  X,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/auth.provider";
@@ -11,6 +19,7 @@ const navigation = [
   { name: "Profile", href: "/me/profile", icon: User },
   { name: "Stories", href: "/me/stories", icon: Notebook },
   { name: "Stats", href: "/me/stats", icon: TrendingUp },
+  { name: "Settings", href: "/me/settings", icon: Settings },
 ];
 
 interface SidebarProps {
