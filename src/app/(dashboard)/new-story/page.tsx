@@ -1,6 +1,7 @@
 "use client";
 
-import { Bell, MoreHorizontal } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { ArrowLeft, Check, Loader2, MoreHorizontal } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { AlertDialog } from "@/components/ui/AlertDialog";
@@ -14,6 +15,7 @@ function NewStoryContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const editPostId = searchParams?.get("edit");
+  const queryClient = useQueryClient();
 
   const [showSessionExpired, setShowSessionExpired] = useState(false);
 
@@ -25,12 +27,17 @@ function NewStoryContent() {
   }, []);
 
   const [postId, setPostId] = useState<string | null>(null);
+  const [postStatus, setPostStatus] = useState<
+    "draft" | "published" | "unpublished" | "archived"
+  >("draft");
   const [title, setTitle] = useState("");
   const [saveStatus, setSaveStatus] = useState<
     "Saved" | "Saving..." | "Draft" | "Published" | "Archived" | "Error"
   >("Draft");
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [wordCount, setWordCount] = useState(0);
   const [isPublishing, setIsPublishing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [showMenu, setShowMenu] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -45,6 +52,7 @@ function NewStoryContent() {
           if ("post" in response) {
             const postData = response.post;
             setPostId(postData._id);
+            setPostStatus(postData.status || "draft");
             const postTitle =
               postData.title && postData.title !== "Untitled Story"
                 ? postData.title
@@ -68,6 +76,7 @@ function NewStoryContent() {
 
           const newPost = res.post || res;
           setPostId(newPost._id);
+          setPostStatus("draft");
           window.history.replaceState(
             null,
             "",
@@ -83,6 +92,18 @@ function NewStoryContent() {
 
     initPost();
   }, [editPostId]);
+
+  // Format last saved time
+  const formatLastSaved = (date: Date | null): string => {
+    if (!date) return "";
+    const now = new Date();
+    const diffSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+    if (diffSeconds < 60) return "just now";
+    if (diffSeconds < 3600) return `${Math.floor(diffSeconds / 60)}m ago`;
+    if (diffSeconds < 86400) return `${Math.floor(diffSeconds / 3600)}h ago`;
+    return date.toLocaleDateString();
+  };
 
   const handlePublish = async () => {
     if (!postId || !title.trim()) {
@@ -108,26 +129,42 @@ function NewStoryContent() {
 
     setIsPublishing(true);
     try {
-      console.log(
-        "[handlePublish] Saving content to database:",
-        content.substring(0, 100),
-      );
+      if (postStatus === "published") {
+        // Republish existing live story by overwriting the same record.
+        await fetcher.patch(`/posts/${postId}`, {
+          title,
+          content,
+          status: "published",
+        });
+      } else {
+        // Save draft content first, then publish for first-time publish flow.
+        await fetcher.patch(`/posts/${postId}/autosave`, {
+          content,
+          title,
+        });
+        await fetcher.patch(`/posts/${postId}/publish`, {
+          title,
+          content,
+        });
+      }
 
-      // Save as HTML for both autosave and publish to ensure consistency
-      await fetcher.patch(`/posts/${postId}/autosave`, {
-        content: content, // Always send HTML string
-        title,
-      });
-      console.log("[handlePublish] Content saved successfully");
-
-      // Now publish the post with the same HTML content
-      await fetcher.patch(`/posts/${postId}/publish`, {
-        title,
-        content: content, // Same HTML content
-      });
-      console.log("[handlePublish] Post published successfully");
-
+      // Update local state
       setSaveStatus("Published");
+      setPostStatus("published");
+      setLastSaved(new Date());
+
+      // Invalidate queries to refresh the stories list
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["my-posts"] }),
+        queryClient.invalidateQueries({ queryKey: ["published-posts"] }),
+        queryClient.invalidateQueries({ queryKey: ["tenant-published-posts"] }),
+        queryClient.refetchQueries({ queryKey: ["my-posts"], type: "active" }),
+        queryClient.refetchQueries({
+          queryKey: ["tenant-published-posts"],
+          type: "active",
+        }),
+      ]);
+
       setShowSuccess(true);
     } catch (err: any) {
       console.error("Publish failed", err);
@@ -142,11 +179,16 @@ function NewStoryContent() {
 
   const handleSuccessClose = () => {
     setShowSuccess(false);
-    router.push("/dashboard");
+    // Invalidate queries before navigating
+    queryClient.invalidateQueries({ queryKey: ["my-posts"] });
+    queryClient.invalidateQueries({ queryKey: ["tenant-published-posts"] });
+    router.push("/me/stories");
   };
 
   const handleSaveDraft = async () => {
-    if (!postId) return;
+    if (!postId || isSaving || isPublishing) return;
+
+    setIsSaving(true);
     setSaveStatus("Saving...");
     try {
       const content = editorRef.current?.getHTML();
@@ -155,10 +197,14 @@ function NewStoryContent() {
         title,
         status: "draft",
       });
-      setSaveStatus("Draft");
+      setSaveStatus("Saved");
+      setPostStatus("draft");
+      setLastSaved(new Date());
     } catch (err) {
       console.error("Failed to save draft:", err);
       setSaveStatus("Error");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -235,19 +281,22 @@ function NewStoryContent() {
       <div className="sticky top-0 z-30 bg-white border-b border-gray-100 mb-8 -mx-4 sm:-mx-6 px-4 sm:px-6 py-3">
         <div className="flex items-center justify-between max-w-[680px] mx-auto">
           <div className="flex items-center gap-3">
-            <span className="text-sm text-gray-400 font-normal">
-              {saveStatus === "Draft"
-                ? "Draft"
-                : saveStatus === "Saving..."
-                  ? "Saving..."
-                  : saveStatus === "Saved"
-                    ? "Saved"
-                    : saveStatus === "Published"
-                      ? "Published"
-                      : saveStatus === "Error"
-                        ? "Error"
-                        : "Draft"}
-            </span>
+            {/* Back button */}
+            <button
+              onClick={() => router.push("/me/stories")}
+              className="p-2 -ml-2 text-gray-500 hover:text-gray-900 transition-colors"
+              aria-label="Go back to stories"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+
+            {/* Last saved indicator */}
+            {lastSaved && (
+              <span className="text-xs text-gray-400 hidden sm:inline-flex items-center gap-1">
+                <Check className="w-3 h-3" />
+                Saved {formatLastSaved(lastSaved)}
+              </span>
+            )}
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">
@@ -255,12 +304,32 @@ function NewStoryContent() {
               {readingTime} min read
             </span>
 
+            {/* Status Badge */}
+            {postStatus === "published" && (
+              <span className="text-xs font-medium px-2 py-1 rounded bg-green-100 text-green-700">
+                Published
+              </span>
+            )}
+
+            {/* Save as Draft Button - Secondary gray */}
+            <button
+              onClick={handleSaveDraft}
+              disabled={isSaving || isPublishing}
+              className="px-4 py-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 border border-gray-300 hover:border-gray-400 rounded-full transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              aria-label="Save as draft"
+            >
+              {isSaving && <Loader2 className="w-4 h-4 animate-spin" />}
+              Save as Draft
+            </button>
+
+            {/* Publish Button - Primary green */}
             <button
               onClick={handlePublish}
-              disabled={isPublishing || !title.trim()}
-              className="px-4 py-1.5 bg-green-500 hover:bg-green-600 disabled:bg-gray-200 disabled:text-gray-400 text-white text-sm font-medium rounded-full transition-all duration-200"
+              disabled={isPublishing || isSaving || !title.trim()}
+              className="px-4 py-1.5 bg-green-600 hover:bg-green-700 disabled:bg-gray-200 disabled:text-gray-400 text-white text-sm font-medium rounded-full transition-all duration-200 flex items-center gap-2"
             >
-              {isPublishing ? "Publishing..." : "Publish"}
+              {isPublishing && <Loader2 className="w-4 h-4 animate-spin" />}
+              {postStatus === "published" ? "Update & Publish" : "Publish"}
             </button>
 
             <div className="relative">
@@ -278,15 +347,6 @@ function NewStoryContent() {
                     onClick={() => setShowMenu(false)}
                   />
                   <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-100 py-1 z-20">
-                    <button
-                      onClick={() => {
-                        handleSaveDraft();
-                        setShowMenu(false);
-                      }}
-                      className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                    >
-                      Save as draft
-                    </button>
                     <button
                       onClick={() => {
                         handleArchive();
