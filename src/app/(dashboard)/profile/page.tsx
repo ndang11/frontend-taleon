@@ -354,7 +354,7 @@ export default function ProfilePage() {
           ) : (
             <button
               onClick={handleEditClick}
-              className="flex items-center gap-2 px-4 py-2 border cursor-pointer rounded-full hover:bg-gray-50 transition-all text-sm font-medium"
+              className="flex items-center gap-2 px-4 py-2 border border-blue-500 text-blue-500 rounded-full hover:bg-blue-50 transition-all text-sm font-medium mt-4"
             >
               <Edit3 size={16} />
               Edit Profile
