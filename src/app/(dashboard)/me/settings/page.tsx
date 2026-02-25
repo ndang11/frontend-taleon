@@ -66,8 +66,8 @@ export default function SettingsPage() {
   const [isEditingReplyToEmail, setIsEditingReplyToEmail] = useState(false);
   const [isSavingPublishing, setIsSavingPublishing] = useState(false);
   const [isSavingNotifications, setIsSavingNotifications] = useState(false);
-  const [notifNewMediumDigest, setNotifNewMediumDigest] = useState<boolean>(
-    user?.notifNewMediumDigest ?? true,
+  const [notifNewTaleonDigest, setNotifNewTaleonDigest] = useState<boolean>(
+    user?.notifNewTaleonDigest ?? true,
   );
   const [notifRecommendedReading, setNotifRecommendedReading] =
     useState<boolean>(user?.notifRecommendedReading ?? true);
@@ -345,7 +345,7 @@ export default function SettingsPage() {
       await updateUserProfile(
         userId,
         {
-          notifNewMediumDigest,
+          notifNewTaleonDigest,
           notifRecommendedReading,
           notifSavedListStories,
           notifFollowsHighlights,
@@ -389,22 +389,22 @@ export default function SettingsPage() {
         <div className="flex items-start justify-between gap-6 p-5">
           <div>
             <h3 className="text-sm font-semibold text-gray-900">
-              New Medium Digest
+              New Taleon Digest
             </h3>
             <p className="text-sm text-gray-500 mt-1">
-              The best stories on Medium personalized based on your interests,
+              The best stories on Taleon personalized based on your interests,
               as well as outstanding stories selected by our editors.
             </p>
           </div>
           <input
             type="checkbox"
-            checked={notifNewMediumDigest}
+            checked={notifNewTaleonDigest}
             className={toggleClasses}
             disabled={isSavingNotifications}
             onChange={async (event) => {
               const next = event.target.checked;
-              setNotifNewMediumDigest(next);
-              await persistNotifications({ notifNewMediumDigest: next });
+              setNotifNewTaleonDigest(next);
+              await persistNotifications({ notifNewTaleonDigest: next });
             }}
           />
         </div>
@@ -621,13 +621,13 @@ export default function SettingsPage() {
 
         <div className="p-5">
           <h2 className="text-sm font-semibold text-gray-900">
-            Others from Medium
+            Others from Taleon
           </h2>
         </div>
 
         <div className="flex items-start justify-between gap-6 p-5">
           <h3 className="text-sm font-semibold text-gray-900">
-            New product features from Medium
+            New product features from Taleon
           </h3>
           <input
             type="checkbox"
@@ -644,7 +644,7 @@ export default function SettingsPage() {
 
         <div className="flex items-start justify-between gap-6 p-5">
           <h3 className="text-sm font-semibold text-gray-900">
-            Information about Medium membership
+            Information about Taleon membership
           </h3>
           <input
             type="checkbox"

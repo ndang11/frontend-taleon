@@ -24,7 +24,7 @@ export interface User {
   allowPrivateNotes?: boolean;
   allowEmailReplies?: boolean;
   replyToEmail?: string;
-  notifNewMediumDigest?: boolean;
+  notifNewTaleonDigest?: boolean;
   notifRecommendedReading?: boolean;
   notifSavedListStories?: boolean;
   notifFollowsHighlights?: boolean;
