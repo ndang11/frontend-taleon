@@ -11,7 +11,6 @@ const getNotifications = async () => {
 };
 
 const markNotificationAsRead = async (notificationId: string) => {
-  // Fix: Pass empty object as body for POST request
   const res: any = await fetcher.post(
     `/notifications/${notificationId}/read`,
     {},
