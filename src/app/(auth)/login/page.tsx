@@ -10,7 +10,7 @@ export default function LoginPage() {
         <div className="max-w-md w-full bg-white/80 backdrop-blur-sm p-8 rounded-xl shadow-lg border border-gray-200">
           <div className="mb-8">
             <h2 className="text-center text-4xl font-bold text-gray-900 mb-2">
-              Welcome back
+              Welcome back!
             </h2>
             <p className="text-center text-gray-600">Sign in to your account</p>
           </div>
