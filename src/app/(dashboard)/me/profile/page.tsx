@@ -293,11 +293,11 @@ export default function MyProfilePage() {
               type="text"
               value={formData.name}
               onChange={(e) => handleChange("name", e.target.value)}
-              className="text-3xl font-bold text-gray-900 border-b-2 border-gray-300 focus:border-gray-900 focus:outline-none bg-transparent pb-1 mb-2"
+              className="text-3xl font-bold text-white border-b-2 border-gray-300 focus:border-gray-900 focus:outline-none bg-transparent pb-1 mb-2"
               placeholder="Your name"
             />
           ) : (
-            <h1 className="text-3xl font-bold text-gray-900">{profile.name}</h1>
+            <h1 className="text-3xl font-bold text-white">{profile.name}</h1>
           )}
           <p className="text-gray-500">
             @{profile.email?.split("@")[0] || "user"}
@@ -355,7 +355,7 @@ export default function MyProfilePage() {
           ) : (
             <button
               onClick={handleEditClick}
-              className="flex items-center gap-2 px-4 py-2 border border-blue-500 text-blue-500 rounded-full hover:bg-blue-50 transition-all text-sm font-medium mt-4"
+              className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-all text-sm font-medium mt-4"
             >
               <Edit3 size={16} />
               Edit Profile
