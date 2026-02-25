@@ -370,6 +370,7 @@ export async function publishPost(postId: string): Promise<Post> {
   const response = await fetch(`${API_BASE_URL}/posts/${postId}/publish`, {
     method: "PATCH",
     headers: getAuthHeaders(),
+    body: JSON.stringify({}), // Send empty body to avoid issues with undefined
   });
 
   if (!response.ok) {
@@ -394,6 +395,7 @@ export async function updatePost(
     category?: string;
     image?: string;
     subtitle?: string;
+    status?: "draft" | "published" | "unpublished" | "archived";
   },
 ): Promise<Post> {
   const response = await fetch(`${API_BASE_URL}/posts/${postId}`, {
