@@ -1,17 +1,19 @@
 "use client";
 
-import { ArrowLeft, MoreHorizontal } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { ArrowLeft, Check, Loader2, MoreHorizontal } from "lucide-react";
 import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AlertDialog } from "@/components/ui/AlertDialog";
 import TiptapEditor from "@/core/components/molecule/dashboard/editor/tipTapEditor";
-import { getPost, publishPost, updatePost } from "@/core/lib/api-client";
+import { getPost, updatePost } from "@/core/lib/api-client";
 
 export default function EditPostPage() {
   const router = useRouter();
   const params = useParams();
   const postId = params?.id as string;
+  const queryClient = useQueryClient();
 
   const [post, setPost] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -21,13 +23,21 @@ export default function EditPostPage() {
   const [saveStatus, setSaveStatus] = useState<
     "Saved" | "Saving..." | "Draft" | "Published" | "Error"
   >("Draft");
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
   const [wordCount, setWordCount] = useState(0);
   const [showSessionExpired, setShowSessionExpired] = useState(false);
   const [showPostNotFound, setShowPostNotFound] = useState(false);
   const [showLoadFailed, setShowLoadFailed] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
 
   const editorRef = useRef<any>(null);
+
+  // Check if post is already published
+  const isPublished = post?.status === "published";
 
   useEffect(() => {
     const token = localStorage.getItem("access_token");
@@ -104,12 +114,24 @@ export default function EditPostPage() {
     }
   }, [postId]);
 
-  const handleSave = useCallback(async () => {
-    if (!post) return;
+  // Format last saved time
+  const formatLastSaved = (date: Date | null): string => {
+    if (!date) return "";
+    const now = new Date();
+    const diffSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
-    const content = editorRef.current?.getHTML();
+    if (diffSeconds < 60) return "just now";
+    if (diffSeconds < 3600) return `${Math.floor(diffSeconds / 60)}m ago`;
+    if (diffSeconds < 86400) return `${Math.floor(diffSeconds / 3600)}h ago`;
+    return date.toLocaleDateString();
+  };
+
+  // Save as Draft - keeps status as draft
+  const handleSaveAsDraft = useCallback(async () => {
+    if (!post || isSaving || isPublishing) return;
+
     const jsonContent = editorRef.current?.getJSON();
-
+    setIsSaving(true);
     setSaveStatus("Saving...");
 
     try {
@@ -119,45 +141,92 @@ export default function EditPostPage() {
         image: coverImage || undefined,
       });
       setSaveStatus("Saved");
+      setLastSaved(new Date());
     } catch (error) {
       console.error("Failed to save:", error);
       setSaveStatus("Error");
+    } finally {
+      setIsSaving(false);
     }
-  }, [post, postId, title, coverImage]);
+  }, [post, postId, title, coverImage, isSaving, isPublishing]);
 
+  // Publish - sets status to published
   const handlePublish = useCallback(async () => {
-    if (!post) return;
+    if (!post || isSaving || isPublishing) return;
 
+    const htmlContent = editorRef.current?.getHTML();
+    setIsPublishing(true);
     setSaveStatus("Saving...");
+
     try {
-      const jsonContent = editorRef.current?.getJSON();
-      await updatePost(postId, {
+      // Republish by overwriting the same post record in a single PATCH call.
+      const updatedPost = await updatePost(postId, {
         title,
-        content: jsonContent,
+        content: htmlContent,
         image: coverImage || undefined,
+        status: "published",
       });
 
-      await publishPost(postId);
+      // Update local state with backend response for accurate timestamps/content.
+      setPost(updatedPost);
       setSaveStatus("Published");
+      setLastSaved(new Date());
 
-      // Redirect to the post page
-      router.push(`/post/${postId}`);
+      // Invalidate and refetch story lists so dashboard previews update immediately.
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["my-posts"] }),
+        queryClient.invalidateQueries({ queryKey: ["published-posts"] }),
+        queryClient.invalidateQueries({ queryKey: ["tenant-published-posts"] }),
+        queryClient.refetchQueries({ queryKey: ["my-posts"], type: "active" }),
+        queryClient.refetchQueries({
+          queryKey: ["tenant-published-posts"],
+          type: "active",
+        }),
+      ]);
+
+      // Show success message
+      setSuccessMessage(
+        isPublished
+          ? "Story updated successfully!"
+          : "Story published successfully!",
+      );
+      setShowSuccessDialog(true);
     } catch (error) {
       console.error("Failed to publish:", error);
       setSaveStatus("Error");
+    } finally {
+      setIsPublishing(false);
     }
-  }, [post, postId, title, coverImage, router]);
+  }, [
+    post,
+    postId,
+    title,
+    coverImage,
+    isPublished,
+    isSaving,
+    isPublishing,
+    queryClient,
+  ]);
+
+  // Handle success dialog close - redirect to stories
+  const handleSuccessClose = useCallback(() => {
+    setShowSuccessDialog(false);
+    // Invalidate queries before navigating
+    queryClient.invalidateQueries({ queryKey: ["my-posts"] });
+    queryClient.invalidateQueries({ queryKey: ["tenant-published-posts"] });
+    router.push("/me/stories");
+  }, [router, queryClient]);
 
   // Auto-save every 30 seconds
   useEffect(() => {
     const interval = setInterval(() => {
-      if (post && saveStatus !== "Saving...") {
-        handleSave();
+      if (post && saveStatus !== "Saving..." && !isSaving && !isPublishing) {
+        handleSaveAsDraft();
       }
     }, 30000);
 
     return () => clearInterval(interval);
-  }, [post, handleSave, saveStatus]);
+  }, [post, handleSaveAsDraft, saveStatus, isSaving, isPublishing]);
 
   const totalWords =
     title
@@ -221,54 +290,56 @@ export default function EditPostPage() {
           {/* Left side - Back button */}
           <div className="flex items-center gap-4">
             <button
-              onClick={() => router.back()}
+              onClick={() => router.push("/me/stories")}
               className="p-2 -ml-2 text-gray-500 hover:text-gray-900 transition-colors"
-              aria-label="Go back"
+              aria-label="Go back to stories"
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
+
+            {/* Last saved indicator */}
+            {lastSaved && (
+              <span className="text-xs text-gray-400 hidden sm:inline-flex items-center gap-1">
+                <Check className="w-3 h-3" />
+                Saved {formatLastSaved(lastSaved)}
+              </span>
+            )}
           </div>
 
           {/* Right side - Status & Actions */}
           <div className="flex items-center gap-3">
-            {/* Save Status Indicator */}
-            {saveStatus !== "Draft" && (
-              <span
-                className={`text-xs font-medium px-2 py-1 rounded ${
-                  saveStatus === "Published"
-                    ? "text-green-700 bg-green-50"
-                    : saveStatus === "Saving..."
-                      ? "text-amber-700 bg-amber-50"
-                      : saveStatus === "Saved"
-                        ? "text-gray-600 bg-gray-50"
-                        : saveStatus === "Error"
-                          ? "text-red-700 bg-red-50"
-                          : "text-gray-500"
-                }`}
-              >
-                {saveStatus === "Saving..." ? "Saving..." : saveStatus}
-              </span>
-            )}
-
             {/* Reading Time */}
             <span className="text-xs text-gray-400 hidden sm:inline">
               {readingTime} min read
             </span>
 
-            {/* Save Draft Button */}
+            {/* Status Badge */}
+            {isPublished && (
+              <span className="text-xs font-medium px-2 py-1 rounded bg-green-100 text-green-700">
+                Published
+              </span>
+            )}
+
+            {/* Save as Draft Button - Secondary gray */}
             <button
-              onClick={handleSave}
-              className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+              onClick={handleSaveAsDraft}
+              disabled={isSaving || isPublishing}
+              className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 border border-gray-300 hover:border-gray-400 rounded-full transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              aria-label="Save as draft"
             >
-              Save
+              {isSaving && <Loader2 className="w-4 h-4 animate-spin" />}
+              Save as Draft
             </button>
 
-            {/* Publish Button */}
+            {/* Publish/Update Button - Primary green */}
             <button
               onClick={handlePublish}
-              className="px-5 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-full transition-all duration-200"
+              disabled={isSaving || isPublishing}
+              className="px-5 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-full transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              aria-label={isPublished ? "Update & Publish" : "Publish"}
             >
-              Publish
+              {isPublishing && <Loader2 className="w-4 h-4 animate-spin" />}
+              {isPublished ? "Update & Publish" : "Publish"}
             </button>
 
             {/* More Options Menu */}
@@ -276,6 +347,7 @@ export default function EditPostPage() {
               <button
                 onClick={() => setShowMenu(!showMenu)}
                 className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                aria-label="More options"
               >
                 <MoreHorizontal className="w-5 h-5" />
               </button>
@@ -353,6 +425,7 @@ export default function EditPostPage() {
         </div>
       </main>
 
+      {/* Session Expired Dialog */}
       <AlertDialog
         isOpen={showSessionExpired}
         onClose={() => {
@@ -367,6 +440,17 @@ export default function EditPostPage() {
           setShowSessionExpired(false);
           router.push("/login");
         }}
+      />
+
+      {/* Success Dialog */}
+      <AlertDialog
+        isOpen={showSuccessDialog}
+        onClose={handleSuccessClose}
+        title="Success!"
+        message={successMessage}
+        buttonText="Go to Stories"
+        type="success"
+        onButtonClick={handleSuccessClose}
       />
     </div>
   );

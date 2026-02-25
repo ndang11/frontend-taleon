@@ -11,6 +11,7 @@ import {
   type Post,
   publishPost,
   searchPosts,
+  updatePost,
 } from "@/core/lib/api-client";
 
 interface UseStoriesOptions {
@@ -126,6 +127,78 @@ export function useDeletePost() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["my-posts"] });
       queryClient.invalidateQueries({ queryKey: ["published-posts"] });
+    },
+  });
+}
+
+// ============================================
+// Update Post (PATCH /posts/:id)
+// ============================================
+
+export interface UpdatePostData {
+  title?: string;
+  content?: any;
+  category?: string;
+  image?: string;
+  subtitle?: string;
+}
+
+export function useUpdatePost() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ postId, data }: { postId: string; data: UpdatePostData }) =>
+      updatePost(postId, data),
+    onSuccess: (updatedPost) => {
+      // Invalidate and refetch related queries
+      queryClient.invalidateQueries({ queryKey: ["my-posts"] });
+      queryClient.invalidateQueries({ queryKey: ["published-posts"] });
+      queryClient.invalidateQueries({ queryKey: ["post", updatedPost._id] });
+      queryClient.invalidateQueries({ queryKey: ["tenant-published-posts"] });
+    },
+    // Optimistic update
+    onMutate: async ({ postId, data }) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["my-posts"] });
+      await queryClient.cancelQueries({ queryKey: ["post", postId] });
+
+      // Snapshot the previous value
+      const previousPosts = queryClient.getQueryData(["my-posts"]);
+      const previousPost = queryClient.getQueryData(["post", postId]);
+
+      // Optimistically update to the new value
+      queryClient.setQueryData(["my-posts"], (old: any) => {
+        if (!old?.posts) return old;
+        return {
+          ...old,
+          posts: old.posts.map((post: Post) =>
+            post._id === postId ? { ...post, ...data } : post,
+          ),
+        };
+      });
+
+      queryClient.setQueryData(["post", postId], (old: any) => {
+        if (!old) return old;
+        return { ...old, ...data };
+      });
+
+      // Return a context object with the snapshotted value
+      return { previousPosts, previousPost };
+    },
+    onError: (err, { postId }, context) => {
+      // If the mutation fails, use the context returned from onMutate to roll back
+      if (context?.previousPosts) {
+        queryClient.setQueryData(["my-posts"], context.previousPosts);
+      }
+      if (context?.previousPost) {
+        queryClient.setQueryData(["post", postId], context.previousPost);
+      }
+      console.error("Failed to update post:", err);
+    },
+    onSettled: (_data, _error, { postId }) => {
+      // Always refetch after error or success
+      queryClient.invalidateQueries({ queryKey: ["my-posts"] });
+      queryClient.invalidateQueries({ queryKey: ["post", postId] });
     },
   });
 }
