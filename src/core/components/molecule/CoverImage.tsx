@@ -69,7 +69,7 @@ export function CoverImage({
 
   return (
     <div
-      className="relative w-full h-[300px] rounded-[8px] overflow-hidden bg-gray-200 group"
+      className="relative w-full h-[400px] rounded-[8px] overflow-hidden bg-gray-200 group"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
