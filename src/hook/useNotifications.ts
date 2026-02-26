@@ -3,9 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetcher } from "@/core/lib/api-client";
 
-// API functions (can be moved to api-client.ts if preferred)
 const getNotifications = async () => {
-  // Fix: Backend returns { notifications, unreadCount } directly, not wrapped in .data
   const res: any = await fetcher.get("/notifications?limit=20");
   return res;
 };
@@ -19,7 +17,6 @@ const markNotificationAsRead = async (notificationId: string) => {
 };
 
 const markAllNotificationsAsRead = async () => {
-  // Fix: Pass empty object as body for POST request
   const res: any = await fetcher.post("/notifications/read-all", {});
   return res;
 };
@@ -39,14 +36,13 @@ export const useNotifications = () => {
   const { data, isLoading } = useQuery({
     queryKey: ["notifications"],
     queryFn: getNotifications,
-    refetchInterval: 30000, // Poll for new notifications every 30 seconds
+    refetchInterval: 30000,
     staleTime: 30000,
   });
 
   const markAsReadMutation = useMutation({
     mutationFn: markNotificationAsRead,
     onSuccess: (updatedData, notificationId) => {
-      // Optimistically update the UI and then refetch in the background
       queryClient.setQueryData(["notifications"], (oldData: any) => {
         if (!oldData) return oldData;
         return {
