@@ -317,7 +317,7 @@ export default function SettingsPage() {
 
   const persistNotifications = async (
     patch: Partial<{
-      notifNewMediumDigest: boolean;
+      notifNewTaleonDigest: boolean;
       notifRecommendedReading: boolean;
       notifSavedListStories: boolean;
       notifFollowsHighlights: boolean;
