@@ -161,7 +161,7 @@ export default function Editor({
 
       <EditorContent editor={editor} />
 
-      {/* Floating Action Button for Image (Medium style side button) */}
+      {/* Floating Action Button for Image (Taleon style side button) */}
       <div className="fixed bottom-10 right-10 md:hidden">
         <button
           onClick={handleImageUpload}

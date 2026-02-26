@@ -1045,7 +1045,7 @@ export interface UserProfile {
   allowPrivateNotes?: boolean;
   allowEmailReplies?: boolean;
   replyToEmail?: string;
-  notifNewMediumDigest?: boolean;
+  notifNewTaleonDigest?: boolean;
   notifRecommendedReading?: boolean;
   notifSavedListStories?: boolean;
   notifFollowsHighlights?: boolean;
@@ -1134,7 +1134,7 @@ export async function getUserProfile(
     allowPrivateNotes: !!userData.allowPrivateNotes,
     allowEmailReplies: !!userData.allowEmailReplies,
     replyToEmail: userData.replyToEmail || userData.email || undefined,
-    notifNewMediumDigest: !!userData.notifNewMediumDigest,
+    notifNewTaleonDigest: !!userData.notifNewTaleonDigest,
     notifRecommendedReading: !!userData.notifRecommendedReading,
     notifSavedListStories: !!userData.notifSavedListStories,
     notifFollowsHighlights: !!userData.notifFollowsHighlights,
@@ -1181,7 +1181,7 @@ export async function updateUserProfile(
     allowPrivateNotes?: boolean;
     allowEmailReplies?: boolean;
     replyToEmail?: string;
-    notifNewMediumDigest?: boolean;
+    notifNewTaleonDigest?: boolean;
     notifRecommendedReading?: boolean;
     notifSavedListStories?: boolean;
     notifFollowsHighlights?: boolean;
