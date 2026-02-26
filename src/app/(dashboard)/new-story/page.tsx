@@ -114,12 +114,6 @@ function NewStoryContent() {
 
     const content = editorRef.current?.getHTML();
 
-    const isEmptyContent =
-      !content ||
-      content === "" ||
-      content === "<p></p>" ||
-      content === "<p><br></p>" ||
-      content === '<p class="p-"></p>';
     // Validate content is not empty HTML - strip HTML tags and check for actual text
     const stripHtml = (html: string) => {
       return html
