@@ -1,10 +1,12 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Check, Loader2, MoreHorizontal } from "lucide-react";
+import { ArrowLeft, Check, Loader2, MoreHorizontal, X } from "lucide-react";
+import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { AlertDialog } from "@/components/ui/AlertDialog";
+import { ImageUpload } from "@/components/ui/ImageUpload";
 import { SuccessDialog } from "@/components/ui/SuccessDialog";
 import { useAuth } from "@/context/auth.provider";
 import TiptapEditor from "@/core/components/molecule/dashboard/editor/tipTapEditor";
@@ -41,6 +43,7 @@ function NewStoryContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [showMenu, setShowMenu] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [coverImage, setCoverImage] = useState<string>("");
 
   const editorRef = useRef<any>(null);
 
@@ -58,6 +61,10 @@ function NewStoryContent() {
                 ? postData.title
                 : "";
             setTitle(postTitle);
+            // Load existing cover image if available
+            if (postData.image) {
+              setCoverImage(postData.image);
+            }
             if (editorRef.current && postData.content) {
               editorRef.current.setContent(postData.content);
             }
@@ -140,16 +147,19 @@ function NewStoryContent() {
           title,
           content,
           status: "published",
+          image: coverImage,
         });
       } else {
         // Save draft content first, then publish for first-time publish flow.
         await fetcher.patch(`/posts/${postId}/autosave`, {
           content,
           title,
+          image: coverImage,
         });
         await fetcher.patch(`/posts/${postId}/publish`, {
           title,
           content,
+          image: coverImage,
         });
       }
 
@@ -201,6 +211,7 @@ function NewStoryContent() {
         content,
         title,
         status: "draft",
+        image: coverImage,
       });
       setSaveStatus("Saved");
       setPostStatus("draft");
@@ -409,6 +420,39 @@ function NewStoryContent() {
               className="w-full text-[48px] sm:text-[52px] font-serif font-bold outline-none placeholder:text-gray-300 placeholder:font-bold text-gray-900 leading-[1.1] resize-none border-none bg-transparent tracking-tight"
               style={{ minHeight: "64px" }}
             />
+          </div>
+
+          {/* Cover Image Upload */}
+          <div className="mb-8">
+            {coverImage ? (
+              <div className="relative w-full h-48 md:h-64 rounded-lg overflow-hidden bg-gray-100">
+                <Image
+                  src={coverImage}
+                  alt="Cover image"
+                  fill
+                  className="object-cover"
+                  unoptimized
+                />
+                <button
+                  onClick={() => setCoverImage("")}
+                  className="absolute top-2 right-2 p-1 bg-black/50 hover:bg-black/70 rounded-full text-white transition-colors"
+                  aria-label="Remove cover image"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            ) : (
+              <div className="w-full">
+                <ImageUpload
+                  value={coverImage}
+                  onChange={setCoverImage}
+                  onRemove={() => setCoverImage("")}
+                />
+                <p className="text-xs text-gray-500 mt-2">
+                  Add a cover image to make your story stand out
+                </p>
+              </div>
+            )}
           </div>
 
           {postId ? (
