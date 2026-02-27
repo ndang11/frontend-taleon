@@ -41,13 +41,11 @@ export function LikeButton({
     <button
       type="button"
       onClick={handleLike}
-      disabled={toggleLike.isPending || !isAuthenticated}
+      disabled={toggleLike.isPending}
       className={`flex items-center space-x-1 px-3 py-2 rounded-lg transition-colors ${
-        !isAuthenticated
-          ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-          : hasLiked
-            ? "bg-red-50 text-red-600 hover:bg-red-100"
-            : "bg-gray-50 text-gray-600 hover:bg-gray-100"
+        hasLiked
+          ? "bg-red-50 text-red-600 hover:bg-red-100"
+          : "bg-gray-50 text-gray-600 hover:bg-gray-100"
       } ${className}`}
     >
       <Heart className={`h-5 w-5 ${hasLiked ? "fill-current" : ""}`} />
