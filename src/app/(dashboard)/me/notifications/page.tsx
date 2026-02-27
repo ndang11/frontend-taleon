@@ -27,6 +27,8 @@ interface NotificationData {
   postId?: {
     _id: string;
     title: string;
+    slug: string;
+    coverImage?: string;
   };
   message: string;
   isRead: boolean;
@@ -89,8 +91,8 @@ export default function NotificationsPage() {
     if (notification.type === "follow") {
       return `/me/profile`;
     }
-    if (notification.postId) {
-      return `/story/${notification.postId._id}`;
+    if (notification.postId?.slug) {
+      return `/story/${notification.postId.slug}`;
     }
     return "/me";
   };
@@ -228,6 +230,16 @@ export default function NotificationsPage() {
                     )}
                   </p>
                 </Link>
+                {notification.postId?.coverImage && (
+                  <div className="flex-shrink-0 w-16 h-16 rounded overflow-hidden relative">
+                    <Image
+                      src={notification.postId.coverImage}
+                      alt={notification.postId.title || "Post"}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                )}
                 <div className="flex items-center gap-2 flex-shrink-0">
                   {!notification.isRead && (
                     <button
