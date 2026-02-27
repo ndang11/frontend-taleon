@@ -197,7 +197,7 @@ function NewStoryContent() {
     // Invalidate queries before navigating
     queryClient.invalidateQueries({ queryKey: ["my-posts"] });
     queryClient.invalidateQueries({ queryKey: ["tenant-published-posts"] });
-    router.push("/me/stories");
+    router.push("/me");
   };
 
   const handleSaveDraft = async () => {
