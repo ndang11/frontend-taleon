@@ -4,6 +4,7 @@ import { Edit, Loader2, MoreHorizontal, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
+import ConfirmDeleteModal from "@/core/components/molecule/dashboard/ConfirmDeleteModal";
 import { deletePost } from "@/core/lib/api-client";
 import { useMyPosts } from "@/hook/useStories";
 
@@ -97,7 +98,7 @@ function StoryItem({
 }: {
   post: any;
   onEdit: (post: any) => void;
-  onDelete: (postId: string) => void;
+  onDelete: (post: any) => void;
   isDeleting: boolean;
 }) {
   const [showMenu, setShowMenu] = useState(false);
@@ -179,7 +180,7 @@ function StoryItem({
                 <button
                   onClick={(e) => {
                     e.preventDefault();
-                    onDelete(post._id);
+                    onDelete(post);
                     setShowMenu(false);
                   }}
                   disabled={isDeleting}
@@ -201,6 +202,8 @@ function StoryItem({
 export default function StoriesPage() {
   const [activeTab, setActiveTab] = useState<"drafts" | "published">("drafts");
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [postToDelete, setPostToDelete] = useState<any | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const router = useRouter();
 
   // Use React Query for automatic refetching and cache invalidation
@@ -221,21 +224,33 @@ export default function StoriesPage() {
     [router],
   );
 
-  const handleDelete = async (postId: string) => {
-    if (confirm("Are you sure you want to delete this story?")) {
-      setDeletingId(postId);
-      try {
-        await deletePost(postId);
-        // Refetch to update the list
-        refetch();
-      } catch (error) {
-        console.error("Failed to delete post:", error);
-        alert("Failed to delete post. Please try again.");
-      } finally {
-        setDeletingId(null);
-      }
+  const handleRequestDelete = useCallback((post: any) => {
+    setDeleteError(null);
+    setPostToDelete(post);
+  }, []);
+
+  const handleCloseDeleteModal = useCallback(() => {
+    if (deletingId) return;
+    setPostToDelete(null);
+  }, [deletingId]);
+
+  const handleConfirmDelete = useCallback(async () => {
+    if (!postToDelete?._id) return;
+
+    setDeletingId(postToDelete._id);
+    try {
+      await deletePost(postToDelete._id);
+      await refetch();
+      setPostToDelete(null);
+    } catch (error: any) {
+      console.error("Failed to delete post:", error);
+      setDeleteError(
+        error?.message || "Failed to delete post. Please try again.",
+      );
+    } finally {
+      setDeletingId(null);
     }
-  };
+  }, [postToDelete, refetch]);
 
   // Filter posts based on status
   const filteredPosts = posts.filter((post: any) => {
@@ -307,6 +322,11 @@ export default function StoriesPage() {
           </button>
         </div>
       )}
+      {deleteError && (
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-red-700 text-sm">{deleteError}</p>
+        </div>
+      )}
 
       {/* List */}
       {isLoading ? (
@@ -322,7 +342,7 @@ export default function StoriesPage() {
                 key={post._id}
                 post={post}
                 onEdit={handleEdit}
-                onDelete={handleDelete}
+                onDelete={handleRequestDelete}
                 isDeleting={deletingId === post._id}
               />
             ))
@@ -342,6 +362,15 @@ export default function StoriesPage() {
           )}
         </div>
       )}
+
+      <ConfirmDeleteModal
+        isOpen={!!postToDelete}
+        onClose={handleCloseDeleteModal}
+        onConfirm={handleConfirmDelete}
+        isLoading={deletingId === postToDelete?._id}
+        title="Delete story"
+        description="Are you sure you want to delete this story? This action cannot be undone."
+      />
     </div>
   );
 }
