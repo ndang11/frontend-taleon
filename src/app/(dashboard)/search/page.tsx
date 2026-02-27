@@ -91,7 +91,7 @@ function SearchContent() {
                   type="text"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search stories..."
+                  placeholder="Search by title, content, author name, or tags..."
                   className="w-full pl-4 pr-12 py-3 bg-gray-50 border border-gray-200 rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
                 />
               </div>
@@ -242,7 +242,7 @@ function SearchContent() {
               Search for stories
             </h2>
             <p className="text-gray-500 text-center">
-              Enter keywords to search for stories, articles, and more.
+              Search by title, content, author name, or tags to find stories.
             </p>
           </div>
         )}

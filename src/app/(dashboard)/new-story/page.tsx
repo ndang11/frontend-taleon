@@ -69,7 +69,7 @@ function NewStoryContent() {
         } else {
           const initialContent = { type: "doc", content: [] };
           const res: any = await fetcher.post("/posts", {
-            title: "",
+            title: "Untitled Story",
             content: JSON.stringify(initialContent),
             category: "General",
           });
@@ -122,6 +122,9 @@ function NewStoryContent() {
         .replace(/\s+/g, " ")
         .trim();
     };
+
+    const textContent = content ? stripHtml(content) : "";
+    const isEmptyContent = !content || textContent.length === 0;
 
     if (isEmptyContent) {
       setSaveStatus("Error");
