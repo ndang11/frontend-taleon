@@ -1697,6 +1697,31 @@ export async function getUnreadCount(): Promise<{ count: number }> {
   return response.json();
 }
 
+// ============================================
+// Analytics
+// ============================================
+
+export interface UserAnalytics {
+  totalPosts: number;
+  totalViews: number;
+  totalLikes: number;
+  totalComments: number;
+  followersCount: number;
+  followingCount: number;
+}
+
+export async function getUserAnalytics(): Promise<UserAnalytics> {
+  const response = await fetch(`${API_BASE_URL}/users/me/analytics`, {
+    headers: getAuthHeaders(),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch analytics");
+  }
+
+  return response.json();
+}
+
 export async function markNotificationAsRead(
   notificationId: string,
 ): Promise<{ unreadCount: number }> {
