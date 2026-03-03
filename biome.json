@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.2.0/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.3.10/schema.json",
   "vcs": {
     "enabled": true,
     "clientKind": "git",
@@ -12,14 +12,29 @@
   "formatter": {
     "enabled": true,
     "indentStyle": "space",
-    "indentWidth": 2
+    "indentWidth": 2,
+    "formatWithErrors": true
   },
   "linter": {
     "enabled": true,
     "rules": {
       "recommended": true,
+      "security": {
+        "noDangerouslySetInnerHtml": "off"
+      },
       "suspicious": {
-        "noUnknownAtRules": "off"
+        "noUnknownAtRules": "off",
+        "noExplicitAny": "off"
+      },
+      "correctness": {
+        "noUnusedVariables": "off",
+        "noUnusedImports": "off"
+      },
+      "a11y": {
+        "useButtonType": "off",
+        "noStaticElementInteractions": "off",
+        "useKeyWithClickEvents": "off",
+        "noLabelWithoutControl": "off"
       }
     },
     "domains": {

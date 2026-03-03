@@ -1,0 +1,291 @@
+"use client";
+
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  deletePost,
+  getAllTenantPosts,
+  getMyPosts,
+  getPost,
+  getPublishedPosts,
+  getTenantPublishedPosts,
+  type Post,
+  publishPost,
+  searchPosts,
+  updatePost,
+} from "@/core/lib/api-client";
+
+interface UseStoriesOptions {
+  tenantId?: string;
+  userId?: string;
+  token: string;
+}
+
+// ============================================
+// Published Posts (Public Feed)
+// ============================================
+
+export function usePublishedPosts(page: number = 1, limit: number = 10) {
+  return useQuery({
+    queryKey: ["published-posts", page, limit],
+    queryFn: () => getPublishedPosts(page, limit),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+}
+
+// ============================================
+// Tenant Published Posts (Dashboard)
+// ============================================
+
+export function useTenantPublishedPosts(page: number = 1, limit: number = 10) {
+  return useQuery({
+    queryKey: ["tenant-published-posts", page, limit],
+    queryFn: () => getTenantPublishedPosts(page, limit),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+}
+
+// ============================================
+// All Tenant Posts (Dashboard - Most Recent)
+// ============================================
+
+export function useAllTenantPosts(page: number = 1, limit: number = 50) {
+  return useQuery({
+    queryKey: ["all-tenant-posts", page, limit],
+    queryFn: () => getAllTenantPosts(page, limit),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+}
+
+// ============================================
+// My Posts (Dashboard)
+// ============================================
+
+export function useMyPosts(page: number = 1, limit: number = 10) {
+  return useQuery({
+    queryKey: ["my-posts", page, limit],
+    queryFn: () => getMyPosts(page, limit),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+}
+
+// ============================================
+// Single Post
+// ============================================
+
+export function usePost(postId: string) {
+  return useQuery({
+    queryKey: ["post", postId],
+    queryFn: () => getPost(postId),
+    enabled: !!postId,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+// ============================================
+// Publish Post
+// ============================================
+
+export function usePublishPost() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (postId: string) => publishPost(postId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["my-posts"] });
+      queryClient.invalidateQueries({ queryKey: ["published-posts"] });
+      queryClient.invalidateQueries({ queryKey: ["tenant-published-posts"] });
+    },
+  });
+}
+
+// ============================================
+// Search Posts
+// ============================================
+
+export function useSearchPosts(
+  query: string,
+  page: number = 1,
+  limit: number = 10,
+) {
+  return useQuery({
+    queryKey: ["search-posts", query, page, limit],
+    queryFn: () => searchPosts(query, page, limit),
+    enabled: !!query && query.trim().length > 0,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+}
+
+// ============================================
+// Delete Post
+// ============================================
+
+export function useDeletePost() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (postId: string) => deletePost(postId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["my-posts"] });
+      queryClient.invalidateQueries({ queryKey: ["published-posts"] });
+    },
+  });
+}
+
+// ============================================
+// Update Post (PATCH /posts/:id)
+// ============================================
+
+export interface UpdatePostData {
+  title?: string;
+  content?: any;
+  category?: string;
+  image?: string;
+  subtitle?: string;
+}
+
+export function useUpdatePost() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ postId, data }: { postId: string; data: UpdatePostData }) =>
+      updatePost(postId, data),
+    onSuccess: (updatedPost) => {
+      // Invalidate and refetch related queries
+      queryClient.invalidateQueries({ queryKey: ["my-posts"] });
+      queryClient.invalidateQueries({ queryKey: ["published-posts"] });
+      queryClient.invalidateQueries({ queryKey: ["post", updatedPost._id] });
+      queryClient.invalidateQueries({ queryKey: ["tenant-published-posts"] });
+    },
+    // Optimistic update
+    onMutate: async ({ postId, data }) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["my-posts"] });
+      await queryClient.cancelQueries({ queryKey: ["post", postId] });
+
+      // Snapshot the previous value
+      const previousPosts = queryClient.getQueryData(["my-posts"]);
+      const previousPost = queryClient.getQueryData(["post", postId]);
+
+      // Optimistically update to the new value
+      queryClient.setQueryData(["my-posts"], (old: any) => {
+        if (!old?.posts) return old;
+        return {
+          ...old,
+          posts: old.posts.map((post: Post) =>
+            post._id === postId ? { ...post, ...data } : post,
+          ),
+        };
+      });
+
+      queryClient.setQueryData(["post", postId], (old: any) => {
+        if (!old) return old;
+        return { ...old, ...data };
+      });
+
+      // Return a context object with the snapshotted value
+      return { previousPosts, previousPost };
+    },
+    onError: (err, { postId }, context) => {
+      // If the mutation fails, use the context returned from onMutate to roll back
+      if (context?.previousPosts) {
+        queryClient.setQueryData(["my-posts"], context.previousPosts);
+      }
+      if (context?.previousPost) {
+        queryClient.setQueryData(["post", postId], context.previousPost);
+      }
+      console.error("Failed to update post:", err);
+    },
+    onSettled: (_data, _error, { postId }) => {
+      // Always refetch after error or success
+      queryClient.invalidateQueries({ queryKey: ["my-posts"] });
+      queryClient.invalidateQueries({ queryKey: ["post", postId] });
+    },
+  });
+}
+
+// ============================================
+// Stories (Legacy - Tenant-based)
+// ============================================
+
+export function useStories({ tenantId, token }: UseStoriesOptions) {
+  return useQuery({
+    queryKey: ["stories", tenantId],
+    queryFn: () => {
+      if (!tenantId || !token) throw new Error("Missing required parameters");
+      return getPublishedPosts(1, 10); // Fallback to new function
+    },
+    enabled: !!tenantId && !!token,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+}
+
+export function useMyStories({ tenantId, userId, token }: UseStoriesOptions) {
+  return useQuery({
+    queryKey: ["my-stories", tenantId, userId],
+    queryFn: () => {
+      if (!tenantId || !userId || !token)
+        throw new Error("Missing required parameters");
+      return getMyPosts(1, 10); // Use new function
+    },
+    enabled: !!tenantId && !!userId && !!token,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useStory(tenantId: string, storyId: string, token: string) {
+  return useQuery({
+    queryKey: ["story", tenantId, storyId],
+    queryFn: () => {
+      if (!tenantId || !storyId || !token)
+        throw new Error("Missing required parameters");
+      return getPost(storyId);
+    },
+    enabled: !!tenantId && !!storyId && !!token,
+  });
+}
+
+interface DeleteStoryOptions {
+  tenantId: string;
+  userId: string;
+  token?: string;
+}
+
+export function useDeleteStory({
+  tenantId,
+  userId,
+  token: _token,
+}: DeleteStoryOptions) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (storyId: string) => deletePost(storyId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["stories", tenantId] });
+      queryClient.invalidateQueries({
+        queryKey: ["my-stories", tenantId, userId],
+      });
+    },
+  });
+}
+
+// ============================================
+// Stats Helper
+// ============================================
+
+export function useStoriesStats(posts: Post[] | undefined) {
+  if (!posts) {
+    return {
+      total: 0,
+      published: 0,
+      drafts: 0,
+      unpublished: 0,
+    };
+  }
+
+  return {
+    total: posts.length,
+    published: posts.filter((p) => p.status === "published").length,
+    drafts: posts.filter((p) => p.status === "draft").length,
+    unpublished: posts.filter((p) => p.status === "unpublished").length,
+  };
+}
